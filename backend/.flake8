@@ -1,0 +1,20 @@
+[flake8]
+max-line-length = 88
+select = E,W,F
+extend-ignore = 
+    E203,  # whitespace before ':'
+    W503,  # line break before binary operator
+    E501,  # line too long (handled by black)
+    F401,  # module imported but unused (handled by isort)
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .tox,
+    dist,
+    build,
+    *.egg,
+    alembic/versions,
+per-file-ignores =
+    __init__.py:F401
