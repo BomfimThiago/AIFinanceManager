@@ -1,52 +1,62 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Expense } from '../types';
-
-const initialExpenses: Expense[] = [
-  {
-    id: 1,
-    date: '2025-07-20',
-    amount: 89.99,
-    category: 'Groceries',
-    description: 'Weekly grocery shopping',
-    merchant: 'Whole Foods',
-    type: 'expense'
-  },
-  {
-    id: 2,
-    date: '2025-07-19',
-    amount: 45.00,
-    category: 'Utilities',
-    description: 'Electricity bill',
-    merchant: 'Power Company',
-    type: 'expense'
-  },
-  {
-    id: 3,
-    date: '2025-07-18',
-    amount: 3200.00,
-    category: 'Income',
-    description: 'Salary deposit',
-    merchant: 'Employer',
-    type: 'income'
-  }
-];
+import { expenseApi } from '../services/apiService';
 
 interface UseExpensesReturn {
   expenses: Expense[];
-  addExpense: (expense: Expense) => void;
-  removeExpense: (id: number) => void;
+  addExpense: (expense: Expense) => Promise<void>;
+  removeExpense: (id: number) => Promise<void>;
   updateExpense: (id: number, updatedExpense: Partial<Expense>) => void;
+  loading: boolean;
+  error: string | null;
+  refreshExpenses: () => Promise<void>;
 }
 
 export const useExpenses = (): UseExpensesReturn => {
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const addExpense = (expense: Expense): void => {
-    setExpenses(prev => [expense, ...prev]);
+  const refreshExpenses = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedExpenses = await expenseApi.getAll();
+      setExpenses(fetchedExpenses);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch expenses');
+      console.error('Error fetching expenses:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeExpense = (id: number): void => {
-    setExpenses(prev => prev.filter(expense => expense.id !== id));
+  useEffect(() => {
+    refreshExpenses();
+  }, []);
+
+  const addExpense = async (expense: Expense): Promise<void> => {
+    try {
+      setError(null);
+      const newExpense = await expenseApi.create(expense);
+      setExpenses(prev => [newExpense, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add expense');
+      console.error('Error adding expense:', err);
+      throw err;
+    }
+  };
+
+  const removeExpense = async (id: number): Promise<void> => {
+    try {
+      setError(null);
+      await expenseApi.delete(id);
+      setExpenses(prev => prev.filter(expense => expense.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove expense');
+      console.error('Error removing expense:', err);
+      throw err;
+    }
   };
 
   const updateExpense = (id: number, updatedExpense: Partial<Expense>): void => {
@@ -59,6 +69,9 @@ export const useExpenses = (): UseExpensesReturn => {
     expenses,
     addExpense,
     removeExpense,
-    updateExpense
+    updateExpense,
+    loading,
+    error,
+    refreshExpenses
   };
 };

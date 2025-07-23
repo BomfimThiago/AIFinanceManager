@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react';
-import { processFileWithAI } from '../services/aiService';
+import { processFileWithAI } from '../services/apiService';
 import { UploadedFile, Expense } from '../types';
 
 interface UseFileUploadProps {
-  onExpenseAdded: (expense: Expense) => void;
-  onBudgetUpdate?: (category: string, amount: number) => void;
+  onExpenseAdded: (expense: Expense) => Promise<void>;
+  onBudgetUpdate?: (category: string, amount: number) => Promise<void>;
 }
 
 interface UseFileUploadReturn {
@@ -41,9 +41,9 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadP
       const processedExpense = await processFileWithAI(file);
       
       if (processedExpense) {
-        onExpenseAdded(processedExpense);
+        await onExpenseAdded(processedExpense);
         if (onBudgetUpdate && processedExpense.category) {
-          onBudgetUpdate(processedExpense.category, processedExpense.amount);
+          await onBudgetUpdate(processedExpense.category, processedExpense.amount);
         }
       }
       

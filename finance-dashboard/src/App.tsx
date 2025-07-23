@@ -10,9 +10,9 @@ import { useExpenses } from './hooks/useExpenses';
 import { useBudgets } from './hooks/useBudgets';
 import { useFileUpload } from './hooks/useFileUpload';
 import { usePrivacyMode } from './hooks/usePrivacyMode';
-import { generateAIInsights } from './services/aiService';
+import { generateAIInsights } from './services/apiService';
 import { categories } from './constants/categories';
-import { calculateNetAmount } from './utils/calculations';
+import { calculateNetAmount } from './utils/apiCalculations';
 import type { TabId, AIInsight } from './types';
 
 const FinanceManager: React.FC = () => {
@@ -51,7 +51,6 @@ const FinanceManager: React.FC = () => {
           <Dashboard
             expenses={expenses}
             budgets={budgets}
-            categories={categories}
             hideAmounts={hideAmounts}
           />
         );
