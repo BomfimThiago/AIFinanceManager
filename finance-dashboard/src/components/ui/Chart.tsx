@@ -1,8 +1,19 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { formatAmount } from '../../utils/formatters';
+import { MonthlyData, CategoryData } from '../../utils/calculations';
 
-export const LineChartComponent = ({ data, hideAmounts = false }) => {
+interface LineChartComponentProps {
+  data: MonthlyData[];
+  hideAmounts?: boolean;
+}
+
+interface PieChartComponentProps {
+  data: CategoryData[];
+  hideAmounts?: boolean;
+}
+
+export const LineChartComponent: React.FC<LineChartComponentProps> = ({ data, hideAmounts = false }) => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Income vs Expenses</h3>
@@ -11,7 +22,7 @@ export const LineChartComponent = ({ data, hideAmounts = false }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />
-          <Tooltip formatter={(value) => formatAmount(value, hideAmounts)} />
+          <Tooltip formatter={(value) => formatAmount(value as number, hideAmounts)} />
           <Legend />
           <Line type="monotone" dataKey="income" stroke="#10B981" strokeWidth={3} />
           <Line type="monotone" dataKey="expenses" stroke="#EF4444" strokeWidth={3} />
@@ -21,7 +32,7 @@ export const LineChartComponent = ({ data, hideAmounts = false }) => {
   );
 };
 
-export const PieChartComponent = ({ data, hideAmounts = false }) => {
+export const PieChartComponent: React.FC<PieChartComponentProps> = ({ data, hideAmounts = false }) => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Spending by Category</h3>
@@ -34,13 +45,13 @@ export const PieChartComponent = ({ data, hideAmounts = false }) => {
             outerRadius={100}
             fill="#8884d8"
             dataKey="value"
-            label={({name, value}) => `${name}: ${formatAmount(value, hideAmounts)}`}
+            label={(entry: any) => `${entry.name}: ${formatAmount(entry.value, hideAmounts)}`}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip formatter={(value) => formatAmount(value, hideAmounts)} />
+          <Tooltip formatter={(value) => formatAmount(value as number, hideAmounts)} />
         </RechartsPieChart>
       </ResponsiveContainer>
     </div>

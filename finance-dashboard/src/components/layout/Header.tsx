@@ -2,7 +2,13 @@ import React from 'react';
 import { Wallet, Eye, EyeOff } from 'lucide-react';
 import { formatAmount } from '../../utils/formatters';
 
-const Header = ({ netAmount, hideAmounts, onTogglePrivacy }) => {
+interface HeaderProps {
+  netAmount: number;
+  hideAmounts: boolean;
+  onTogglePrivacy: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy }) => {
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

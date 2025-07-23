@@ -1,8 +1,15 @@
 import React from 'react';
 import { Brain, AlertCircle, TrendingUp } from 'lucide-react';
 import { calculateNetAmount } from '../../utils/calculations';
+import { AIInsight, Expense } from '../../types';
 
-const Insights = ({ aiInsights, onGenerateInsights, expenses }) => {
+interface InsightsProps {
+  aiInsights: AIInsight[];
+  onGenerateInsights: () => void;
+  expenses: Expense[];
+}
+
+const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, expenses }) => {
   const netAmount = calculateNetAmount(expenses);
 
   return (

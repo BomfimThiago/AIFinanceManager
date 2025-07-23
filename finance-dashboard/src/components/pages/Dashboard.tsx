@@ -4,8 +4,16 @@ import SummaryCard from '../ui/SummaryCard';
 import { LineChartComponent, PieChartComponent } from '../ui/Chart';
 import { calculateTotalIncome, calculateTotalExpenses, calculateNetAmount, prepareCategoryData, prepareMonthlyData } from '../../utils/calculations';
 import { formatAmount } from '../../utils/formatters';
+import { Expense, Budgets, Category } from '../../types';
 
-const Dashboard = ({ expenses, budgets, categories, hideAmounts }) => {
+interface DashboardProps {
+  expenses: Expense[];
+  budgets: Budgets;
+  categories: Category[];
+  hideAmounts: boolean;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, categories, hideAmounts }) => {
   const totalIncome = calculateTotalIncome(expenses);
   const totalExpenses = calculateTotalExpenses(expenses);
   const netAmount = calculateNetAmount(expenses);

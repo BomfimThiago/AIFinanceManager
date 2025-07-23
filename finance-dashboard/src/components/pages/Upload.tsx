@@ -1,8 +1,21 @@
 import React from 'react';
 import { Upload as UploadIcon, FileText } from 'lucide-react';
 import { formatAmount } from '../../utils/formatters';
+import { UploadedFile } from '../../types';
 
-const Upload = ({ 
+interface UploadProps {
+  uploadedFiles: UploadedFile[];
+  dragActive: boolean;
+  isProcessing: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleDrag: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleFileInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  triggerFileInput: () => void;
+  hideAmounts: boolean;
+}
+
+const Upload: React.FC<UploadProps> = ({ 
   uploadedFiles, 
   dragActive, 
   isProcessing, 

@@ -1,18 +1,26 @@
-export const calculateTotalIncome = (expenses) => {
+import { Expense, Category } from '../types';
+
+export const calculateTotalIncome = (expenses: Expense[]): number => {
   return expenses.filter(e => e.type === 'income').reduce((sum, e) => sum + e.amount, 0);
 };
 
-export const calculateTotalExpenses = (expenses) => {
+export const calculateTotalExpenses = (expenses: Expense[]): number => {
   return expenses.filter(e => e.type === 'expense').reduce((sum, e) => sum + e.amount, 0);
 };
 
-export const calculateNetAmount = (expenses) => {
+export const calculateNetAmount = (expenses: Expense[]): number => {
   const totalIncome = calculateTotalIncome(expenses);
   const totalExpenses = calculateTotalExpenses(expenses);
   return totalIncome - totalExpenses;
 };
 
-export const prepareCategoryData = (expenses, categories) => {
+export interface CategoryData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export const prepareCategoryData = (expenses: Expense[], categories: Category[]): CategoryData[] => {
   return categories
     .map(cat => ({
       name: cat.name,
@@ -22,7 +30,13 @@ export const prepareCategoryData = (expenses, categories) => {
     .filter(cat => cat.value > 0);
 };
 
-export const prepareMonthlyData = (expenses) => {
+export interface MonthlyData {
+  month: string;
+  income: number;
+  expenses: number;
+}
+
+export const prepareMonthlyData = (expenses: Expense[]): MonthlyData[] => {
   const totalIncome = calculateTotalIncome(expenses);
   const totalExpenses = calculateTotalExpenses(expenses);
   

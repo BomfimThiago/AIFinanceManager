@@ -13,10 +13,11 @@ import { usePrivacyMode } from './hooks/usePrivacyMode';
 import { generateAIInsights } from './services/aiService';
 import { categories } from './constants/categories';
 import { calculateNetAmount } from './utils/calculations';
+import type { TabId, AIInsight } from './types';
 
-const FinanceManager = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [aiInsights, setAiInsights] = useState([]);
+const FinanceManager: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
 
   const { expenses, addExpense } = useExpenses();
   const { budgets, addBudget, updateBudgetSpent } = useBudgets();
@@ -38,12 +39,12 @@ const FinanceManager = () => {
 
   const netAmount = calculateNetAmount(expenses);
 
-  const handleGenerateInsights = async () => {
+  const handleGenerateInsights = async (): Promise<void> => {
     const insights = await generateAIInsights(expenses, budgets);
     setAiInsights(insights);
   };
 
-  const renderContent = () => {
+  const renderContent = (): React.ReactNode => {
     switch (activeTab) {
       case 'dashboard':
         return (

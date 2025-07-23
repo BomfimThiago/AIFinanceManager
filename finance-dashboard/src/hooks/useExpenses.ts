@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Expense } from '../types';
 
-const initialExpenses = [
+const initialExpenses: Expense[] = [
   {
     id: 1,
     date: '2025-07-20',
@@ -30,18 +31,25 @@ const initialExpenses = [
   }
 ];
 
-export const useExpenses = () => {
-  const [expenses, setExpenses] = useState(initialExpenses);
+interface UseExpensesReturn {
+  expenses: Expense[];
+  addExpense: (expense: Expense) => void;
+  removeExpense: (id: number) => void;
+  updateExpense: (id: number, updatedExpense: Partial<Expense>) => void;
+}
 
-  const addExpense = (expense) => {
+export const useExpenses = (): UseExpensesReturn => {
+  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+
+  const addExpense = (expense: Expense): void => {
     setExpenses(prev => [expense, ...prev]);
   };
 
-  const removeExpense = (id) => {
+  const removeExpense = (id: number): void => {
     setExpenses(prev => prev.filter(expense => expense.id !== id));
   };
 
-  const updateExpense = (id, updatedExpense) => {
+  const updateExpense = (id: number, updatedExpense: Partial<Expense>): void => {
     setExpenses(prev => 
       prev.map(expense => expense.id === id ? { ...expense, ...updatedExpense } : expense)
     );

@@ -1,6 +1,7 @@
 import { ShoppingCart, Home, Car, Utensils, Gamepad2, Plus, DollarSign } from 'lucide-react';
+import { Category } from '../types';
 
-export const categories = [
+export const categories: Category[] = [
   { name: 'Groceries', icon: ShoppingCart, color: '#10B981' },
   { name: 'Utilities', icon: Home, color: '#3B82F6' },
   { name: 'Transport', icon: Car, color: '#8B5CF6' },
@@ -10,4 +11,4 @@ export const categories = [
   { name: 'Income', icon: DollarSign, color: '#059669' }
 ];
 
-export const CHART_COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
+export const CHART_COLORS: string[] = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];

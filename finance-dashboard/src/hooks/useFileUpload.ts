@@ -1,13 +1,30 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react';
 import { processFileWithAI } from '../services/aiService';
+import { UploadedFile, Expense } from '../types';
 
-export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }) => {
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [dragActive, setDragActive] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const fileInputRef = useRef(null);
+interface UseFileUploadProps {
+  onExpenseAdded: (expense: Expense) => void;
+  onBudgetUpdate?: (category: string, amount: number) => void;
+}
 
-  const handleDrag = useCallback((e) => {
+interface UseFileUploadReturn {
+  uploadedFiles: UploadedFile[];
+  dragActive: boolean;
+  isProcessing: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleDrag: (e: DragEvent<HTMLDivElement>) => void;
+  handleDrop: (e: DragEvent<HTMLDivElement>) => void;
+  handleFileInput: (e: ChangeEvent<HTMLInputElement>) => void;
+  triggerFileInput: () => void;
+}
+
+export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadProps): UseFileUploadReturn => {
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrag = useCallback((e: DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -17,7 +34,7 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }) => {
     }
   }, []);
 
-  const processFile = useCallback(async (file) => {
+  const processFile = useCallback(async (file: File): Promise<void> => {
     setIsProcessing(true);
     try {
       setUploadedFiles(prev => [...prev, { file, status: 'processing' }]);
@@ -31,7 +48,7 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }) => {
       }
       
       setUploadedFiles(prev => 
-        prev.map(f => f.file === file ? { ...f, status: 'completed', expense: processedExpense } : f)
+        prev.map(f => f.file === file ? { ...f, status: 'completed', expense: processedExpense || undefined } : f)
       );
     } catch (error) {
       console.error('Error processing file:', error);
@@ -43,7 +60,7 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }) => {
     }
   }, [onExpenseAdded, onBudgetUpdate]);
 
-  const handleDrop = useCallback(async (e) => {
+  const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>): Promise<void> => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -58,7 +75,9 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }) => {
     }
   }, [processFile]);
 
-  const handleFileInput = async (e) => {
+  const handleFileInput = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    if (!e.target.files) return;
+    
     const files = Array.from(e.target.files);
     for (const file of files) {
       if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
@@ -67,7 +86,7 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }) => {
     }
   };
 
-  const triggerFileInput = () => {
+  const triggerFileInput = (): void => {
     fileInputRef.current?.click();
   };
 

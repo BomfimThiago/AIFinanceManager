@@ -1,8 +1,11 @@
-const convertFileToBase64 = (file) => {
+import { Expense, AIInsight, Budgets } from '../types';
+
+const convertFileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = reader.result.split(",")[1];
+      const result = reader.result as string;
+      const base64 = result.split(",")[1];
       resolve(base64);
     };
     reader.onerror = () => reject(new Error("Failed to read file"));
@@ -10,7 +13,16 @@ const convertFileToBase64 = (file) => {
   });
 };
 
-export const processFileWithAI = async (file) => {
+interface AIExpenseResponse {
+  amount: number;
+  date: string;
+  merchant: string;
+  category: string;
+  description: string;
+  items?: string[];
+}
+
+export const processFileWithAI = async (file: File): Promise<Expense | null> => {
   try {
     const base64Data = await convertFileToBase64(file);
 
@@ -59,13 +71,13 @@ export const processFileWithAI = async (file) => {
     const data = await response.json();
     let responseText = data.content[0].text;
     responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const expenseData = JSON.parse(responseText);
+    const expenseData: AIExpenseResponse = JSON.parse(responseText);
     
     return {
       id: Date.now(),
       ...expenseData,
-      type: 'expense',
-      source: 'ai-processed'
+      type: 'expense' as const,
+      source: 'ai-processed' as const
     };
   } catch (error) {
     console.error('Error processing file with AI:', error);
@@ -73,7 +85,11 @@ export const processFileWithAI = async (file) => {
   }
 };
 
-export const generateAIInsights = async (expenses, budgets) => {
+interface AIInsightsResponse {
+  insights: AIInsight[];
+}
+
+export const generateAIInsights = async (expenses: Expense[], budgets: Budgets): Promise<AIInsight[]> => {
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -114,7 +130,7 @@ export const generateAIInsights = async (expenses, budgets) => {
     const data = await response.json();
     let responseText = data.content[0].text;
     responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const insightsData = JSON.parse(responseText);
+    const insightsData: AIInsightsResponse = JSON.parse(responseText);
     
     return insightsData.insights || [];
   } catch (error) {

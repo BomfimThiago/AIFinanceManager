@@ -1,8 +1,15 @@
 import React from 'react';
 import { DollarSign } from 'lucide-react';
 import { formatAmount, formatDate } from '../../utils/formatters';
+import { Expense, Category } from '../../types';
 
-const Expenses = ({ expenses, categories, hideAmounts }) => {
+interface ExpensesProps {
+  expenses: Expense[];
+  categories: Category[];
+  hideAmounts: boolean;
+}
+
+const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

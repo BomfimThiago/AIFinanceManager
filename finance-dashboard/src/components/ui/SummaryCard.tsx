@@ -1,6 +1,15 @@
 import React from 'react';
+import { LucideIcon } from 'lucide-react';
 
-const SummaryCard = ({ title, value, icon: Icon, bgColor, textColor }) => { // eslint-disable-line no-unused-vars
+interface SummaryCardProps {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  bgColor: string;
+  textColor: string;
+}
+
+const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, icon: Icon, bgColor, textColor }) => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border">
       <div className="flex items-center justify-between">

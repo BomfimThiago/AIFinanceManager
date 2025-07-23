@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
 import { Plus, X, Target, AlertCircle } from 'lucide-react';
 import { formatAmount } from '../../utils/formatters';
+import { Budgets as BudgetsType, Category } from '../../types';
 
-const Budgets = ({ budgets, categories, onAddBudget, hideAmounts }) => {
-  const [showBudgetForm, setShowBudgetForm] = useState(false);
-  const [newBudget, setNewBudget] = useState({ category: '', limit: '' });
+interface BudgetsProps {
+  budgets: BudgetsType;
+  categories: Category[];
+  onAddBudget: (category: string, limit: string | number) => void;
+  hideAmounts: boolean;
+}
 
-  const handleAddBudget = () => {
+interface NewBudgetState {
+  category: string;
+  limit: string;
+}
+
+const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hideAmounts }) => {
+  const [showBudgetForm, setShowBudgetForm] = useState<boolean>(false);
+  const [newBudget, setNewBudget] = useState<NewBudgetState>({ category: '', limit: '' });
+
+  const handleAddBudget = (): void => {
     if (newBudget.category && newBudget.limit) {
       onAddBudget(newBudget.category, newBudget.limit);
       setNewBudget({ category: '', limit: '' });
