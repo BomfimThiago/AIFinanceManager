@@ -1,4 +1,4 @@
-import { ShoppingCart, Home, Car, Utensils, Gamepad2, Plus, DollarSign } from 'lucide-react';
+import { ShoppingCart, Home, Car, Utensils, Gamepad2, Plus, DollarSign, MoreHorizontal } from 'lucide-react';
 import { Category } from '../types';
 
 export const categories: Category[] = [
@@ -8,6 +8,7 @@ export const categories: Category[] = [
   { name: 'Dining', icon: Utensils, color: '#F59E0B' },
   { name: 'Entertainment', icon: Gamepad2, color: '#EF4444' },
   { name: 'Healthcare', icon: Plus, color: '#EC4899' },
+  { name: 'Other', icon: MoreHorizontal, color: '#6B7280' },
   { name: 'Income', icon: DollarSign, color: '#059669' }
 ];
 

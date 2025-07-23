@@ -37,7 +37,12 @@ class ExpenseRepository:
             merchant=expense_data.merchant,
             type=ExpenseType(expense_data.type),
             source=ExpenseSource(expense_data.source) if expense_data.source else ExpenseSource.MANUAL,
-            items=expense_data.items
+            items=expense_data.items,
+            # Multi-currency fields
+            original_currency=expense_data.original_currency or "EUR",
+            amounts=expense_data.amounts,
+            exchange_rates=expense_data.exchange_rates,
+            exchange_date=expense_data.exchange_date
         )
         self.db.add(db_expense)
         await self.db.commit()
@@ -57,7 +62,12 @@ class ExpenseRepository:
                 merchant=expense_data.merchant,
                 type=ExpenseType(expense_data.type),
                 source=ExpenseSource(expense_data.source) if expense_data.source else ExpenseSource.MANUAL,
-                items=expense_data.items
+                items=expense_data.items,
+                # Multi-currency fields
+                original_currency=expense_data.original_currency or "EUR",
+                amounts=expense_data.amounts,
+                exchange_rates=expense_data.exchange_rates,
+                exchange_date=expense_data.exchange_date
             )
             .returning(ExpenseModel)
         )

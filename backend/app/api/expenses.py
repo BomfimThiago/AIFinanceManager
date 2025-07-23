@@ -18,6 +18,7 @@ from app.db.repositories import ExpenseRepository, UploadHistoryRepository
 from app.db.models import UploadStatus
 from app.api.auth import get_current_user
 from app.models.auth import User
+from app.services.currency_service import currency_service, Currency
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -45,7 +46,12 @@ def expense_model_to_pydantic(expense_model) -> Expense:
         merchant=expense_model.merchant,
         type=expense_model.type.value,
         source=expense_model.source.value if expense_model.source else "manual",
-        items=expense_model.items
+        items=expense_model.items,
+        # Multi-currency fields
+        original_currency=expense_model.original_currency,
+        amounts=expense_model.amounts,
+        exchange_rates=expense_model.exchange_rates,
+        exchange_date=expense_model.exchange_date
     )
 
 
@@ -70,13 +76,17 @@ async def get_expenses(
 async def create_expense(expense: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     """Create a new expense."""
     try:
-        logger.info(f"Creating expense with data: {expense.dict()}")
+        logger.info(f"Creating expense with data: {expense.model_dump()}")
+        
+        # Handle multi-currency conversion
+        expense_with_currencies = await _process_expense_currencies(expense)
+        
         repo = ExpenseRepository(db)
-        expense_model = await repo.create(expense)
+        expense_model = await repo.create(expense_with_currencies)
         return expense_model_to_pydantic(expense_model)
     except Exception as e:
         logger.error(f"Error creating manual expense: {e}")
-        logger.error(f"Expense data: {expense.dict() if hasattr(expense, 'dict') else 'Invalid data'}")
+        logger.error(f"Expense data: {expense.model_dump() if hasattr(expense, 'model_dump') else 'Invalid data'}")
         raise HTTPException(status_code=500, detail=f"Failed to create expense: {str(e)}")
 
 
@@ -88,7 +98,9 @@ async def create_bulk_expenses(expenses: List[ExpenseCreate], db: AsyncSession =
     
     for expense_data in expenses:
         try:
-            expense_model = await repo.create(expense_data)
+            # Process with currency conversion like single expense creation
+            expense_with_currencies = await _process_expense_currencies(expense_data)
+            expense_model = await repo.create(expense_with_currencies)
             created_expenses.append(expense_model_to_pydantic(expense_model))
         except Exception as e:
             logger.error(f"Failed to create one of the bulk expenses: {expense_data.description}")
@@ -148,9 +160,12 @@ async def upload_expenses_from_file(
                 merchant=expense.merchant,
                 type=expense.type,
                 source=expense.source,
-                items=expense.items
+                items=expense.items,
+                original_currency=expense.original_currency
             )
-            expense_model = await expense_repo.create(expense_create)
+            # Process with currency conversion
+            expense_with_currencies = await _process_expense_currencies(expense_create)
+            expense_model = await expense_repo.create(expense_with_currencies)
             created_expenses.append(expense_model_to_pydantic(expense_model))
         
         # Update upload history to success
@@ -222,9 +237,13 @@ async def get_monthly_chart_data(db: AsyncSession = Depends(get_db)):
 async def update_expense(expense_id: int, expense: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     """Update an expense."""
     try:
-        logger.info(f"Updating expense {expense_id} with data: {expense.dict()}")
+        logger.info(f"Updating expense {expense_id} with data: {expense.model_dump()}")
+        
+        # Handle multi-currency conversion
+        expense_with_currencies = await _process_expense_currencies(expense)
+        
         repo = ExpenseRepository(db)
-        expense_model = await repo.update(expense_id, expense)
+        expense_model = await repo.update(expense_id, expense_with_currencies)
         
         if not expense_model:
             raise HTTPException(status_code=404, detail="Expense not found")
@@ -234,7 +253,7 @@ async def update_expense(expense_id: int, expense: ExpenseCreate, db: AsyncSessi
         raise
     except Exception as e:
         logger.error(f"Error updating expense: {e}")
-        logger.error(f"Expense data: {expense.dict() if hasattr(expense, 'dict') else 'Invalid data'}")
+        logger.error(f"Expense data: {expense.model_dump() if hasattr(expense, 'model_dump') else 'Invalid data'}")
         raise HTTPException(status_code=500, detail=f"Failed to update expense: {str(e)}")
 
 
@@ -248,3 +267,58 @@ async def delete_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Expense not found")
     
     return {"message": "Expense deleted successfully"}
+
+
+async def _process_expense_currencies(expense: ExpenseCreate) -> ExpenseCreate:
+    """Process expense to include multi-currency data."""
+    try:
+        # Get the original currency (default to EUR if not specified)
+        original_currency = Currency(expense.original_currency or "EUR")
+        
+        # Get current exchange rates
+        exchange_rates = await currency_service.get_current_rates()
+        
+        # Convert the amount to all supported currencies
+        amounts = await currency_service.convert_to_all_currencies(
+            expense.amount, original_currency, exchange_rates
+        )
+        
+        # Create updated expense with currency data
+        expense_data = expense.model_dump()
+        expense_data.update({
+            "original_currency": original_currency.value,
+            "amounts": amounts,
+            "exchange_rates": exchange_rates,
+            "exchange_date": expense.date  # Use expense date for historical accuracy
+        })
+        
+        return ExpenseCreate(**expense_data)
+        
+    except Exception as e:
+        logger.error(f"Error processing expense currencies: {e}")
+        # Return original expense if currency processing fails
+        return expense
+
+
+@router.get("/currencies")
+async def get_currencies():
+    """Get supported currencies with their display information."""
+    return {
+        "currencies": currency_service.get_all_currencies_info(),
+        "supported": [currency.value for currency in Currency]
+    }
+
+
+@router.get("/exchange-rates")
+async def get_current_exchange_rates():
+    """Get current exchange rates for all supported currencies."""
+    try:
+        rates = await currency_service.get_current_rates()
+        return {
+            "rates": rates,
+            "base_currency": "EUR",
+            "timestamp": rates.get("date", "current")
+        }
+    except Exception as e:
+        logger.error(f"Error fetching exchange rates: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch exchange rates")

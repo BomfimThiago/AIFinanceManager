@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Upload as UploadIcon, FileText, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { formatAmount } from '../../utils/formatters';
 import { UploadedFile, UploadHistory } from '../../types';
 import { useUploadHistoryQuery, useDeleteUploadHistoryMutation } from '../../hooks/queries';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import ConfirmationModal from '../ui/ConfirmationModal';
 
 interface UploadProps {
   uploadedFiles: UploadedFile[];
@@ -27,8 +28,11 @@ const Upload: React.FC<UploadProps> = ({
   triggerFileInput,
   hideAmounts 
 }) => {
+  const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency } = useCurrency();
   const { data: uploadHistory = [] } = useUploadHistoryQuery();
   const deleteUploadMutation = useDeleteUploadHistoryMutation();
+  const [uploadToDelete, setUploadToDelete] = useState<UploadHistory | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -56,10 +60,29 @@ const Upload: React.FC<UploadProps> = ({
     }
   };
 
-  const handleDeleteUpload = (uploadId: number) => {
-    if (window.confirm('Are you sure you want to delete this upload history?')) {
-      deleteUploadMutation.mutate(uploadId);
-    }
+  const handleDeleteClick = (upload: UploadHistory) => {
+    setUploadToDelete(upload);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!uploadToDelete) return;
+
+    deleteUploadMutation.mutate(uploadToDelete.id, {
+      onSuccess: () => {
+        setIsConfirmModalOpen(false);
+        setUploadToDelete(null);
+      },
+      onError: () => {
+        setIsConfirmModalOpen(false);
+        setUploadToDelete(null);
+      },
+    });
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmModalOpen(false);
+    setUploadToDelete(null);
   };
 
   return (
@@ -137,7 +160,16 @@ const Upload: React.FC<UploadProps> = ({
                   )}
                   {item.status === 'completed' && item.expense && (
                     <div className="text-sm text-green-600 font-medium">
-                      {formatAmount(item.expense.amount, hideAmounts)} - {item.expense.category}
+                      {(() => {
+                        if (hideAmounts) return '*** - ' + item.expense.category;
+                        
+                        // Convert amount to selected currency
+                        const convertedAmount = item.expense.amounts && item.expense.amounts[selectedCurrency] 
+                          ? item.expense.amounts[selectedCurrency]
+                          : convertAmount(item.expense.amount, item.expense.original_currency || 'EUR');
+                        
+                        return `${formatCurrencyAmount(convertedAmount)} - ${item.expense.category}`;
+                      })()} 
                     </div>
                   )}
                   <div className={`px-2 py-1 rounded text-xs font-medium ${
@@ -185,7 +217,7 @@ const Upload: React.FC<UploadProps> = ({
                     </span>
                   </div>
                   <button
-                    onClick={() => handleDeleteUpload(upload.id)}
+                    onClick={() => handleDeleteClick(upload)}
                     disabled={deleteUploadMutation.isPending}
                     className="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                     title="Delete upload history"
@@ -198,6 +230,19 @@ const Upload: React.FC<UploadProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Upload History"
+        message={`Are you sure you want to delete the upload history for "${uploadToDelete?.filename}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteUploadMutation.isPending}
+      />
     </div>
   );
 };

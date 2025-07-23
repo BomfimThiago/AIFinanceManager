@@ -47,6 +47,12 @@ class ExpenseModel(Base):
     type = Column(SQLEnum(ExpenseType), nullable=False, default=ExpenseType.EXPENSE)
     source = Column(SQLEnum(ExpenseSource), nullable=False, default=ExpenseSource.MANUAL)
     items = Column(JSON, nullable=True)  # Store list of items as JSON
+    
+    # Multi-currency support
+    original_currency = Column(String, nullable=False, default="EUR")  # Currency of the original amount
+    amounts = Column(JSON, nullable=True)  # Amounts in all supported currencies (USD, EUR, BRL)
+    exchange_rates = Column(JSON, nullable=True)  # Exchange rates at time of creation
+    exchange_date = Column(String, nullable=True)  # Date when exchange rates were captured
 
     def __repr__(self):
         return f"<ExpenseModel(id={self.id}, amount={self.amount}, category='{self.category}')>"

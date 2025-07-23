@@ -5,6 +5,7 @@ from typing import Optional, List, Dict
 from anthropic import Anthropic
 from app.models.expense import Expense, AIInsight
 from app.core.config import settings
+from app.services.currency_service import currency_service, Currency
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +57,8 @@ class AIService:
                                 "text": """Extract ALL expenses from this document. Return ONLY a JSON array with minimal fields:
 
                                 [
-                                  {"amount":12.99,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Milk & bread"},
-                                  {"amount":5.49,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Fruits"}
+                                  {"amount":12.99,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Milk & bread","currency":"USD"},
+                                  {"amount":5.49,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Fruits","currency":"USD"}
                                 ]
 
                                 Rules:
@@ -66,7 +67,10 @@ class AIService:
                                 - No spaces after colons/commas in JSON
                                 - Extract EVERY transaction/item as separate expense
                                 - For bank statements: each transaction = one expense
-                                - For receipts: group similar items if needed to stay concise"""
+                                - For receipts: group similar items if needed to stay concise
+                                - IMPORTANT: Include "currency" field with detected currency code (USD, EUR, BRL)
+                                - Look for currency symbols ($, €, R$) or currency codes in the document
+                                - If currency is unclear, use EUR as default"""
                             }
                         ]
                     }
@@ -167,6 +171,16 @@ class AIService:
                     continue
                 
                 try:
+                    # Detect currency from AI response or document content
+                    detected_currency = expense_data.get("currency", "EUR")
+                    
+                    # Validate currency and fallback to EUR if invalid
+                    try:
+                        currency_enum = Currency(detected_currency)
+                    except ValueError:
+                        logger.warning(f"Invalid currency {detected_currency}, defaulting to EUR")
+                        currency_enum = Currency.EUR
+                    
                     # Create expense object
                     expense = Expense(
                         id=0,  # Will be set by the API endpoint
@@ -177,7 +191,8 @@ class AIService:
                         description=expense_data["description"],
                         items=expense_data.get("items", []),
                         type="expense",  # Pydantic expects lowercase
-                        source="ai-processed"  # Pydantic expects lowercase with hyphen
+                        source="ai-processed",  # Pydantic expects lowercase with hyphen
+                        original_currency=currency_enum.value
                     )
                     expenses.append(expense)
                     logger.info(f"Created expense {i+1}: {expense.description} - ${expense.amount}")

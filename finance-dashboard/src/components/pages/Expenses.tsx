@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { DollarSign, Edit2, Trash2, Plus, TrendingUp, TrendingDown } from 'lucide-react';
-import { formatAmount, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 import { Expense, Category } from '../../types';
 import { useCreateExpense, useUpdateExpense, useDeleteExpense } from '../../hooks/queries';
 import { useToast } from '../../contexts/ToastContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import EditExpenseModal from '../ui/EditExpenseModal';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
@@ -11,7 +12,7 @@ interface ExpensesProps {
   expenses: Expense[];
   categories: Category[];
   hideAmounts: boolean;
-  onFiltersChange?: (filters: { month?: number; year?: number }) => void;
+  onFiltersChange?: (filters: { month?: number; year?: number; category?: string }) => void;
 }
 
 const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, onFiltersChange }) => {
@@ -19,7 +20,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [filters, setFilters] = useState<{ month?: number; year?: number }>({});
+  const [filters, setFilters] = useState<{ month?: number; year?: number; category?: string }>({});
+  
+  const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency } = useCurrency();
   
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
@@ -113,15 +116,59 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
     onFiltersChange?.(newFilters);
   }, [filters, onFiltersChange]);
 
-  // Calculate totals for visible expenses
+  const handleCategoryChange = useCallback((category: string) => {
+    const categoryValue = category === 'All Categories' ? undefined : category;
+    const newFilters = { ...filters, category: categoryValue };
+    setFilters(newFilters);
+    onFiltersChange?.(newFilters);
+  }, [filters, onFiltersChange]);
+
+  // Filter expenses based on current filters
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter(expense => {
+      // Category filter
+      if (filters.category && expense.category !== filters.category) {
+        return false;
+      }
+      
+      // Date filters (these are handled by the backend in onFiltersChange)
+      // but we can also apply them here for consistency
+      if (filters.month || filters.year) {
+        const expenseDate = new Date(expense.date);
+        const expenseMonth = expenseDate.getMonth() + 1; // getMonth() returns 0-11
+        const expenseYear = expenseDate.getFullYear();
+        
+        if (filters.month && expenseMonth !== filters.month) {
+          return false;
+        }
+        
+        if (filters.year && expenseYear !== filters.year) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [expenses, filters]);
+
+  // Calculate totals for visible (filtered) expenses with currency conversion
   const expenseTotals = useMemo(() => {
-    const totalExpenses = expenses
-      .filter(expense => expense.type === 'expense')
-      .reduce((sum, expense) => sum + expense.amount, 0);
+    const getConvertedAmount = (expense: Expense) => {
+      // If expense has pre-calculated amounts for the selected currency, use that
+      if (expense.amounts && expense.amounts[selectedCurrency]) {
+        return expense.amounts[selectedCurrency];
+      }
+      // Otherwise, convert using current rates
+      return convertAmount(expense.amount, expense.original_currency || 'EUR');
+    };
     
-    const totalIncome = expenses
+    const totalExpenses = filteredExpenses
+      .filter(expense => expense.type === 'expense')
+      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
+    
+    const totalIncome = filteredExpenses
       .filter(expense => expense.type === 'income')
-      .reduce((sum, expense) => sum + expense.amount, 0);
+      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
     
     const netAmount = totalIncome - totalExpenses;
     
@@ -129,9 +176,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
       totalExpenses,
       totalIncome,
       netAmount,
-      totalTransactions: expenses.length
+      totalTransactions: filteredExpenses.length
     };
-  }, [expenses]);
+  }, [filteredExpenses, selectedCurrency, convertAmount]);
 
   // Generate year options (current year and past 5 years)
   const currentYear = new Date().getFullYear();
@@ -165,10 +212,14 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
             <span>Add Expense</span>
           </button>
           <div className="flex space-x-2">
-          <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-            <option>All Categories</option>
+          <select 
+            value={filters.category || 'All Categories'}
+            onChange={(e) => handleCategoryChange(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="All Categories">All Categories</option>
             {categories.map(cat => (
-              <option key={cat.name}>{cat.name}</option>
+              <option key={cat.name} value={cat.name}>{cat.name}</option>
             ))}
           </select>
           <select 
@@ -202,7 +253,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
             <div>
               <p className="text-sm font-medium text-gray-600">Total Expenses</p>
               <p className="text-2xl font-bold text-red-600">
-                {formatAmount(expenseTotals.totalExpenses, hideAmounts)}
+                {hideAmounts ? '***' : formatCurrencyAmount(expenseTotals.totalExpenses)}
               </p>
             </div>
             <div className="p-3 bg-red-100 rounded-full">
@@ -216,7 +267,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
             <div>
               <p className="text-sm font-medium text-gray-600">Total Income</p>
               <p className="text-2xl font-bold text-green-600">
-                {formatAmount(expenseTotals.totalIncome, hideAmounts)}
+                {hideAmounts ? '***' : formatCurrencyAmount(expenseTotals.totalIncome)}
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-full">
@@ -232,7 +283,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
               <p className={`text-2xl font-bold ${
                 expenseTotals.netAmount >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
-                {expenseTotals.netAmount >= 0 ? '+' : ''}{formatAmount(Math.abs(expenseTotals.netAmount), hideAmounts)}
+                {hideAmounts ? '***' : `${expenseTotals.netAmount >= 0 ? '+' : ''}${formatCurrencyAmount(Math.abs(expenseTotals.netAmount))}`}
               </p>
             </div>
             <div className={`p-3 rounded-full ${
@@ -276,7 +327,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {expenses.map((expense) => {
+              {filteredExpenses.map((expense) => {
                 const CategoryIcon = categories.find(cat => cat.name === expense.category)?.icon || DollarSign;
                 const categoryColor = categories.find(cat => cat.name === expense.category)?.color || '#6B7280';
                 
@@ -307,7 +358,16 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
                     <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${
                       expense.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {expense.type === 'income' ? '+' : '-'}{formatAmount(expense.amount, hideAmounts)}
+                      {(() => {
+                        if (hideAmounts) return '***';
+                        
+                        // Get converted amount
+                        const convertedAmount = expense.amounts && expense.amounts[selectedCurrency] 
+                          ? expense.amounts[selectedCurrency]
+                          : convertAmount(expense.amount, expense.original_currency || 'EUR');
+                        
+                        return `${expense.type === 'income' ? '+' : '-'}${formatCurrencyAmount(convertedAmount)}`;
+                      })()} 
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">

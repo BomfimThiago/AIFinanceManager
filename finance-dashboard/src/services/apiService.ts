@@ -1,4 +1,4 @@
-import { Expense, AIInsight, Budgets, AuthToken, LoginCredentials, SignupCredentials, User, UploadHistory } from '../types';
+import { Expense, AIInsight, Budgets, AuthToken, LoginCredentials, SignupCredentials, User, UploadHistory, CurrencyInfo, ExchangeRates } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
@@ -196,6 +196,15 @@ export const generateAIInsights = async (_expenses: Expense[], _budgets: Budgets
     console.error('Error generating AI insights:', error);
     return [];
   }
+};
+
+// Currency API functions
+export const getCurrencies = async (): Promise<CurrencyInfo> => {
+  return apiRequest<CurrencyInfo>('/api/currencies');
+};
+
+export const getExchangeRates = async (): Promise<ExchangeRates> => {
+  return apiRequest<ExchangeRates>('/api/exchange-rates');
 };
 
 // Authentication API calls

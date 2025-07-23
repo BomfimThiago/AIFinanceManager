@@ -42,13 +42,14 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadP
       setUploadedFiles(prev => [...prev, { file, status: 'processing' }]);
       const processedExpenses = await uploadFileMutation.mutateAsync(file);
       
-      if (processedExpenses && processedExpenses.length > 0) {
-        await onExpenseAdded(processedExpenses);
-        if (onBudgetUpdate) {
-          for (const expense of processedExpenses) {
-            if (expense.category) {
-              await onBudgetUpdate(expense.category, expense.amount);
-            }
+      // Note: uploadFileMutation already creates expenses in the database via /api/expenses/upload
+      // So we don't need to call onExpenseAdded which would create duplicates via /api/expenses/bulk
+      
+      if (processedExpenses && processedExpenses.length > 0 && onBudgetUpdate) {
+        // Only update budgets, don't create expenses again
+        for (const expense of processedExpenses) {
+          if (expense.category) {
+            await onBudgetUpdate(expense.category, expense.amount);
           }
         }
       }

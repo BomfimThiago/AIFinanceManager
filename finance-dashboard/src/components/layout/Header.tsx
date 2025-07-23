@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Wallet, Eye, EyeOff, User, LogOut, ChevronDown } from 'lucide-react';
-import { formatAmount } from '../../utils/formatters';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import CurrencySelector from '../ui/CurrencySelector';
 
 interface HeaderProps {
   netAmount: number;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy }) => {
   const { user, logout } = useAuth();
+  const { formatAmount: formatCurrencyAmount } = useCurrency();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -53,10 +55,12 @@ const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy
               {hideAmounts ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </button>
             
+            <CurrencySelector />
+            
             <div className="text-right">
               <div className="text-sm text-gray-500">Net Balance</div>
               <div className={`font-semibold ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatAmount(netAmount, hideAmounts)}
+                {hideAmounts ? '****' : formatCurrencyAmount(netAmount)}
               </div>
             </div>
 

@@ -11,6 +11,11 @@ export interface Expense {
   type: 'expense' | 'income';
   source?: 'ai-processed' | 'manual';
   items?: string[];
+  // Multi-currency support
+  original_currency?: string;
+  amounts?: Record<string, number>;
+  exchange_rates?: Record<string, number>;
+  exchange_date?: string;
 }
 
 export interface Budget {
@@ -51,6 +56,24 @@ export interface UploadHistory {
 }
 
 export type TabId = 'dashboard' | 'upload' | 'expenses' | 'budgets' | 'insights';
+
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  flag: string;
+}
+
+export interface CurrencyInfo {
+  currencies: Record<string, Currency>;
+  supported: string[];
+}
+
+export interface ExchangeRates {
+  rates: Record<string, number>;
+  base_currency: string;
+  timestamp: string;
+}
 
 
 export interface User {

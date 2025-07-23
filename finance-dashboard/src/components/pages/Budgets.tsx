@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, X, Target, AlertCircle } from 'lucide-react';
-import { formatAmount } from '../../utils/formatters';
 import { Budgets as BudgetsType, Category } from '../../types';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { useExpenses } from '../../hooks/queries';
 
 interface BudgetsProps {
   budgets: BudgetsType;
@@ -16,8 +17,43 @@ interface NewBudgetState {
 }
 
 const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hideAmounts }) => {
+  const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency, exchangeRates, currencies } = useCurrency();
   const [showBudgetForm, setShowBudgetForm] = useState<boolean>(false);
   const [newBudget, setNewBudget] = useState<NewBudgetState>({ category: '', limit: '' });
+  
+  // Get expenses to calculate actual spending
+  const { data: expenses = [] } = useExpenses();
+
+  // Helper function to calculate actual spending for a category from expenses
+  const calculateActualSpending = (category: string) => {
+    return expenses
+      .filter(expense => expense.category === category && expense.type === 'expense')
+      .reduce((total, expense) => {
+        // Use pre-calculated amounts if available, otherwise convert
+        if (expense.amounts && expense.amounts[selectedCurrency]) {
+          return total + expense.amounts[selectedCurrency];
+        }
+        // Convert using current rates
+        return total + convertAmount(expense.amount, expense.original_currency || 'EUR');
+      }, 0);
+  };
+
+  // Helper function to convert budget amounts (assuming they're stored in EUR)
+  const convertBudgetAmount = (amount: number) => {
+    // Budget amounts are stored in EUR (base currency), convert to selected currency
+    return convertAmount(amount, 'EUR');
+  };
+
+  // Get conversion rates for display
+  const getConversionRateDisplay = () => {
+    if (selectedCurrency === 'EUR') return null; // No conversion needed for base currency
+    
+    const rate = exchangeRates[selectedCurrency];
+    if (!rate) return null;
+    
+    const currencyInfo = currencies[selectedCurrency];
+    return `1 EUR = ${rate.toFixed(4)} ${currencyInfo?.symbol || selectedCurrency}`;
+  };
 
   const handleAddBudget = (): void => {
     if (newBudget.category && newBudget.limit) {
@@ -79,12 +115,26 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
         </div>
       )}
 
+      {/* Currency Conversion Notice */}
+      {selectedCurrency !== 'EUR' && getConversionRateDisplay() && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center">
+            <div className="text-xs text-blue-700">
+              <span className="font-medium">Currency Conversion:</span> Using current rates - {getConversionRateDisplay()}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Object.entries(budgets).map(([category, budget]) => {
-          const percentage = (budget.spent / budget.limit) * 100;
+          // Calculate actual spending from expenses instead of using stored budget.spent
+          const actualSpent = calculateActualSpending(category);
+          const convertedLimit = convertBudgetAmount(budget.limit);
+          const percentage = (actualSpent / convertedLimit) * 100;
           const CategoryIcon = categories.find(cat => cat.name === category)?.icon || Target;
           const categoryColor = categories.find(cat => cat.name === category)?.color || '#6B7280';
-          const isOverBudget = budget.spent > budget.limit;
+          const isOverBudget = actualSpent > convertedLimit;
           
           return (
             <div key={category} className="bg-white p-6 rounded-xl shadow-sm border">
@@ -102,13 +152,13 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Spent</span>
                   <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
-                    {formatAmount(budget.spent, hideAmounts)}
+                    {hideAmounts ? '***' : formatCurrencyAmount(actualSpent)}
                   </span>
                 </div>
                 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Budget</span>
-                  <span className="font-medium text-gray-900">{formatAmount(budget.limit, hideAmounts)}</span>
+                  <span className="font-medium text-gray-900">{hideAmounts ? '***' : formatCurrencyAmount(convertedLimit)}</span>
                 </div>
                 
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -125,9 +175,9 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
                     {percentage.toFixed(1)}% used
                   </span>
                   <span className={`font-medium ${
-                    budget.limit - budget.spent >= 0 ? 'text-green-600' : 'text-red-600'
+                    convertedLimit - actualSpent >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {formatAmount(Math.abs(budget.limit - budget.spent), hideAmounts)} {budget.limit - budget.spent >= 0 ? 'left' : 'over'}
+                    {hideAmounts ? '***' : formatCurrencyAmount(Math.abs(convertedLimit - actualSpent))} {convertedLimit - actualSpent >= 0 ? 'left' : 'over'}
                   </span>
                 </div>
               </div>
