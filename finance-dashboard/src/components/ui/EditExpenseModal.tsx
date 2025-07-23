@@ -43,8 +43,20 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
         source: expense.source || 'manual',
         items: expense.items || []
       });
+    } else {
+      // Reset form for create mode
+      setFormData({
+        date: new Date().toISOString().split('T')[0], // Today's date
+        amount: '',
+        category: '',
+        description: '',
+        merchant: '',
+        type: 'expense',
+        source: 'manual',
+        items: []
+      });
     }
-  }, [expense]);
+  }, [expense, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +90,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Edit Expense</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{expense ? 'Edit Expense' : 'Add New Expense'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -197,7 +209,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               disabled={isLoading}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Saving...' : 'Save Changes'}
+              {isLoading ? 'Saving...' : (expense ? 'Save Changes' : 'Add Expense')}
             </button>
           </div>
         </form>

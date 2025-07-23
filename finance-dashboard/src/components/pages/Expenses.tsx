@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { DollarSign, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { DollarSign, Edit2, Trash2, Plus, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatAmount, formatDate } from '../../utils/formatters';
 import { Expense, Category } from '../../types';
-import { useUpdateExpense, useDeleteExpense } from '../../hooks/queries';
+import { useCreateExpense, useUpdateExpense, useDeleteExpense } from '../../hooks/queries';
 import { useToast } from '../../contexts/ToastContext';
 import EditExpenseModal from '../ui/EditExpenseModal';
+import ConfirmationModal from '../ui/ConfirmationModal';
 
 interface ExpensesProps {
   expenses: Expense[];
@@ -16,11 +17,19 @@ interface ExpensesProps {
 const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, onFiltersChange }) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [filters, setFilters] = useState<{ month?: number; year?: number }>({});
   
+  const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
   const { showToast } = useToast();
+
+  const handleAddClick = () => {
+    setEditingExpense(null); // null means create mode
+    setIsEditModalOpen(true);
+  };
 
   const handleEditClick = (expense: Expense) => {
     setEditingExpense(expense);
@@ -28,34 +37,61 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
   };
 
   const handleDeleteClick = (expense: Expense) => {
-    if (window.confirm(`Are you sure you want to delete "${expense.description}"?`)) {
-      deleteExpenseMutation.mutate(expense.id, {
-        onSuccess: () => {
-          showToast('success', 'Expense deleted successfully');
-        },
-        onError: (error: any) => {
-          showToast('error', error?.message || 'Failed to delete expense');
-        },
-      });
-    }
+    setExpenseToDelete(expense);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!expenseToDelete) return;
+
+    deleteExpenseMutation.mutate(expenseToDelete.id, {
+      onSuccess: () => {
+        showToast('success', 'Expense deleted successfully');
+        setIsConfirmModalOpen(false);
+        setExpenseToDelete(null);
+      },
+      onError: (error: any) => {
+        showToast('error', error?.message || 'Failed to delete expense');
+        setIsConfirmModalOpen(false);
+        setExpenseToDelete(null);
+      },
+    });
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmModalOpen(false);
+    setExpenseToDelete(null);
   };
 
   const handleSaveExpense = (expenseData: Omit<Expense, 'id'>) => {
-    if (!editingExpense) return;
-
-    updateExpenseMutation.mutate(
-      { expenseId: editingExpense.id, expense: expenseData },
-      {
+    if (editingExpense) {
+      // Update existing expense
+      updateExpenseMutation.mutate(
+        { expenseId: editingExpense.id, expense: expenseData },
+        {
+          onSuccess: () => {
+            showToast('success', 'Expense updated successfully');
+            setIsEditModalOpen(false);
+            setEditingExpense(null);
+          },
+          onError: (error: any) => {
+            showToast('error', error?.message || 'Failed to update expense');
+          },
+        }
+      );
+    } else {
+      // Create new expense
+      createExpenseMutation.mutate(expenseData, {
         onSuccess: () => {
-          showToast('success', 'Expense updated successfully');
+          showToast('success', 'Expense created successfully');
           setIsEditModalOpen(false);
           setEditingExpense(null);
         },
         onError: (error: any) => {
-          showToast('error', error?.message || 'Failed to update expense');
+          showToast('error', error?.message || 'Failed to create expense');
         },
-      }
-    );
+      });
+    }
   };
 
   const handleCloseModal = () => {
@@ -76,6 +112,26 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
   }, [filters, onFiltersChange]);
+
+  // Calculate totals for visible expenses
+  const expenseTotals = useMemo(() => {
+    const totalExpenses = expenses
+      .filter(expense => expense.type === 'expense')
+      .reduce((sum, expense) => sum + expense.amount, 0);
+    
+    const totalIncome = expenses
+      .filter(expense => expense.type === 'income')
+      .reduce((sum, expense) => sum + expense.amount, 0);
+    
+    const netAmount = totalIncome - totalExpenses;
+    
+    return {
+      totalExpenses,
+      totalIncome,
+      netAmount,
+      totalTransactions: expenses.length
+    };
+  }, [expenses]);
 
   // Generate year options (current year and past 5 years)
   const currentYear = new Date().getFullYear();
@@ -100,7 +156,15 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Recent Transactions</h2>
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleAddClick}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center space-x-2 font-medium"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Expense</span>
+          </button>
+          <div className="flex space-x-2">
           <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
             <option>All Categories</option>
             {categories.map(cat => (
@@ -127,6 +191,74 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
               <option key={month.value} value={month.value}>{month.label}</option>
             ))}
           </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+              <p className="text-2xl font-bold text-red-600">
+                {formatAmount(expenseTotals.totalExpenses, hideAmounts)}
+              </p>
+            </div>
+            <div className="p-3 bg-red-100 rounded-full">
+              <TrendingDown className="h-6 w-6 text-red-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Income</p>
+              <p className="text-2xl font-bold text-green-600">
+                {formatAmount(expenseTotals.totalIncome, hideAmounts)}
+              </p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full">
+              <TrendingUp className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Net Amount</p>
+              <p className={`text-2xl font-bold ${
+                expenseTotals.netAmount >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {expenseTotals.netAmount >= 0 ? '+' : ''}{formatAmount(Math.abs(expenseTotals.netAmount), hideAmounts)}
+              </p>
+            </div>
+            <div className={`p-3 rounded-full ${
+              expenseTotals.netAmount >= 0 ? 'bg-green-100' : 'bg-red-100'
+            }`}>
+              {expenseTotals.netAmount >= 0 ? (
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              ) : (
+                <TrendingDown className="h-6 w-6 text-red-600" />
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Transactions</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {expenseTotals.totalTransactions}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <DollarSign className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -211,7 +343,20 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
         onSave={handleSaveExpense}
         expense={editingExpense}
         categories={categories}
-        isLoading={updateExpenseMutation.isPending}
+        isLoading={editingExpense ? updateExpenseMutation.isPending : createExpenseMutation.isPending}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Expense"
+        message={`Are you sure you want to delete "${expenseToDelete?.description}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteExpenseMutation.isPending}
       />
     </div>
   );
