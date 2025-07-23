@@ -7,6 +7,7 @@ export {
   useCreateExpense,
   useCreateBulkExpenses,
   useUploadExpenseFile,
+  useUpdateExpense,
   useDeleteExpense,
   expenseKeys,
 } from './useExpensesQuery';

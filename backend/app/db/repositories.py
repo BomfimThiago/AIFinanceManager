@@ -79,6 +79,28 @@ class ExpenseRepository:
         )
         return result.scalars().all()
 
+    async def get_by_date_filter(self, month: Optional[int] = None, year: Optional[int] = None) -> List[ExpenseModel]:
+        """Get expenses filtered by month and/or year."""
+        query = select(ExpenseModel)
+        
+        if year is not None and month is not None:
+            # Filter by specific year and month
+            month_str = f"{month:02d}"
+            query = query.where(ExpenseModel.date.like(f"{year}-{month_str}-%"))
+        elif year is not None:
+            # Filter by year only
+            query = query.where(ExpenseModel.date.like(f"{year}-%"))
+        elif month is not None:
+            # Filter by month across all years
+            month_str = f"{month:02d}"
+            query = query.where(ExpenseModel.date.like(f"%-{month_str}-%"))
+        
+        # Order by date descending
+        query = query.order_by(ExpenseModel.date.desc())
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
 
 class BudgetRepository:
     """Repository for budget database operations."""

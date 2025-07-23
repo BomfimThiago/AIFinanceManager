@@ -83,8 +83,20 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 // Expense API calls
 export const expenseApi = {
-  getAll: (): Promise<Expense[]> => 
-    apiRequest<Expense[]>('/api/expenses'),
+  getAll: (filters?: { month?: number; year?: number }): Promise<Expense[]> => {
+    const params = new URLSearchParams();
+    if (filters?.month && filters.month > 0) {
+      params.append('month', filters.month.toString());
+    }
+    if (filters?.year && filters.year > 0) {
+      params.append('year', filters.year.toString());
+    }
+    
+    const queryString = params.toString();
+    const endpoint = queryString ? `/api/expenses?${queryString}` : '/api/expenses';
+    
+    return apiRequest<Expense[]>(endpoint);
+  },
 
   create: (expense: Omit<Expense, 'id'>): Promise<Expense> =>
     apiRequest<Expense>('/api/expenses', {
@@ -120,6 +132,12 @@ export const expenseApi = {
 
   getMonthlyChart: (): Promise<Array<{month: string; income: number; expenses: number}>> =>
     apiRequest('/api/expenses/charts/monthly'),
+
+  update: (expenseId: number, expense: Omit<Expense, 'id'>): Promise<Expense> =>
+    apiRequest<Expense>(`/api/expenses/${expenseId}`, {
+      method: 'PUT',
+      body: JSON.stringify(expense),
+    }),
 
   delete: (expenseId: number): Promise<{message: string}> =>
     apiRequest(`/api/expenses/${expenseId}`, {

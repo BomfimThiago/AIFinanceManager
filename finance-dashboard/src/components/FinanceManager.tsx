@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Header from './layout/Header';
 import Navigation from './layout/Navigation';
 import Dashboard from './pages/Dashboard';
@@ -18,9 +18,10 @@ import type { TabId, AIInsight } from '../types';
 const FinanceManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
+  const [expenseFilters, setExpenseFilters] = useState<{ month?: number; year?: number }>({});
 
   // TanStack Query hooks
-  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses();
+  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses(expenseFilters);
   const { data: budgets = {}, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
   const { data: expenseSummary } = useExpenseSummary();
   
@@ -74,6 +75,10 @@ const FinanceManager: React.FC = () => {
       console.error('Failed to generate insights:', error);
     }
   };
+
+  const handleFiltersChange = useCallback((filters: { month?: number; year?: number }) => {
+    setExpenseFilters(filters);
+  }, []);
 
   // Show loading state
   if (expensesLoading || budgetsLoading) {
@@ -131,6 +136,7 @@ const FinanceManager: React.FC = () => {
             expenses={expenses}
             categories={categories}
             hideAmounts={hideAmounts}
+            onFiltersChange={handleFiltersChange}
           />
         );
       case 'budgets':

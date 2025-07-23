@@ -53,8 +53,10 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 
 ### Backend Technologies
 - **FastAPI** for REST API endpoints
+- **SQLAlchemy ORM** with AsyncSession for database operations
 - **Pydantic** for data validation and serialization
 - **Anthropic Claude API** for AI receipt processing and insights
+- **JWT Authentication** for user authentication and authorization
 - **uv** for Python dependency management
 
 ### Application Structure
@@ -66,30 +68,43 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **Type Safety**: Full TypeScript coverage with interfaces and proper typing
 
 #### Backend
-- **FastAPI Structure**: Organized into api/, models/, services/, and utils/
-- **API Endpoints**: RESTful endpoints for expenses, budgets, and AI insights
+- **FastAPI Structure**: Organized into api/, models/, services/, utils/, db/, and core/
+- **API Endpoints**: RESTful endpoints for expenses, budgets, AI insights, authentication, and upload history
+- **Database Layer**: Repository pattern with SQLAlchemy models for expenses, budgets, users, insights, and upload history
+- **Authentication**: JWT-based authentication with user management and protected routes
 - **AI Service**: Centralized AI processing service using Anthropic Claude
 - **Data Models**: Pydantic models for request/response validation
 
 ### Core Features
-1. **Dashboard**: Financial overview with charts showing income vs expenses and category breakdowns
-2. **Receipt Upload**: Drag-and-drop file upload with AI-powered expense extraction from PDFs and images
-3. **Expense Tracking**: Transaction history with categorization and filtering
-4. **Budget Management**: Category-based budgets with visual progress tracking and overspending alerts
-5. **AI Insights**: Personalized financial recommendations and spending analysis
+1. **User Authentication**: JWT-based login/signup system with secure password hashing
+2. **Dashboard**: Financial overview with charts showing income vs expenses and category breakdowns
+3. **Receipt Upload**: Drag-and-drop file upload with AI-powered expense extraction from PDFs and images
+4. **Upload History**: Track upload status and history with success/failure states
+5. **Expense Management**: Full CRUD operations for expenses with edit modal and filtering
+6. **Budget Management**: Category-based budgets with visual progress tracking and overspending alerts
+7. **AI Insights**: Personalized financial recommendations and spending analysis
 
 ### Data Flow
 - **Frontend → Backend**: REST API communication via TanStack Query for intelligent caching
 - **AI Processing**: Server-side processing with Anthropic Claude API for security and performance
-- **Data Storage**: In-memory storage (backend) with plans for database integration
+- **Data Storage**: SQLAlchemy ORM with AsyncSession for database operations
 - **State Management**: TanStack Query handles server state, React hooks for local state
 - **Real-time Updates**: Automatic cache invalidation and background refetching
 
 ### Development Notes
 - **Frontend**: TypeScript + React 19 + TanStack Query v5 for robust state management
-- **Backend**: FastAPI + Python 3.12 + uv for ultra-fast dependency management
+- **Backend**: FastAPI + Python 3.12 + SQLAlchemy ORM + uv for ultra-fast dependency management
+- **Database**: Async SQLAlchemy with repository pattern for clean data access
+- **Authentication**: JWT tokens with secure password hashing and protected routes
 - **API Communication**: RESTful design with automatic OpenAPI documentation
 - **Error Handling**: Comprehensive error boundaries and API error handling
 - **Performance**: Optimized with query caching, async/await, and lazy loading
 - **Type Safety**: Full TypeScript frontend and Pydantic backend validation
 - **Development Experience**: Hot reload, automatic type checking, and modern tooling
+
+### Database Schema
+- **Users**: Authentication and user management with email/username
+- **Expenses**: Transaction records with categories, amounts, and metadata
+- **Budgets**: Category-based spending limits and tracking
+- **Insights**: AI-generated financial recommendations and alerts  
+- **Upload History**: File upload tracking with status and error messages

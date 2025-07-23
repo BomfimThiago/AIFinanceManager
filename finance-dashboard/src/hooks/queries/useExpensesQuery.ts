@@ -7,7 +7,7 @@ import { uploadHistoryKeys } from './useUploadHistoryQuery';
 export const expenseKeys = {
   all: ['expenses'] as const,
   lists: () => [...expenseKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...expenseKeys.lists(), { filters }] as const,
+  list: (filters: { month?: number; year?: number }) => [...expenseKeys.lists(), filters] as const,
   details: () => [...expenseKeys.all, 'detail'] as const,
   detail: (id: number) => [...expenseKeys.details(), id] as const,
   summary: () => [...expenseKeys.all, 'summary'] as const,
@@ -17,10 +17,18 @@ export const expenseKeys = {
 };
 
 // Queries
-export function useExpenses() {
+export function useExpenses(filters?: { month?: number; year?: number }) {
+  const normalizedFilters = {
+    month: filters?.month && filters.month > 0 ? filters.month : undefined,
+    year: filters?.year && filters.year > 0 ? filters.year : undefined,
+  };
+
   return useQuery({
-    queryKey: expenseKeys.lists(),
-    queryFn: expenseApi.getAll,
+    queryKey: expenseKeys.list(normalizedFilters),
+    queryFn: () => expenseApi.getAll(normalizedFilters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -79,6 +87,19 @@ export function useUploadExpenseFile() {
       queryClient.invalidateQueries({ queryKey: expenseKeys.all });
       // Also invalidate upload history to show the new upload
       queryClient.invalidateQueries({ queryKey: uploadHistoryKeys.lists() });
+    },
+  });
+}
+
+export function useUpdateExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ expenseId, expense }: { expenseId: number; expense: Omit<Expense, 'id'> }) => 
+      expenseApi.update(expenseId, expense),
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
     },
   });
 }

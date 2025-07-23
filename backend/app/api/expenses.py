@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,10 +50,19 @@ def expense_model_to_pydantic(expense_model) -> Expense:
 
 
 @router.get("/expenses", response_model=List[Expense])
-async def get_expenses(db: AsyncSession = Depends(get_db)):
-    """Get all expenses."""
+async def get_expenses(
+    month: Optional[int] = None, 
+    year: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get expenses with optional month and year filtering."""
     repo = ExpenseRepository(db)
-    expense_models = await repo.get_all()
+    
+    if month is not None or year is not None:
+        expense_models = await repo.get_by_date_filter(month=month, year=year)
+    else:
+        expense_models = await repo.get_all()
+    
     return [expense_model_to_pydantic(expense) for expense in expense_models]
 
 
@@ -207,6 +216,26 @@ async def get_monthly_chart_data(db: AsyncSession = Depends(get_db)):
     expense_models = await repo.get_all()
     expenses = [expense_model_to_pydantic(expense) for expense in expense_models]
     return prepare_monthly_data(expenses)
+
+
+@router.put("/expenses/{expense_id}", response_model=Expense)
+async def update_expense(expense_id: int, expense: ExpenseCreate, db: AsyncSession = Depends(get_db)):
+    """Update an expense."""
+    try:
+        logger.info(f"Updating expense {expense_id} with data: {expense.dict()}")
+        repo = ExpenseRepository(db)
+        expense_model = await repo.update(expense_id, expense)
+        
+        if not expense_model:
+            raise HTTPException(status_code=404, detail="Expense not found")
+        
+        return expense_model_to_pydantic(expense_model)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating expense: {e}")
+        logger.error(f"Expense data: {expense.dict() if hasattr(expense, 'dict') else 'Invalid data'}")
+        raise HTTPException(status_code=500, detail=f"Failed to update expense: {str(e)}")
 
 
 @router.delete("/expenses/{expense_id}")
