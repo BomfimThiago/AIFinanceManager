@@ -1,5 +1,5 @@
 from typing import Dict
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.expense import Budget, BudgetCreate
@@ -40,7 +40,7 @@ async def create_budget(budget: BudgetCreate, db: AsyncSession = Depends(get_db)
 
 
 @router.put("/budgets/{category}/spent")
-async def update_budget_spent(category: str, amount: float, db: AsyncSession = Depends(get_db)):
+async def update_budget_spent(category: str, amount: float = Body(...), db: AsyncSession = Depends(get_db)):
     """Update the spent amount for a budget category."""
     repo = BudgetRepository(db)
     

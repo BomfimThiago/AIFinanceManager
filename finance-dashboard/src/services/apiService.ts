@@ -1,4 +1,4 @@
-import { Expense, AIInsight, Budgets, AuthToken, LoginCredentials, SignupCredentials, User } from '../types';
+import { Expense, AIInsight, Budgets, AuthToken, LoginCredentials, SignupCredentials, User, UploadHistory } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
@@ -17,23 +17,27 @@ export const setAuthToken = (token: string | null) => {
 export const getAuthToken = (): string | null => authToken;
 
 // Generic API request function with authentication
-async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
+async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...options?.headers,
-  };
+  const headers = new Headers(options.headers);
 
   // Add authorization header if token exists
   if (authToken) {
-    headers.Authorization = `Bearer ${authToken}`;
+    headers.set('Authorization', `Bearer ${authToken}`);
   }
   
+  // Conditionally set Content-Type header
+  if (options.body && !(options.body instanceof FormData)) {
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+  }
+
   try {
     const response = await fetch(url, {
-      headers,
       ...options,
+      headers,
     });
 
     // Handle 401 unauthorized - token might be expired
@@ -64,7 +68,13 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
       throw new Error(errorMessage);
     }
 
-    return await response.json();
+    // Handle empty response body
+    const responseText = await response.text();
+    if (!responseText) {
+      return {} as T;
+    }
+
+    return JSON.parse(responseText);
   } catch (error) {
     console.error(`API request to ${endpoint} failed:`, error);
     throw error;
@@ -81,14 +91,19 @@ export const expenseApi = {
       method: 'POST',
       body: JSON.stringify(expense),
     }),
+    
+  createBulk: (expenses: Omit<Expense, 'id'>[]): Promise<Expense[]> =>
+    apiRequest<Expense[]>('/api/expenses/bulk', {
+      method: 'POST',
+      body: JSON.stringify(expenses),
+    }),
 
-  uploadFile: async (file: File): Promise<Expense> => {
+  uploadFile: async (file: File): Promise<Expense[]> => {
     const formData = new FormData();
     formData.append('file', file);
 
-    return apiRequest<Expense>('/api/expenses/upload', {
+    return apiRequest<Expense[]>('/api/expenses/upload', {
       method: 'POST',
-      headers: {}, // Remove Content-Type to let browser set it with boundary for FormData
       body: formData,
     });
   },
@@ -147,7 +162,7 @@ export const insightsApi = {
 };
 
 // Legacy functions for backward compatibility
-export const processFileWithAI = async (file: File): Promise<Expense | null> => {
+export const processFileWithAI = async (file: File): Promise<Expense[] | null> => {
   try {
     return await expenseApi.uploadFile(file);
   } catch (error) {
@@ -195,5 +210,16 @@ export const authApi = {
   refreshToken: (): Promise<AuthToken> =>
     apiRequest<AuthToken>('/api/auth/refresh', {
       method: 'POST',
+    }),
+};
+
+// Upload History API
+export const uploadHistoryApi = {
+  getAll: (): Promise<UploadHistory[]> =>
+    apiRequest<UploadHistory[]>('/api/upload-history/'),
+
+  delete: (uploadId: number): Promise<{ message: string }> =>
+    apiRequest<{ message: string }>(`/api/upload-history/${uploadId}`, {
+      method: 'DELETE',
     }),
 };

@@ -176,7 +176,9 @@ poetry.lock
 
 # PEP 582
 __pypackages__/
-*__pycache__
+*__pycache__*
+*.pyc*
+*cpython*
 
 # Celery stuff
 celerybeat-schedule

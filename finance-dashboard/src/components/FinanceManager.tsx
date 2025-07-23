@@ -6,7 +6,7 @@ import Upload from './pages/Upload';
 import Expenses from './pages/Expenses';
 import Budgets from './pages/Budgets';
 import Insights from './pages/Insights';
-import { useExpenses, useExpenseSummary, useCreateExpense } from '../hooks/queries';
+import { useExpenses, useExpenseSummary, useCreateBulkExpenses } from '../hooks/queries';
 import { useBudgets, useCreateBudget, useUpdateBudgetSpent } from '../hooks/queries';
 import { useGenerateInsights } from '../hooks/queries';
 import { useFileUpload } from '../hooks/useFileUpload';
@@ -25,7 +25,7 @@ const FinanceManager: React.FC = () => {
   const { data: expenseSummary } = useExpenseSummary();
   
   // Mutations
-  const createExpenseMutation = useCreateExpense();
+  const createBulkExpensesMutation = useCreateBulkExpenses();
   // const uploadFileMutation = useUploadExpenseFile(); // Currently handled by useFileUpload hook
   const createBudgetMutation = useCreateBudget();
   const updateBudgetSpentMutation = useUpdateBudgetSpent();
@@ -34,8 +34,8 @@ const FinanceManager: React.FC = () => {
   const { hideAmounts, togglePrivacyMode } = usePrivacyMode();
 
   // Wrapper functions for the hooks
-  const addExpense = async (expense: any) => {
-    await createExpenseMutation.mutateAsync(expense);
+  const addExpense = async (expenses: any[]) => {
+    await createBulkExpensesMutation.mutateAsync(expenses);
   };
 
   const addBudget = async (category: string, limit: string | number) => {

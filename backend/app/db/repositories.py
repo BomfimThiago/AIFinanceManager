@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from sqlalchemy.orm import selectinload
 
-from .models import ExpenseModel, BudgetModel, InsightModel, UserModel, ExpenseType, ExpenseSource
+from .models import ExpenseModel, BudgetModel, InsightModel, UserModel, UploadHistoryModel, ExpenseType, ExpenseSource, UploadStatus
 from ..models.expense import Expense, ExpenseCreate, Budget, BudgetCreate, AIInsight
 from ..models.auth import User, UserCreate, UserUpdate
 from ..core.auth import get_password_hash
@@ -276,3 +276,62 @@ class UserRepository:
         """Check if username already exists."""
         user = await self.get_by_username(username)
         return user is not None
+
+
+class UploadHistoryRepository:
+    """Repository for upload history database operations."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_all_by_user(self, user_id: int) -> List[UploadHistoryModel]:
+        """Get all upload history for a user, ordered by upload date desc."""
+        result = await self.db.execute(
+            select(UploadHistoryModel)
+            .where(UploadHistoryModel.user_id == user_id)
+            .order_by(UploadHistoryModel.upload_date.desc())
+        )
+        return result.scalars().all()
+
+    async def get_by_id(self, upload_id: int) -> Optional[UploadHistoryModel]:
+        """Get upload history by ID."""
+        result = await self.db.execute(
+            select(UploadHistoryModel).where(UploadHistoryModel.id == upload_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def create(self, user_id: int, filename: str, file_size: int, status: UploadStatus = UploadStatus.PROCESSING) -> UploadHistoryModel:
+        """Create a new upload history record."""
+        db_upload = UploadHistoryModel(
+            user_id=user_id,
+            filename=filename,
+            file_size=file_size,
+            status=status
+        )
+        self.db.add(db_upload)
+        await self.db.commit()
+        await self.db.refresh(db_upload)
+        return db_upload
+
+    async def update_status(self, upload_id: int, status: UploadStatus, error_message: Optional[str] = None) -> Optional[UploadHistoryModel]:
+        """Update upload status and optional error message."""
+        result = await self.db.execute(
+            update(UploadHistoryModel)
+            .where(UploadHistoryModel.id == upload_id)
+            .values(status=status, error_message=error_message)
+        )
+        
+        if result.rowcount > 0:
+            await self.db.commit()
+            return await self.get_by_id(upload_id)
+        return None
+
+    async def delete(self, upload_id: int) -> bool:
+        """Delete an upload history record."""
+        result = await self.db.execute(
+            delete(UploadHistoryModel).where(UploadHistoryModel.id == upload_id)
+        )
+        if result.rowcount > 0:
+            await self.db.commit()
+            return True
+        return False

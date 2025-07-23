@@ -1,7 +1,8 @@
 import React from 'react';
-import { Upload as UploadIcon, FileText } from 'lucide-react';
+import { Upload as UploadIcon, FileText, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { formatAmount } from '../../utils/formatters';
-import { UploadedFile } from '../../types';
+import { UploadedFile, UploadHistory } from '../../types';
+import { useUploadHistoryQuery, useDeleteUploadHistoryMutation } from '../../hooks/queries';
 
 interface UploadProps {
   uploadedFiles: UploadedFile[];
@@ -26,6 +27,41 @@ const Upload: React.FC<UploadProps> = ({
   triggerFileInput,
   hideAmounts 
 }) => {
+  const { data: uploadHistory = [] } = useUploadHistoryQuery();
+  const deleteUploadMutation = useDeleteUploadHistoryMutation();
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
+
+  const getStatusIcon = (status: UploadHistory['status']) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'processing':
+        return <Clock className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const handleDeleteUpload = (uploadId: number) => {
+    if (window.confirm('Are you sure you want to delete this upload history?')) {
+      deleteUploadMutation.mutate(uploadId);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -111,6 +147,51 @@ const Upload: React.FC<UploadProps> = ({
                   }`}>
                     {item.status}
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upload History Section */}
+      {uploadHistory.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload History</h3>
+          <div className="space-y-3">
+            {uploadHistory.map((upload) => (
+              <div key={upload.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{upload.filename}</div>
+                    <div className="text-xs text-gray-500">
+                      {formatFileSize(upload.file_size)} • {formatDate(upload.upload_date)}
+                    </div>
+                    {upload.error_message && (
+                      <div className="text-xs text-red-600 mt-1">{upload.error_message}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(upload.status)}
+                    <span className={`text-xs font-medium capitalize ${
+                      upload.status === 'success' ? 'text-green-600' :
+                      upload.status === 'failed' ? 'text-red-600' :
+                      'text-yellow-600'
+                    }`}>
+                      {upload.status}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteUpload(upload.id)}
+                    disabled={deleteUploadMutation.isPending}
+                    className="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    title="Delete upload history"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             ))}

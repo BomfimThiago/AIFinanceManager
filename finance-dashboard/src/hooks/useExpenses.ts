@@ -35,14 +35,21 @@ export const useExpenses = (): UseExpensesReturn => {
     refreshExpenses();
   }, []);
 
-  const addExpense = async (expense: Expense): Promise<void> => {
+  const addExpense = async (expenseData: Omit<Expense, 'id'> | Omit<Expense, 'id'>[]): Promise<void> => {
     try {
       setError(null);
-      const newExpense = await expenseApi.create(expense);
-      setExpenses(prev => [newExpense, ...prev]);
+      if (Array.isArray(expenseData)) {
+        // Handle bulk creation
+        const newExpenses = await expenseApi.createBulk(expenseData);
+        setExpenses(prev => [...newExpenses, ...prev]);
+      } else {
+        // Handle single expense creation
+        const newExpense = await expenseApi.create(expenseData);
+        setExpenses(prev => [newExpense, ...prev]);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add expense');
-      console.error('Error adding expense:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add expense(s)');
+      console.error('Error adding expense(s):', err);
       throw err;
     }
   };

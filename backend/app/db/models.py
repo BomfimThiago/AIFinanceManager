@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Text, Enum as SQLEnum, JSON, Boolean
+from sqlalchemy import Column, String, Float, Text, Enum as SQLEnum, JSON, Boolean, DateTime, func, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 import enum
 
@@ -27,6 +27,9 @@ class UserModel(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+
+    # Relationships
+    upload_history = relationship("UploadHistoryModel", back_populates="user")
 
     def __repr__(self):
         return f"<UserModel(id={self.id}, email='{self.email}', username='{self.username}')>"
@@ -72,3 +75,28 @@ class InsightModel(Base):
     
     def __repr__(self):
         return f"<InsightModel(id={self.id}, title='{self.title}', type='{self.type}')>"
+
+
+class UploadStatus(str, enum.Enum):
+    """Enum for upload status."""
+    PROCESSING = "processing"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
+class UploadHistoryModel(Base):
+    """SQLAlchemy model for upload history."""
+    __tablename__ = "upload_history"
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    filename = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
+    status = Column(SQLEnum(UploadStatus), nullable=False, default=UploadStatus.PROCESSING)
+    upload_date = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    error_message = Column(Text, nullable=True)  # For error messages
+
+    # Relationship to user
+    user = relationship("UserModel", back_populates="upload_history")
+
+    def __repr__(self):
+        return f"<UploadHistoryModel(id={self.id}, filename='{self.filename}', status='{self.status}')>"

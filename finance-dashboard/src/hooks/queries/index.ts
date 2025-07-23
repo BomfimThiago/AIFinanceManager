@@ -5,6 +5,7 @@ export {
   useCategoryChartData,
   useMonthlyChartData,
   useCreateExpense,
+  useCreateBulkExpenses,
   useUploadExpenseFile,
   useDeleteExpense,
   expenseKeys,
@@ -24,3 +25,10 @@ export {
   useGenerateInsights,
   insightKeys,
 } from './useInsightsQuery';
+
+// Upload History
+export {
+  useUploadHistoryQuery,
+  useDeleteUploadHistoryMutation,
+  uploadHistoryKeys,
+} from './useUploadHistoryQuery';

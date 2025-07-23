@@ -41,6 +41,15 @@ export interface UploadedFile {
   expense?: Expense;
 }
 
+export interface UploadHistory {
+  id: number;
+  filename: string;
+  file_size: number;
+  status: 'processing' | 'success' | 'failed';
+  upload_date: string;
+  error_message?: string;
+}
+
 export type TabId = 'dashboard' | 'upload' | 'expenses' | 'budgets' | 'insights';
 
 

@@ -1,4 +1,5 @@
 from typing import List, Dict
+import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,8 +14,12 @@ from app.utils.calculations import (
     calculate_category_spending
 )
 from app.db.connection import get_db
-from app.db.repositories import ExpenseRepository
+from app.db.repositories import ExpenseRepository, UploadHistoryRepository
+from app.db.models import UploadStatus
+from app.api.auth import get_current_user
+from app.models.auth import User
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Categories with colors (should match frontend)
@@ -55,42 +60,116 @@ async def get_expenses(db: AsyncSession = Depends(get_db)):
 @router.post("/expenses", response_model=Expense)
 async def create_expense(expense: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     """Create a new expense."""
+    try:
+        logger.info(f"Creating expense with data: {expense.dict()}")
+        repo = ExpenseRepository(db)
+        expense_model = await repo.create(expense)
+        return expense_model_to_pydantic(expense_model)
+    except Exception as e:
+        logger.error(f"Error creating manual expense: {e}")
+        logger.error(f"Expense data: {expense.dict() if hasattr(expense, 'dict') else 'Invalid data'}")
+        raise HTTPException(status_code=500, detail=f"Failed to create expense: {str(e)}")
+
+
+@router.post("/expenses/bulk", response_model=List[Expense])
+async def create_bulk_expenses(expenses: List[ExpenseCreate], db: AsyncSession = Depends(get_db)):
+    """Create multiple expenses in a single request."""
     repo = ExpenseRepository(db)
-    expense_model = await repo.create(expense)
-    return expense_model_to_pydantic(expense_model)
+    created_expenses = []
+    
+    for expense_data in expenses:
+        try:
+            expense_model = await repo.create(expense_data)
+            created_expenses.append(expense_model_to_pydantic(expense_model))
+        except Exception as e:
+            logger.error(f"Failed to create one of the bulk expenses: {expense_data.description}")
+            # Optionally, decide if you want to stop or continue on error
+            continue
+            
+    if not created_expenses:
+        raise HTTPException(status_code=400, detail="No valid expenses were created.")
+        
+    return created_expenses
 
 
-@router.post("/expenses/upload", response_model=Expense)
-async def upload_expense_file(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
+@router.post("/expenses/upload", response_model=List[Expense])
+async def upload_expenses_from_file(
+    file: UploadFile = File(...), 
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """Upload and process file with AI to extract expense data."""
     if not file.content_type or not file.content_type.startswith(('image/', 'application/pdf')):
         raise HTTPException(status_code=400, detail="Only image and PDF files are supported")
     
+    # Create upload history record
+    upload_repo = UploadHistoryRepository(db)
+    file_content = await file.read()
+    file_size = len(file_content)
+    
+    upload_record = await upload_repo.create(
+        user_id=current_user.id,
+        filename=file.filename or "unknown",
+        file_size=file_size,
+        status=UploadStatus.PROCESSING
+    )
+    
     try:
-        file_content = await file.read()
-        expense = await ai_service.process_file_with_ai(file_content, file.content_type)
+        expenses = await ai_service.process_file_with_ai(file_content, file.content_type)
         
-        if not expense:
-            raise HTTPException(status_code=400, detail="Failed to process file")
+        if not expenses or len(expenses) == 0:
+            # Update upload history to failed
+            await upload_repo.update_status(
+                upload_record.id, 
+                UploadStatus.FAILED, 
+                "No expense data found in the file"
+            )
+            raise HTTPException(status_code=400, detail="Failed to process file - no expense data found")
         
-        # Create expense in database
-        repo = ExpenseRepository(db)
-        expense_create = ExpenseCreate(
-            date=expense.date,
-            amount=expense.amount,
-            category=expense.category,
-            description=expense.description,
-            merchant=expense.merchant,
-            type=expense.type,
-            source=expense.source,
-            items=expense.items
+        # Create expenses in database
+        expense_repo = ExpenseRepository(db)
+        created_expenses = []
+        
+        for expense in expenses:
+            expense_create = ExpenseCreate(
+                date=expense.date,
+                amount=expense.amount,
+                category=expense.category,
+                description=expense.description,
+                merchant=expense.merchant,
+                type=expense.type,
+                source=expense.source,
+                items=expense.items
+            )
+            expense_model = await expense_repo.create(expense_create)
+            created_expenses.append(expense_model_to_pydantic(expense_model))
+        
+        # Update upload history to success
+        await upload_repo.update_status(upload_record.id, UploadStatus.SUCCESS)
+        
+        return created_expenses
+        
+    except HTTPException as e:
+        # Update upload history to failed
+        await upload_repo.update_status(
+            upload_record.id, 
+            UploadStatus.FAILED, 
+            str(e.detail)
         )
-        expense_model = await repo.create(expense_create)
-        
-        return expense_model_to_pydantic(expense_model)
-        
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"File upload error: {e}\n{error_details}")
+        
+        # Update upload history to failed
+        await upload_repo.update_status(
+            upload_record.id, 
+            UploadStatus.FAILED, 
+            f"Internal server error: {str(e)}"
+        )
+        
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.get("/expenses/summary")

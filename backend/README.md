@@ -260,7 +260,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @router.post("/expenses/upload")
-async def upload_expense_file(file: UploadFile = File(...)):
+async def upload_expenses_from_file(file: UploadFile = File(...)):
     # Validate file type
     if not file.content_type or not file.content_type.startswith(('image/', 'application/pdf')):
         raise HTTPException(
@@ -270,15 +270,15 @@ async def upload_expense_file(file: UploadFile = File(...)):
     
     try:
         file_content = await file.read()
-        expense = await ai_service.process_file_with_ai(file_content, file.content_type)
+        expenses = await ai_service.process_file_with_ai(file_content, file.content_type)
         
-        if not expense:
+        if not expenses:
             raise HTTPException(
                 status_code=400, 
                 detail="Failed to process file"
             )
         
-        return expense
+        return expenses
         
     except Exception as e:
         logger.error(f"File upload failed: {e}")

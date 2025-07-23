@@ -56,13 +56,23 @@ def verify_token(token: str) -> dict:
 def get_token_data(token: str) -> dict:
     """Extract user data from JWT token."""
     payload = verify_token(token)
-    user_id: int = payload.get("sub")
+    user_id_str = payload.get("sub")
     email: str = payload.get("email")
     
-    if user_id is None or email is None:
+    if user_id_str is None or email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        # Convert string user_id back to integer for database query
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token format",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

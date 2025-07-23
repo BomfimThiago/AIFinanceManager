@@ -3,7 +3,7 @@ import { useUploadExpenseFile } from './queries';
 import { UploadedFile, Expense } from '../types';
 
 interface UseFileUploadProps {
-  onExpenseAdded: (expense: Expense) => Promise<void>;
+  onExpenseAdded: (expenses: Expense[]) => Promise<void>;
   onBudgetUpdate?: (category: string, amount: number) => Promise<void>;
 }
 
@@ -40,17 +40,21 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadP
     setIsProcessing(true);
     try {
       setUploadedFiles(prev => [...prev, { file, status: 'processing' }]);
-      const processedExpense = await uploadFileMutation.mutateAsync(file);
+      const processedExpenses = await uploadFileMutation.mutateAsync(file);
       
-      if (processedExpense) {
-        await onExpenseAdded(processedExpense);
-        if (onBudgetUpdate && processedExpense.category) {
-          await onBudgetUpdate(processedExpense.category, processedExpense.amount);
+      if (processedExpenses && processedExpenses.length > 0) {
+        await onExpenseAdded(processedExpenses);
+        if (onBudgetUpdate) {
+          for (const expense of processedExpenses) {
+            if (expense.category) {
+              await onBudgetUpdate(expense.category, expense.amount);
+            }
+          }
         }
       }
       
       setUploadedFiles(prev => 
-        prev.map(f => f.file === file ? { ...f, status: 'completed', expense: processedExpense || undefined } : f)
+        prev.map(f => f.file === file ? { ...f, status: 'completed', expenses: processedExpenses || undefined } : f)
       );
     } catch (error) {
       console.error('Error processing file:', error);

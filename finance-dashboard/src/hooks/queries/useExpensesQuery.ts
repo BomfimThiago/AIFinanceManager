@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { expenseApi } from '../../services/apiService';
 import { Expense } from '../../types';
+import { uploadHistoryKeys } from './useUploadHistoryQuery';
 
 // Query keys
 export const expenseKeys = {
@@ -57,6 +58,17 @@ export function useCreateExpense() {
   });
 }
 
+export function useCreateBulkExpenses() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (expenses: Omit<Expense, 'id'>[]) => expenseApi.createBulk(expenses),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+    },
+  });
+}
+
 export function useUploadExpenseFile() {
   const queryClient = useQueryClient();
 
@@ -65,6 +77,8 @@ export function useUploadExpenseFile() {
     onSuccess: () => {
       // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      // Also invalidate upload history to show the new upload
+      queryClient.invalidateQueries({ queryKey: uploadHistoryKeys.lists() });
     },
   });
 }
