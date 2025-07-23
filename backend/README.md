@@ -28,6 +28,8 @@ app/
 - **Framework**: FastAPI 0.104+ for high-performance async API
 - **Python**: 3.12+ with modern async/await patterns
 - **Package Manager**: uv for ultra-fast dependency management
+- **Database**: PostgreSQL with SQLAlchemy async ORM
+- **Migrations**: Alembic for database schema management
 - **Data Validation**: Pydantic v2 for robust type safety and validation
 - **AI Integration**: Anthropic Claude API for document processing
 - **Development**: Hot reload with uvicorn for rapid development
@@ -37,6 +39,7 @@ app/
 ### Prerequisites
 - Python 3.12 or higher
 - uv package manager
+- Docker and Docker Compose for PostgreSQL
 - Anthropic API key for AI features
 
 ### Installation
@@ -60,21 +63,42 @@ cp .env.example .env
 ```env
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+DATABASE_URL=postgresql+asyncpg://ai_finance_user:ai_finance_password@localhost:5432/ai_finance_db
 ```
 
-5. **Start development server**:
+5. **Start PostgreSQL database**:
+```bash
+cd .. && docker compose up -d postgres
+```
+
+6. **Apply database migrations**:
+```bash
+uv run alembic upgrade head
+```
+
+7. **Seed database with sample data** (optional):
+```bash
+uv run python seed_db.py
+```
+
+8. **Start development server**:
 ```bash
 uv run python run.py
 ```
 
-6. **Access the API**: http://localhost:8001
-7. **View API docs**: http://localhost:8001/docs (Swagger UI)
+9. **Access the API**: http://localhost:8001
+10. **View API docs**: http://localhost:8001/docs (Swagger UI)
 
 ### Development Commands
 
 ```bash
 # Start development server
 uv run python run.py
+
+# Database commands
+docker compose up -d postgres     # Start PostgreSQL container
+uv run alembic upgrade head       # Apply database migrations
+uv run python seed_db.py         # Seed database with sample data
 
 # Add new dependencies
 uv add package-name
@@ -381,42 +405,70 @@ def _parse_ai_response(self, response_text: str) -> Expense:
 
 ## 📊 Data Management
 
-### In-Memory Storage
+### PostgreSQL Database
 
-Currently using in-memory storage for simplicity:
+The application uses PostgreSQL with SQLAlchemy async ORM for data persistence:
 
 ```python
-# In production, replace with database
-expenses_db: List[Expense] = []
-budgets_db: Dict[str, Dict[str, float]] = {}
-next_id = 1
-
-# Thread-safe operations for concurrent requests
-import threading
-db_lock = threading.Lock()
-
-@router.post("/expenses")
-async def create_expense(expense: ExpenseCreate):
-    global next_id
-    with db_lock:
-        new_expense = Expense(id=next_id, **expense.dict())
-        expenses_db.append(new_expense)
-        next_id += 1
-    return new_expense
+# Database models with SQLAlchemy
+class ExpenseModel(Base):
+    __tablename__ = "expenses"
+    
+    # Inherits id, created_at, updated_at from Base
+    date = Column(String, nullable=False, index=True)
+    amount = Column(Float, nullable=False)
+    category = Column(String, nullable=False, index=True)
+    description = Column(Text, nullable=False)
+    merchant = Column(String, nullable=False)
+    type = Column(SQLEnum(ExpenseType), nullable=False)
+    source = Column(SQLEnum(ExpenseSource), nullable=False)
+    items = Column(JSON, nullable=True)
 ```
 
-### Future Database Integration
+### Repository Pattern
 
-For production deployment, consider:
+Data access is handled through repository classes:
 
 ```python
-# Example with SQLAlchemy (future implementation)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+# Repository for expense operations
+class ExpenseRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+    
+    async def get_all(self) -> List[ExpenseModel]:
+        result = await self.db.execute(select(ExpenseModel))
+        return result.scalars().all()
+    
+    async def create(self, expense_data: ExpenseCreate) -> ExpenseModel:
+        db_expense = ExpenseModel(**expense_data.dict())
+        self.db.add(db_expense)
+        await self.db.commit()
+        await self.db.refresh(db_expense)
+        return db_expense
+```
 
-async def get_expenses(db: AsyncSession) -> List[Expense]:
-    result = await db.execute(select(ExpenseModel))
-    return [Expense.from_orm(expense) for expense in result.scalars().all()]
+### Database Migrations
+
+Database schema changes are managed with Alembic:
+
+```bash
+# Generate new migration
+uv run alembic revision --autogenerate -m "Description"
+
+# Apply migrations
+uv run alembic upgrade head
+
+# Rollback migration
+uv run alembic downgrade -1
+```
+
+### Database Seeding
+
+For development, use the seeding script:
+
+```bash
+# Populate database with sample data
+uv run python seed_db.py
 ```
 
 ## 🧪 Testing

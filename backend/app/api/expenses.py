@@ -1,5 +1,7 @@
 from typing import List, Dict
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.expense import Expense, ExpenseCreate, AIInsight, CategoryData, MonthlyData
 from app.services.ai_service import ai_service
 from app.utils.calculations import (
@@ -10,13 +12,10 @@ from app.utils.calculations import (
     prepare_monthly_data,
     calculate_category_spending
 )
+from app.db.connection import get_db
+from app.db.repositories import ExpenseRepository
 
 router = APIRouter()
-
-# In-memory storage (in production, use a database)
-expenses_db: List[Expense] = []
-budgets_db: Dict[str, Dict[str, float]] = {}
-next_id = 1
 
 # Categories with colors (should match frontend)
 CATEGORIES = {
@@ -30,24 +29,39 @@ CATEGORIES = {
 }
 
 
+def expense_model_to_pydantic(expense_model) -> Expense:
+    """Convert SQLAlchemy model to Pydantic model."""
+    return Expense(
+        id=expense_model.id,
+        date=expense_model.date,
+        amount=expense_model.amount,
+        category=expense_model.category,
+        description=expense_model.description,
+        merchant=expense_model.merchant,
+        type=expense_model.type.value,
+        source=expense_model.source.value if expense_model.source else "manual",
+        items=expense_model.items
+    )
+
+
 @router.get("/expenses", response_model=List[Expense])
-async def get_expenses():
+async def get_expenses(db: AsyncSession = Depends(get_db)):
     """Get all expenses."""
-    return expenses_db
+    repo = ExpenseRepository(db)
+    expense_models = await repo.get_all()
+    return [expense_model_to_pydantic(expense) for expense in expense_models]
 
 
 @router.post("/expenses", response_model=Expense)
-async def create_expense(expense: ExpenseCreate):
+async def create_expense(expense: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     """Create a new expense."""
-    global next_id
-    new_expense = Expense(id=next_id, **expense.dict())
-    expenses_db.append(new_expense)
-    next_id += 1
-    return new_expense
+    repo = ExpenseRepository(db)
+    expense_model = await repo.create(expense)
+    return expense_model_to_pydantic(expense_model)
 
 
 @router.post("/expenses/upload", response_model=Expense)
-async def upload_expense_file(file: UploadFile = File(...)):
+async def upload_expense_file(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
     """Upload and process file with AI to extract expense data."""
     if not file.content_type or not file.content_type.startswith(('image/', 'application/pdf')):
         raise HTTPException(status_code=400, detail="Only image and PDF files are supported")
@@ -59,47 +73,70 @@ async def upload_expense_file(file: UploadFile = File(...)):
         if not expense:
             raise HTTPException(status_code=400, detail="Failed to process file")
         
-        global next_id
-        expense.id = next_id
-        expenses_db.append(expense)
-        next_id += 1
+        # Create expense in database
+        repo = ExpenseRepository(db)
+        expense_create = ExpenseCreate(
+            date=expense.date,
+            amount=expense.amount,
+            category=expense.category,
+            description=expense.description,
+            merchant=expense.merchant,
+            type=expense.type,
+            source=expense.source,
+            items=expense.items
+        )
+        expense_model = await repo.create(expense_create)
         
-        return expense
+        return expense_model_to_pydantic(expense_model)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/expenses/summary")
-async def get_expenses_summary():
+async def get_expenses_summary(db: AsyncSession = Depends(get_db)):
     """Get expense summary data."""
-    total_income = calculate_total_income(expenses_db)
-    total_expenses = calculate_total_expenses(expenses_db)
-    net_amount = calculate_net_amount(expenses_db)
+    repo = ExpenseRepository(db)
+    expense_models = await repo.get_all()
+    expenses = [expense_model_to_pydantic(expense) for expense in expense_models]
+    
+    total_income = calculate_total_income(expenses)
+    total_expenses = calculate_total_expenses(expenses)
+    net_amount = calculate_net_amount(expenses)
     
     return {
         "total_income": total_income,
         "total_expenses": total_expenses,
         "net_amount": net_amount,
-        "category_spending": calculate_category_spending(expenses_db)
+        "category_spending": calculate_category_spending(expenses)
     }
 
 
 @router.get("/expenses/charts/categories", response_model=List[CategoryData])
-async def get_category_chart_data():
+async def get_category_chart_data(db: AsyncSession = Depends(get_db)):
     """Get category data for pie chart."""
-    return prepare_category_data(expenses_db, CATEGORIES)
+    repo = ExpenseRepository(db)
+    expense_models = await repo.get_all()
+    expenses = [expense_model_to_pydantic(expense) for expense in expense_models]
+    return prepare_category_data(expenses, CATEGORIES)
 
 
 @router.get("/expenses/charts/monthly", response_model=List[MonthlyData])
-async def get_monthly_chart_data():
+async def get_monthly_chart_data(db: AsyncSession = Depends(get_db)):
     """Get monthly data for line chart."""
-    return prepare_monthly_data(expenses_db)
+    repo = ExpenseRepository(db)
+    expense_models = await repo.get_all()
+    expenses = [expense_model_to_pydantic(expense) for expense in expense_models]
+    return prepare_monthly_data(expenses)
 
 
 @router.delete("/expenses/{expense_id}")
-async def delete_expense(expense_id: int):
+async def delete_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
     """Delete an expense."""
-    global expenses_db
-    expenses_db = [e for e in expenses_db if e.id != expense_id]
+    repo = ExpenseRepository(db)
+    success = await repo.delete(expense_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    
     return {"message": "Expense deleted successfully"}
