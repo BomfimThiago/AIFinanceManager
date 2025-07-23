@@ -6,11 +6,11 @@ import Upload from './components/pages/Upload';
 import Expenses from './components/pages/Expenses';
 import Budgets from './components/pages/Budgets';
 import Insights from './components/pages/Insights';
-import { useExpenses } from './hooks/useExpenses';
-import { useBudgets } from './hooks/useBudgets';
+import { useExpenses, useExpenseSummary, useCreateExpense } from './hooks/queries';
+import { useBudgets, useCreateBudget, useUpdateBudgetSpent } from './hooks/queries';
+import { useGenerateInsights } from './hooks/queries';
 import { useFileUpload } from './hooks/useFileUpload';
 import { usePrivacyMode } from './hooks/usePrivacyMode';
-import { generateAIInsights } from './services/apiService';
 import { categories } from './constants/categories';
 import { calculateNetAmount } from './utils/apiCalculations';
 import type { TabId, AIInsight } from './types';
@@ -19,9 +19,35 @@ const FinanceManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
 
-  const { expenses, addExpense } = useExpenses();
-  const { budgets, addBudget, updateBudgetSpent } = useBudgets();
+  // TanStack Query hooks
+  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses();
+  const { data: budgets = {}, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
+  const { data: expenseSummary } = useExpenseSummary();
+  
+  // Mutations
+  const createExpenseMutation = useCreateExpense();
+  // const uploadFileMutation = useUploadExpenseFile(); // Currently handled by useFileUpload hook
+  const createBudgetMutation = useCreateBudget();
+  const updateBudgetSpentMutation = useUpdateBudgetSpent();
+  const generateInsightsMutation = useGenerateInsights();
+
   const { hideAmounts, togglePrivacyMode } = usePrivacyMode();
+
+  // Wrapper functions for the hooks
+  const addExpense = async (expense: any) => {
+    await createExpenseMutation.mutateAsync(expense);
+  };
+
+  const addBudget = async (category: string, limit: string | number) => {
+    await createBudgetMutation.mutateAsync({ 
+      category, 
+      limit: parseFloat(limit.toString()) 
+    });
+  };
+
+  const updateBudgetSpent = async (category: string, amount: number) => {
+    await updateBudgetSpentMutation.mutateAsync({ category, amount });
+  };
 
   const {
     uploadedFiles,
@@ -37,12 +63,43 @@ const FinanceManager: React.FC = () => {
     onBudgetUpdate: updateBudgetSpent
   });
 
-  const netAmount = calculateNetAmount(expenses);
+  // Calculate net amount using summary data or fallback to local calculation
+  const netAmount = expenseSummary?.net_amount ?? calculateNetAmount(expenses);
 
   const handleGenerateInsights = async (): Promise<void> => {
-    const insights = await generateAIInsights(expenses, budgets);
-    setAiInsights(insights);
+    try {
+      const insights = await generateInsightsMutation.mutateAsync();
+      setAiInsights(insights);
+    } catch (error) {
+      console.error('Failed to generate insights:', error);
+    }
   };
+
+  // Show loading state
+  if (expensesLoading || budgetsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your financial data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (expensesError || budgetsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600">
+            <p className="text-lg font-semibold">Error loading data</p>
+            <p className="mt-2">{expensesError?.message || budgetsError?.message}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = (): React.ReactNode => {
     switch (activeTab) {

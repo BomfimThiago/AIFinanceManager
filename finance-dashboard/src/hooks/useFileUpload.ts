@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react';
-import { processFileWithAI } from '../services/apiService';
+import { useUploadExpenseFile } from './queries';
 import { UploadedFile, Expense } from '../types';
 
 interface UseFileUploadProps {
@@ -23,6 +23,8 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadP
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const uploadFileMutation = useUploadExpenseFile();
 
   const handleDrag = useCallback((e: DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
@@ -38,7 +40,7 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadP
     setIsProcessing(true);
     try {
       setUploadedFiles(prev => [...prev, { file, status: 'processing' }]);
-      const processedExpense = await processFileWithAI(file);
+      const processedExpense = await uploadFileMutation.mutateAsync(file);
       
       if (processedExpense) {
         await onExpenseAdded(processedExpense);
@@ -58,7 +60,7 @@ export const useFileUpload = ({ onExpenseAdded, onBudgetUpdate }: UseFileUploadP
     } finally {
       setIsProcessing(false);
     }
-  }, [onExpenseAdded, onBudgetUpdate]);
+  }, [onExpenseAdded, onBudgetUpdate, uploadFileMutation]);
 
   const handleDrop = useCallback(async (e: DragEvent<HTMLDivElement>): Promise<void> => {
     e.preventDefault();

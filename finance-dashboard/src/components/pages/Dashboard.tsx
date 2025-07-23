@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { TrendingUp, CreditCard, Wallet, Target } from 'lucide-react';
 import SummaryCard from '../ui/SummaryCard';
 import { LineChartComponent, PieChartComponent } from '../ui/Chart';
-import { calculateTotalIncome, calculateTotalExpenses, calculateNetAmount, getExpenseSummary, getCategoryChartData, getMonthlyChartData } from '../../utils/apiCalculations';
+import { calculateTotalIncome, calculateTotalExpenses, calculateNetAmount } from '../../utils/apiCalculations';
 import { formatAmount } from '../../utils/formatters';
 import { Expense, Budgets } from '../../types';
+import { useExpenseSummary, useCategoryChartData, useMonthlyChartData } from '../../hooks/queries';
 
 interface DashboardProps {
   expenses: Expense[];
@@ -12,58 +13,42 @@ interface DashboardProps {
   hideAmounts: boolean;
 }
 
-interface SummaryData {
-  total_income: number;
-  total_expenses: number;
-  net_amount: number;
-  category_spending: Record<string, number>;
-}
-
 const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts }) => {
-  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // TanStack Query hooks
+  const {
+    data: summaryData,
+    isLoading: summaryLoading,
+    error: summaryError
+  } = useExpenseSummary();
+
+  const {
+    data: categoryData = [],
+    isLoading: categoryLoading,
+    error: categoryError
+  } = useCategoryChartData();
+
+  const {
+    data: monthlyData = [],
+    isLoading: monthlyLoading,
+    error: monthlyError
+  } = useMonthlyChartData();
 
   // Fallback to local calculations if API data is not available
   const localTotalIncome = calculateTotalIncome(expenses);
   const localTotalExpenses = calculateTotalExpenses(expenses);
   const localNetAmount = calculateNetAmount(expenses);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const [summary, categoryChart, monthlyChart] = await Promise.all([
-          getExpenseSummary(),
-          getCategoryChartData(),
-          getMonthlyChartData()
-        ]);
-        
-        setSummaryData(summary);
-        setCategoryData(categoryChart);
-        setMonthlyData(monthlyChart);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Using local calculations.');
-        // Fallback to empty arrays for charts when API fails
-        setCategoryData([]);
-        setMonthlyData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [expenses]); // Re-fetch when expenses change
-
   // Use API data if available, otherwise fall back to local calculations
   const totalIncome = summaryData?.total_income ?? localTotalIncome;
   const totalExpenses = summaryData?.total_expenses ?? localTotalExpenses;
   const netAmount = summaryData?.net_amount ?? localNetAmount;
+
+  // Combined loading state
+  const loading = summaryLoading || categoryLoading || monthlyLoading;
+
+  // Combined error state
+  const hasError = summaryError || categoryError || monthlyError;
+  const errorMessage = hasError ? 'Failed to load some dashboard data. Using local calculations where possible.' : null;
 
   if (loading) {
     return (
@@ -77,11 +62,11 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
 
   return (
     <div className="space-y-8">
-      {error && (
+      {errorMessage && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <div className="flex">
             <div className="ml-3">
-              <p className="text-sm text-yellow-700">{error}</p>
+              <p className="text-sm text-yellow-700">{errorMessage}</p>
             </div>
           </div>
         </div>

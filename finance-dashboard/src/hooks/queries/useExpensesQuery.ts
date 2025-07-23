@@ -1,0 +1,82 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { expenseApi } from '../../services/apiService';
+import { Expense } from '../../types';
+
+// Query keys
+export const expenseKeys = {
+  all: ['expenses'] as const,
+  lists: () => [...expenseKeys.all, 'list'] as const,
+  list: (filters: Record<string, any>) => [...expenseKeys.lists(), { filters }] as const,
+  details: () => [...expenseKeys.all, 'detail'] as const,
+  detail: (id: number) => [...expenseKeys.details(), id] as const,
+  summary: () => [...expenseKeys.all, 'summary'] as const,
+  charts: () => [...expenseKeys.all, 'charts'] as const,
+  chartCategories: () => [...expenseKeys.charts(), 'categories'] as const,
+  chartMonthly: () => [...expenseKeys.charts(), 'monthly'] as const,
+};
+
+// Queries
+export function useExpenses() {
+  return useQuery({
+    queryKey: expenseKeys.lists(),
+    queryFn: expenseApi.getAll,
+  });
+}
+
+export function useExpenseSummary() {
+  return useQuery({
+    queryKey: expenseKeys.summary(),
+    queryFn: expenseApi.getSummary,
+  });
+}
+
+export function useCategoryChartData() {
+  return useQuery({
+    queryKey: expenseKeys.chartCategories(),
+    queryFn: expenseApi.getCategoriesChart,
+  });
+}
+
+export function useMonthlyChartData() {
+  return useQuery({
+    queryKey: expenseKeys.chartMonthly(),
+    queryFn: expenseApi.getMonthlyChart,
+  });
+}
+
+// Mutations
+export function useCreateExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (expense: Omit<Expense, 'id'>) => expenseApi.create(expense),
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+    },
+  });
+}
+
+export function useUploadExpenseFile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => expenseApi.uploadFile(file),
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+    },
+  });
+}
+
+export function useDeleteExpense() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (expenseId: number) => expenseApi.delete(expenseId),
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+    },
+  });
+}

@@ -79,14 +79,17 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 5. **AI Insights**: Personalized financial recommendations and spending analysis
 
 ### Data Flow
-- Frontend communicates with backend via REST API
-- AI processing is handled server-side with Anthropic Claude API
-- Data is stored in-memory (backend) - no persistent database yet
-- All calculations and AI logic moved from frontend to backend
+- **Frontend → Backend**: REST API communication via TanStack Query for intelligent caching
+- **AI Processing**: Server-side processing with Anthropic Claude API for security and performance
+- **Data Storage**: In-memory storage (backend) with plans for database integration
+- **State Management**: TanStack Query handles server state, React hooks for local state
+- **Real-time Updates**: Automatic cache invalidation and background refetching
 
 ### Development Notes
-- Frontend uses TypeScript for type safety and better development experience
-- Backend uses FastAPI with async/await patterns
-- CORS configured for cross-origin requests between frontend and backend
-- Privacy mode functionality to hide/show financial amounts
-- Responsive design with Tailwind CSS utilities
+- **Frontend**: TypeScript + React 19 + TanStack Query v5 for robust state management
+- **Backend**: FastAPI + Python 3.12 + uv for ultra-fast dependency management
+- **API Communication**: RESTful design with automatic OpenAPI documentation
+- **Error Handling**: Comprehensive error boundaries and API error handling
+- **Performance**: Optimized with query caching, async/await, and lazy loading
+- **Type Safety**: Full TypeScript frontend and Pydantic backend validation
+- **Development Experience**: Hot reload, automatic type checking, and modern tooling
