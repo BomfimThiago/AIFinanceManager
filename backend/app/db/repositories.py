@@ -3,8 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
 from sqlalchemy.orm import selectinload
 
-from .models import ExpenseModel, BudgetModel, InsightModel, ExpenseType, ExpenseSource
+from .models import ExpenseModel, BudgetModel, InsightModel, UserModel, ExpenseType, ExpenseSource
 from ..models.expense import Expense, ExpenseCreate, Budget, BudgetCreate, AIInsight
+from ..models.auth import User, UserCreate, UserUpdate
+from ..core.auth import get_password_hash
 
 
 class ExpenseRepository:
@@ -190,3 +192,87 @@ class InsightRepository:
         result = await self.db.execute(delete(InsightModel))
         await self.db.commit()
         return result.rowcount
+
+
+class UserRepository:
+    """Repository for user database operations."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_by_email(self, email: str) -> Optional[UserModel]:
+        """Get user by email."""
+        result = await self.db.execute(
+            select(UserModel).where(UserModel.email == email)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_username(self, username: str) -> Optional[UserModel]:
+        """Get user by username."""
+        result = await self.db.execute(
+            select(UserModel).where(UserModel.username == username)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_id(self, user_id: int) -> Optional[UserModel]:
+        """Get user by ID."""
+        result = await self.db.execute(
+            select(UserModel).where(UserModel.id == user_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def create(self, user_data: UserCreate) -> UserModel:
+        """Create a new user."""
+        hashed_password = get_password_hash(user_data.password)
+        
+        db_user = UserModel(
+            email=user_data.email,
+            username=user_data.username,
+            full_name=user_data.full_name,
+            hashed_password=hashed_password,
+            is_active=True,
+            is_verified=False
+        )
+        
+        self.db.add(db_user)
+        await self.db.commit()
+        await self.db.refresh(db_user)
+        return db_user
+
+    async def update(self, user_id: int, user_data: UserUpdate) -> Optional[UserModel]:
+        """Update a user."""
+        update_data = user_data.dict(exclude_unset=True)
+        
+        # Hash password if provided
+        if "password" in update_data:
+            update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+        
+        if not update_data:
+            return await self.get_by_id(user_id)
+        
+        result = await self.db.execute(
+            update(UserModel)
+            .where(UserModel.id == user_id)
+            .values(**update_data)
+            .returning(UserModel)
+        )
+        await self.db.commit()
+        return result.scalar_one_or_none()
+
+    async def delete(self, user_id: int) -> bool:
+        """Delete a user."""
+        result = await self.db.execute(
+            delete(UserModel).where(UserModel.id == user_id)
+        )
+        await self.db.commit()
+        return result.rowcount > 0
+
+    async def email_exists(self, email: str) -> bool:
+        """Check if email already exists."""
+        user = await self.get_by_email(email)
+        return user is not None
+
+    async def username_exists(self, username: str) -> bool:
+        """Check if username already exists."""
+        user = await self.get_by_username(username)
+        return user is not None

@@ -1,22 +1,67 @@
-import { Expense, AIInsight, Budgets } from '../types';
+import { Expense, AIInsight, Budgets, AuthToken, LoginCredentials, SignupCredentials, User } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
-// Generic API request function
+// Token management
+let authToken: string | null = localStorage.getItem('authToken');
+
+export const setAuthToken = (token: string | null) => {
+  authToken = token;
+  if (token) {
+    localStorage.setItem('authToken', token);
+  } else {
+    localStorage.removeItem('authToken');
+  }
+};
+
+export const getAuthToken = (): string | null => authToken;
+
+// Generic API request function with authentication
 async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers,
+  };
+
+  // Add authorization header if token exists
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+  
   try {
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
       ...options,
     });
 
+    // Handle 401 unauthorized - token might be expired
+    if (response.status === 401) {
+      setAuthToken(null);
+      // Don't redirect if we're already on auth endpoints
+      if (!endpoint.includes('/api/auth/')) {
+        window.location.href = '/login';
+      }
+      throw new Error('Unauthorized - please login again');
+    }
+
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        const errorText = await response.text();
+        if (errorText) {
+          errorMessage = errorText;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -118,4 +163,37 @@ export const generateAIInsights = async (_expenses: Expense[], _budgets: Budgets
     console.error('Error generating AI insights:', error);
     return [];
   }
+};
+
+// Authentication API calls
+export const authApi = {
+  login: async (credentials: LoginCredentials): Promise<AuthToken> => {
+    const response = await apiRequest<AuthToken>('/api/auth/login-json', {
+      method: 'POST', 
+      body: JSON.stringify(credentials),
+    });
+    setAuthToken(response.access_token);
+    return response;
+  },
+
+  signup: async (credentials: SignupCredentials): Promise<AuthToken> => {
+    const response = await apiRequest<AuthToken>('/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    setAuthToken(response.access_token);
+    return response;
+  },
+
+  logout: (): void => {
+    setAuthToken(null);
+  },
+
+  getCurrentUser: (): Promise<User> =>
+    apiRequest<User>('/api/auth/me'),
+
+  refreshToken: (): Promise<AuthToken> =>
+    apiRequest<AuthToken>('/api/auth/refresh', {
+      method: 'POST',
+    }),
 };

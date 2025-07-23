@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, Float, Text, Enum as SQLEnum, JSON
+from sqlalchemy import Column, String, Float, Text, Enum as SQLEnum, JSON, Boolean
+from sqlalchemy.orm import relationship
 import enum
 
 from .base import Base
@@ -14,6 +15,21 @@ class ExpenseSource(str, enum.Enum):
     """Enum for expense sources."""
     AI_PROCESSED = "ai-processed"
     MANUAL = "manual"
+
+
+class UserModel(Base):
+    """SQLAlchemy model for users."""
+    __tablename__ = "users"
+
+    email = Column(String, nullable=False, unique=True, index=True)
+    username = Column(String, nullable=False, unique=True, index=True)
+    full_name = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+
+    def __repr__(self):
+        return f"<UserModel(id={self.id}, email='{self.email}', username='{self.username}')>"
 
 
 class ExpenseModel(Base):
