@@ -233,6 +233,51 @@ async def get_monthly_chart_data(db: AsyncSession = Depends(get_db)):
     return prepare_monthly_data(expenses)
 
 
+@router.get("/expenses/category-spending")
+async def get_category_spending(
+    currency: str = "EUR",
+    month: Optional[int] = None,
+    year: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get actual spending amounts by category with currency conversion."""
+    repo = ExpenseRepository(db)
+    
+    # Get filtered expenses
+    if month is not None or year is not None:
+        expense_models = await repo.get_by_date_filter(month=month, year=year)
+    else:
+        expense_models = await repo.get_all()
+    
+    expenses = [expense_model_to_pydantic(expense) for expense in expense_models]
+    
+    # Calculate spending by category with currency conversion
+    category_spending = {}
+    target_currency = Currency(currency)
+    
+    for expense in expenses:
+        if expense.type == 'expense':
+            # Use pre-calculated amounts if available for the target currency
+            if expense.amounts and target_currency.value in expense.amounts:
+                amount = expense.amounts[target_currency.value]
+            else:
+                # Convert using current rates if no pre-calculated amount
+                original_currency = Currency(expense.original_currency or "EUR")
+                current_rates = await currency_service.get_current_rates()
+                amount = await currency_service.convert_amount(
+                    expense.amount, original_currency, target_currency, current_rates
+                )
+            
+            if expense.category not in category_spending:
+                category_spending[expense.category] = 0
+            category_spending[expense.category] += amount
+    
+    return {
+        "currency": currency,
+        "category_spending": category_spending
+    }
+
+
 @router.put("/expenses/{expense_id}", response_model=Expense)
 async def update_expense(expense_id: int, expense: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     """Update an expense."""

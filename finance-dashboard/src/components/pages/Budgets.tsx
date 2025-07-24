@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, X, Target, AlertCircle } from 'lucide-react';
 import { Budgets as BudgetsType, Category } from '../../types';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { useExpenses } from '../../hooks/queries';
+import { useCategorySpending } from '../../hooks/queries';
 
 interface BudgetsProps {
   budgets: BudgetsType;
@@ -21,21 +21,13 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
   const [showBudgetForm, setShowBudgetForm] = useState<boolean>(false);
   const [newBudget, setNewBudget] = useState<NewBudgetState>({ category: '', limit: '' });
   
-  // Get expenses to calculate actual spending
-  const { data: expenses = [] } = useExpenses();
+  // Get category spending from backend with currency conversion
+  const { data: categorySpendingData } = useCategorySpending({ currency: selectedCurrency });
+  const categorySpending = categorySpendingData?.category_spending || {};
 
-  // Helper function to calculate actual spending for a category from expenses
-  const calculateActualSpending = (category: string) => {
-    return expenses
-      .filter(expense => expense.category === category && expense.type === 'expense')
-      .reduce((total, expense) => {
-        // Use pre-calculated amounts if available, otherwise convert
-        if (expense.amounts && expense.amounts[selectedCurrency]) {
-          return total + expense.amounts[selectedCurrency];
-        }
-        // Convert using current rates
-        return total + convertAmount(expense.amount, expense.original_currency || 'EUR');
-      }, 0);
+  // Helper function to get actual spending for a category
+  const getActualSpending = (category: string) => {
+    return categorySpending[category] || 0;
   };
 
   // Helper function to convert budget amounts (assuming they're stored in EUR)
@@ -128,8 +120,8 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Object.entries(budgets).map(([category, budget]) => {
-          // Calculate actual spending from expenses instead of using stored budget.spent
-          const actualSpent = calculateActualSpending(category);
+          // Get actual spending from backend (already in selected currency)
+          const actualSpent = getActualSpending(category);
           const convertedLimit = convertBudgetAmount(budget.limit);
           const percentage = (actualSpent / convertedLimit) * 100;
           const CategoryIcon = categories.find(cat => cat.name === category)?.icon || Target;

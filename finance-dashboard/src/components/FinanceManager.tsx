@@ -181,6 +181,7 @@ const FinanceManager: React.FC = () => {
             aiInsights={aiInsights}
             onGenerateInsights={handleGenerateInsights}
             expenses={expenses}
+            isGeneratingInsights={generateInsightsMutation.isPending}
           />
         );
       default:

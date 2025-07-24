@@ -133,6 +133,27 @@ export const expenseApi = {
   getMonthlyChart: (): Promise<Array<{month: string; income: number; expenses: number}>> =>
     apiRequest('/api/expenses/charts/monthly'),
 
+  getCategorySpending: (params: { currency?: string; month?: number; year?: number } = {}): Promise<{
+    currency: string;
+    category_spending: Record<string, number>;
+  }> => {
+    const searchParams = new URLSearchParams();
+    if (params.currency) {
+      searchParams.append('currency', params.currency);
+    }
+    if (params.month && params.month > 0) {
+      searchParams.append('month', params.month.toString());
+    }
+    if (params.year && params.year > 0) {
+      searchParams.append('year', params.year.toString());
+    }
+    
+    const queryString = searchParams.toString();
+    const endpoint = queryString ? `/api/expenses/category-spending?${queryString}` : '/api/expenses/category-spending';
+    
+    return apiRequest(endpoint);
+  },
+
   update: (expenseId: number, expense: Omit<Expense, 'id'>): Promise<Expense> =>
     apiRequest<Expense>(`/api/expenses/${expenseId}`, {
       method: 'PUT',

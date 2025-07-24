@@ -7,9 +7,10 @@ interface InsightsProps {
   aiInsights: AIInsight[];
   onGenerateInsights: () => void;
   expenses: Expense[];
+  isGeneratingInsights: boolean;
 }
 
-const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, expenses }) => {
+const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, expenses, isGeneratingInsights }) => {
   const netAmount = calculateNetAmount(expenses);
 
   return (
@@ -18,10 +19,15 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
         <h2 className="text-2xl font-bold text-gray-900">AI Financial Insights</h2>
         <button
           onClick={onGenerateInsights}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2"
+          disabled={isGeneratingInsights}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Brain className="h-4 w-4" />
-          <span>Generate Insights</span>
+          {isGeneratingInsights ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          ) : (
+            <Brain className="h-4 w-4" />
+          )}
+          <span>{isGeneratingInsights ? 'Generating...' : 'Generate Insights'}</span>
         </button>
       </div>
 
@@ -36,13 +42,34 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
           </p>
           <button
             onClick={onGenerateInsights}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+            disabled={isGeneratingInsights}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Analyze My Finances
+            {isGeneratingInsights ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Analyzing Your Finances...</span>
+              </>
+            ) : (
+              <>
+                <Brain className="h-5 w-5" />
+                <span>Analyze My Finances</span>
+              </>
+            )}
           </button>
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Loading overlay when generating new insights */}
+          {isGeneratingInsights && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                <span className="text-gray-700 font-medium">Generating fresh insights...</span>
+              </div>
+            </div>
+          )}
+          
           {aiInsights.map((insight, index) => (
             <div key={index} className={`p-6 rounded-xl border-l-4 ${
               insight.type === 'warning' ? 'bg-red-50 border-red-500' :

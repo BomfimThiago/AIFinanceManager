@@ -4,6 +4,7 @@ export {
   useExpenseSummary,
   useCategoryChartData,
   useMonthlyChartData,
+  useCategorySpending,
   useCreateExpense,
   useCreateBulkExpenses,
   useUploadExpenseFile,

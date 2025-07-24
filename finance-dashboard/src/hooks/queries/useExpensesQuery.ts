@@ -14,6 +14,8 @@ export const expenseKeys = {
   charts: () => [...expenseKeys.all, 'charts'] as const,
   chartCategories: () => [...expenseKeys.charts(), 'categories'] as const,
   chartMonthly: () => [...expenseKeys.charts(), 'monthly'] as const,
+  categorySpending: (params: { currency?: string; month?: number; year?: number }) => 
+    [...expenseKeys.all, 'category-spending', params] as const,
 };
 
 // Queries
@@ -50,6 +52,15 @@ export function useMonthlyChartData() {
   return useQuery({
     queryKey: expenseKeys.chartMonthly(),
     queryFn: expenseApi.getMonthlyChart,
+  });
+}
+
+export function useCategorySpending(params: { currency?: string; month?: number; year?: number } = {}) {
+  return useQuery({
+    queryKey: expenseKeys.categorySpending(params),
+    queryFn: () => expenseApi.getCategorySpending(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
