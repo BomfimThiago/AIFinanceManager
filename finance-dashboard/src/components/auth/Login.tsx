@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../../contexts/ToastContext';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import { LoginCredentials } from '../../types';
 
 interface LoginProps {
@@ -10,7 +10,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
   const { login, isLoading } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError } = useNotificationContext();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
@@ -29,12 +29,12 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
 
     try {
       await login(credentials);
-      showSuccess('Welcome back! Login successful.');
+      showSuccess('Login Successful', 'Welcome back! Login successful.');
       // Navigation will be handled by the app component
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       setError(errorMessage);
-      showError(errorMessage);
+      showError('Login Failed', errorMessage);
       console.error('Login error:', error);
     }
   };

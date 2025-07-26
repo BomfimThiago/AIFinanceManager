@@ -6,6 +6,7 @@ import Upload from './pages/Upload';
 import Expenses from './pages/Expenses';
 import Budgets from './pages/Budgets';
 import Insights from './pages/Insights';
+import Integrations from './pages/Integrations';
 import { useExpenses, useCreateBulkExpenses } from '../hooks/queries';
 import { useBudgets, useCreateBudget, useUpdateBudgetSpent } from '../hooks/queries';
 import { useGenerateInsights } from '../hooks/queries';
@@ -184,6 +185,8 @@ const FinanceManager: React.FC = () => {
             isGeneratingInsights={generateInsightsMutation.isPending}
           />
         );
+      case 'integrations':
+        return <Integrations />;
       default:
         return null;
     }

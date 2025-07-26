@@ -10,7 +10,7 @@ class ExpenseBase(BaseModel):
     description: str
     merchant: str
     type: Literal["expense", "income"]
-    source: Optional[Literal["ai-processed", "manual"]] = "manual"
+    source: Optional[Literal["ai-processed", "manual", "belvo-integration"]] = "manual"
     items: Optional[List[str]] = None
     # Multi-currency support
     original_currency: Optional[str] = "EUR"  # Currency of the original amount

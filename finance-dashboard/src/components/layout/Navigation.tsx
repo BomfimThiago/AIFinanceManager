@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Upload, CreditCard, Target, Brain } from 'lucide-react';
+import { BarChart3, Upload, CreditCard, Target, Brain, Link2 } from 'lucide-react';
 import type { TabId } from '../../types';
 
 interface Tab {
@@ -13,7 +13,8 @@ const tabs: Tab[] = [
   { id: 'upload', name: 'Upload', icon: Upload },
   { id: 'expenses', name: 'Expenses', icon: CreditCard },
   { id: 'budgets', name: 'Budgets', icon: Target },
-  { id: 'insights', name: 'AI Insights', icon: Brain }
+  { id: 'insights', name: 'AI Insights', icon: Brain },
+  { id: 'integrations', name: 'Integrations', icon: Link2 }
 ];
 
 interface NavigationProps {

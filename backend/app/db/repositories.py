@@ -1,11 +1,13 @@
 from typing import List, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete, update, func
 from sqlalchemy.orm import selectinload
 
-from .models import ExpenseModel, BudgetModel, InsightModel, UserModel, UploadHistoryModel, ExpenseType, ExpenseSource, UploadStatus
+from .models import ExpenseModel, BudgetModel, InsightModel, UserModel, UploadHistoryModel, IntegrationModel, BelvoInstitutionModel, ExpenseType, ExpenseSource, UploadStatus, IntegrationType, IntegrationStatus
 from ..models.expense import Expense, ExpenseCreate, Budget, BudgetCreate, AIInsight
 from ..models.auth import User, UserCreate, UserUpdate
+from ..models.integration import Integration, IntegrationCreate, IntegrationUpdate
+from ..models.belvo_institution import BelvoInstitutionCreate, BelvoInstitutionUpdate
 from ..core.auth import get_password_hash
 
 
@@ -367,3 +369,196 @@ class UploadHistoryRepository:
             await self.db.commit()
             return True
         return False
+
+
+class IntegrationRepository:
+    """Repository for integration database operations."""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_by_user_id(self, user_id: int) -> List[IntegrationModel]:
+        """Get all integrations for a user."""
+        result = await self.db.execute(
+            select(IntegrationModel).where(IntegrationModel.user_id == user_id)
+        )
+        return result.scalars().all()
+
+    async def get_by_id(self, integration_id: int) -> Optional[IntegrationModel]:
+        """Get integration by ID."""
+        result = await self.db.execute(
+            select(IntegrationModel).where(IntegrationModel.id == integration_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_user_and_type(self, user_id: int, integration_type: IntegrationType) -> Optional[IntegrationModel]:
+        """Get integration by user and type (returns first one found)."""
+        result = await self.db.execute(
+            select(IntegrationModel).where(
+                IntegrationModel.user_id == user_id,
+                IntegrationModel.integration_type == integration_type
+            )
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_access_token(self, access_token: str) -> Optional[IntegrationModel]:
+        """Get integration by access token (link_id for Belvo)."""
+        result = await self.db.execute(
+            select(IntegrationModel).where(IntegrationModel.access_token == access_token)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_all_by_user_and_type(self, user_id: int, integration_type: IntegrationType) -> List[IntegrationModel]:
+        """Get all integrations by user and type."""
+        result = await self.db.execute(
+            select(IntegrationModel).where(
+                IntegrationModel.user_id == user_id,
+                IntegrationModel.integration_type == integration_type
+            )
+        )
+        return result.scalars().all()
+
+    async def create(self, user_id: int, integration_data: IntegrationCreate) -> IntegrationModel:
+        """Create a new integration."""
+        db_integration = IntegrationModel(
+            user_id=user_id,
+            integration_type=integration_data.integration_type,
+            status=integration_data.status,
+            account_id=integration_data.account_id,
+            account_name=integration_data.account_name,
+            institution_id=integration_data.institution_id,
+            institution_name=integration_data.institution_name,
+            access_token=integration_data.access_token,
+            item_id=integration_data.item_id,
+        )
+        self.db.add(db_integration)
+        await self.db.commit()
+        await self.db.refresh(db_integration)
+        return db_integration
+
+    async def update(self, integration_id: int, update_data: IntegrationUpdate) -> Optional[IntegrationModel]:
+        """Update an integration."""
+        update_dict = update_data.model_dump(exclude_unset=True)
+        
+        # Remove metadata from update_dict as it's not stored in database
+        if 'metadata' in update_dict:
+            update_dict.pop('metadata')
+        
+        if not update_dict:
+            return await self.get_by_id(integration_id)
+
+        result = await self.db.execute(
+            update(IntegrationModel)
+            .where(IntegrationModel.id == integration_id)
+            .values(**update_dict)
+            .returning(IntegrationModel)
+        )
+        await self.db.commit()
+        return result.scalar_one_or_none()
+
+    async def delete(self, integration_id: int) -> bool:
+        """Delete an integration."""
+        result = await self.db.execute(
+            delete(IntegrationModel).where(IntegrationModel.id == integration_id)
+        )
+        await self.db.commit()
+        return result.rowcount > 0
+
+    async def get_active_integrations(self, user_id: int) -> List[IntegrationModel]:
+        """Get all active/connected integrations for a user."""
+        result = await self.db.execute(
+            select(IntegrationModel).where(
+                IntegrationModel.user_id == user_id,
+                IntegrationModel.status == IntegrationStatus.CONNECTED
+            )
+        )
+        return result.scalars().all()
+
+
+class BelvoInstitutionRepository:
+    """Repository for managing Belvo institutions."""
+    
+    def __init__(self, db: AsyncSession):
+        self.db = db
+    
+    async def get_by_belvo_id(self, belvo_id: int) -> Optional[BelvoInstitutionModel]:
+        """Get institution by Belvo ID."""
+        result = await self.db.execute(
+            select(BelvoInstitutionModel).where(BelvoInstitutionModel.belvo_id == belvo_id)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_code(self, code: str) -> Optional[BelvoInstitutionModel]:
+        """Get institution by code."""
+        result = await self.db.execute(
+            select(BelvoInstitutionModel).where(BelvoInstitutionModel.code == code)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_country(self, country_code: str) -> List[BelvoInstitutionModel]:
+        """Get all institutions for a specific country."""
+        result = await self.db.execute(
+            select(BelvoInstitutionModel)
+            .where(BelvoInstitutionModel.country_code == country_code)
+            .order_by(BelvoInstitutionModel.display_name)
+        )
+        return result.scalars().all()
+    
+    async def get_all(self) -> List[BelvoInstitutionModel]:
+        """Get all institutions."""
+        result = await self.db.execute(
+            select(BelvoInstitutionModel).order_by(BelvoInstitutionModel.display_name)
+        )
+        return result.scalars().all()
+    
+    async def create(self, institution_data: BelvoInstitutionCreate) -> BelvoInstitutionModel:
+        """Create a new institution."""
+        db_institution = BelvoInstitutionModel(
+            belvo_id=institution_data.belvo_id,
+            name=institution_data.name,
+            display_name=institution_data.display_name,
+            code=institution_data.code,
+            type=institution_data.type,
+            status=institution_data.status,
+            country_code=institution_data.country_code,
+            country_codes=institution_data.country_codes,
+            primary_color=institution_data.primary_color,
+            logo=institution_data.logo,
+            icon_logo=institution_data.icon_logo,
+            text_logo=institution_data.text_logo,
+            website=institution_data.website
+        )
+        self.db.add(db_institution)
+        await self.db.commit()
+        await self.db.refresh(db_institution)
+        return db_institution
+    
+    async def update(self, belvo_id: int, update_data: BelvoInstitutionUpdate) -> Optional[BelvoInstitutionModel]:
+        """Update an institution."""
+        update_dict = update_data.model_dump(exclude_unset=True)
+        
+        if not update_dict:
+            return await self.get_by_belvo_id(belvo_id)
+        
+        result = await self.db.execute(
+            update(BelvoInstitutionModel)
+            .where(BelvoInstitutionModel.belvo_id == belvo_id)
+            .values(**update_dict)
+            .returning(BelvoInstitutionModel)
+        )
+        await self.db.commit()
+        return result.scalar_one_or_none()
+    
+    async def count(self) -> int:
+        """Get total count of institutions."""
+        result = await self.db.execute(
+            select(func.count(BelvoInstitutionModel.id))
+        )
+        return result.scalar()
+    
+    async def get_existing_belvo_ids(self) -> List[int]:
+        """Get list of all existing Belvo IDs to avoid duplicates."""
+        result = await self.db.execute(
+            select(BelvoInstitutionModel.belvo_id)
+        )
+        return [row[0] for row in result.fetchall()]

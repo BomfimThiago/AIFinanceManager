@@ -55,7 +55,7 @@ export interface UploadHistory {
   error_message?: string;
 }
 
-export type TabId = 'dashboard' | 'upload' | 'expenses' | 'budgets' | 'insights';
+export type TabId = 'dashboard' | 'upload' | 'expenses' | 'budgets' | 'insights' | 'integrations';
 
 export interface Currency {
   code: string;

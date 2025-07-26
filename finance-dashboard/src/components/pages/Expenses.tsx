@@ -3,7 +3,7 @@ import { DollarSign, Edit2, Trash2, Plus, TrendingUp, TrendingDown } from 'lucid
 import { formatDate } from '../../utils/formatters';
 import { Expense, Category } from '../../types';
 import { useCreateExpense, useUpdateExpense, useDeleteExpense } from '../../hooks/queries';
-import { useToast } from '../../contexts/ToastContext';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import EditExpenseModal from '../ui/EditExpenseModal';
 import ConfirmationModal from '../ui/ConfirmationModal';
@@ -27,7 +27,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
   const deleteExpenseMutation = useDeleteExpense();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useNotificationContext();
 
   const handleAddClick = () => {
     setEditingExpense(null); // null means create mode
@@ -49,12 +49,12 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
 
     deleteExpenseMutation.mutate(expenseToDelete.id, {
       onSuccess: () => {
-        showToast('success', 'Expense deleted successfully');
+        showSuccess('Expense Deleted', 'Expense deleted successfully');
         setIsConfirmModalOpen(false);
         setExpenseToDelete(null);
       },
       onError: (error: any) => {
-        showToast('error', error?.message || 'Failed to delete expense');
+        showError('Delete Failed', error?.message || 'Failed to delete expense');
         setIsConfirmModalOpen(false);
         setExpenseToDelete(null);
       },
@@ -73,12 +73,12 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
         { expenseId: editingExpense.id, expense: expenseData },
         {
           onSuccess: () => {
-            showToast('success', 'Expense updated successfully');
+            showSuccess('Expense Updated', 'Expense updated successfully');
             setIsEditModalOpen(false);
             setEditingExpense(null);
           },
           onError: (error: any) => {
-            showToast('error', error?.message || 'Failed to update expense');
+            showError('Update Failed', error?.message || 'Failed to update expense');
           },
         }
       );
@@ -86,12 +86,12 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
       // Create new expense
       createExpenseMutation.mutate(expenseData, {
         onSuccess: () => {
-          showToast('success', 'Expense created successfully');
+          showSuccess('Expense Created', 'Expense created successfully');
           setIsEditModalOpen(false);
           setEditingExpense(null);
         },
         onError: (error: any) => {
-          showToast('error', error?.message || 'Failed to create expense');
+          showError('Create Failed', error?.message || 'Failed to create expense');
         },
       });
     }

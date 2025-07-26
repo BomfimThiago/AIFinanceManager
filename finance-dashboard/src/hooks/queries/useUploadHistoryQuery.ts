@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadHistoryApi } from '../../services/apiService';
 import { UploadHistory } from '../../types';
-import { useToast } from '../../contexts/ToastContext';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 
 // Query key factory
 export const uploadHistoryKeys = {
@@ -21,19 +21,19 @@ export const useUploadHistoryQuery = () => {
 // Delete upload history mutation
 export const useDeleteUploadHistoryMutation = () => {
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useNotificationContext();
 
   return useMutation({
     mutationFn: uploadHistoryApi.delete,
     onSuccess: () => {
       // Invalidate and refetch upload history
       queryClient.invalidateQueries({ queryKey: uploadHistoryKeys.lists() });
-      showToast('success', 'Upload history deleted successfully');
+      showSuccess('History Deleted', 'Upload history deleted successfully');
     },
     onError: (error: any) => {
       console.error('Failed to delete upload history:', error);
-      showToast(
-        'error',
+      showError(
+        'Delete Failed',
         error?.message || 'Failed to delete upload history'
       );
     },

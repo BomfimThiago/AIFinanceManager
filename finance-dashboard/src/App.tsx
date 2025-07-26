@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import AuthPage from './components/auth/AuthPage';
 import FinanceManager from './components/FinanceManager';
 
@@ -20,11 +21,19 @@ const App: React.FC = () => {
 
   // Show authentication page if not authenticated
   if (!isAuthenticated) {
-    return <AuthPage />;
+    return (
+      <NotificationProvider>
+        <AuthPage />
+      </NotificationProvider>
+    );
   }
 
   // Show main finance manager if authenticated
-  return <FinanceManager />;
+  return (
+    <NotificationProvider>
+      <FinanceManager />
+    </NotificationProvider>
+  );
 };
 
 export default App;
