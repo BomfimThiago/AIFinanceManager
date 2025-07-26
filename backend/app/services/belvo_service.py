@@ -34,17 +34,86 @@ class BelvoService:
         # Create aiohttp BasicAuth object
         self.auth = aiohttp.BasicAuth(self.secret_id, self.secret_password)
         
+    async def get_consent_management_token(
+        self, 
+        cpf: str, 
+        full_name: str,
+        cnpj: Optional[str] = None,
+        terms_and_conditions_url: Optional[str] = None
+    ) -> str:
+        """Generate access token for Belvo consent management portal (MBP).
+        
+        Args:
+            cpf: User's CPF number
+            full_name: User's full name  
+            cnpj: User's CNPJ (for business users, optional)
+            terms_and_conditions_url: URL to your terms and conditions
+            
+        Returns:
+            Access token for the MBP
+        """
+        identification_info = [
+            {
+                "type": "CPF",
+                "number": cpf,
+                "name": full_name
+            }
+        ]
+        
+        # Add CNPJ info for business users
+        if cnpj:
+            identification_info.append({
+                "type": "CNPJ", 
+                "number": cnpj,
+                "name": full_name
+            })
+        
+        data = {
+            "id": self.secret_id,
+            "password": self.secret_password,
+            "scopes": "read_consents,write_consents,write_consent_callback",
+            "widget": {
+                "openfinance_feature": "consent_management",
+                "consent": {
+                    "terms_and_conditions_url": terms_and_conditions_url or "https://example.com/terms",
+                    "permissions": ["REGISTER", "ACCOUNTS", "CREDIT_CARDS", "CREDIT_OPERATIONS"],
+                    "identification_info": identification_info
+                }
+            }
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}/api/token/", 
+                json=data, 
+                auth=self.auth,
+                headers={'Content-Type': 'application/json'}
+            ) as response:
+                response_body = await response.read()
+                
+                if response.status not in [200, 201]:
+                    error_text = response_body.decode('utf-8')
+                    raise Exception(f"Belvo API error {response.status}: {error_text}")
+                
+                result = json.loads(response_body.decode('utf-8'))
+                return result['access']
+
     async def get_widget_access_token(self, external_id: Optional[str] = None) -> str:
-        """Generate widget access token with asynchronous historical data fetch."""
+        """Generate widget access token with recurrent link for automatic updates.
+        
+        Creates a recurrent link that will automatically receive transaction updates
+        every 6 days as per Belvo's refresh schedule for transaction data.
+        """
         data = {
             "id": self.secret_id,
             "password": self.secret_password,
             "scopes": "read_institutions,write_links,read_consents,write_consents",
-            "stale_in": "1d",
-            # Enable asynchronous historical data workflow
+            # Store data for 300 days (recurrent links need longer retention)
+            "stale_in": "300d",
+            # Enable asynchronous historical data workflow for recurrent links
             "fetch_historical": True,
             "fetch_resources": [
-                "TRANSACTIONS",
+                "TRANSACTIONS"   # Only fetch transaction history and updates
             ]
         }
         

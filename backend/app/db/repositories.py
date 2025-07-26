@@ -474,6 +474,11 @@ class IntegrationRepository:
         )
         return result.scalars().all()
 
+    async def get_all(self) -> List[IntegrationModel]:
+        """Get all integrations (for debugging purposes)."""
+        result = await self.db.execute(select(IntegrationModel))
+        return result.scalars().all()
+
 
 class BelvoInstitutionRepository:
     """Repository for managing Belvo institutions."""

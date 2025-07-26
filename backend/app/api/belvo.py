@@ -22,7 +22,12 @@ from app.models.belvo_responses import (
     HistoricalUpdateResponse,
     InstitutionsListResponse,
     BelvoInstitutionResponse,
-    WebhookResponse
+    WebhookResponse,
+    ConsentManagementRequest,
+    ConsentManagementResponse,
+    ConsentRenewalRequest,
+    ConsentRenewalResponse,
+    ConsentExpiredWebhookData
 )
 from app.db.connection import get_db
 from app.db.repositories import IntegrationRepository, ExpenseRepository, BelvoInstitutionRepository
@@ -503,10 +508,113 @@ async def get_belvo_institution(
         raise HTTPException(status_code=500, detail="Failed to get institution")
 
 
-# Removed - webhook test endpoint
+@router.post(
+    "/belvo/consent-management",
+    response_model=ConsentManagementResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Generate Consent Management Portal URL",
+    description="Generate URL for users to manage their Belvo consents via My Belvo Portal (MBP)"
+)
+async def get_consent_management_url(
+    request: ConsentManagementRequest,
+    current_user: User = Depends(get_current_user)
+) -> ConsentManagementResponse:
+    """
+    Generate consent management portal URL for user to manage their Belvo consents.
+    
+    This allows users to view and manage all consents they've granted to your application
+    through the My Belvo Portal (MBP).
+    """
+    try:
+        logger.info(f"Generating consent management URL for user {current_user.id}")
+        
+        # Generate access token for consent management
+        access_token = await belvo_service.get_consent_management_token(
+            cpf=request.cpf,
+            full_name=request.full_name,
+            cnpj=request.cnpj,
+            terms_and_conditions_url=request.terms_and_conditions_url
+        )
+        
+        # Construct MBP URL with access token
+        consent_management_url = f"https://meuportal.belvo.com/?access_token={access_token}"
+        
+        logger.info(f"Successfully generated consent management URL for user {current_user.id}")
+        
+        return ConsentManagementResponse(
+            consent_management_url=consent_management_url,
+            access_token=access_token,
+            expires_in=3600
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to generate consent management URL for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate consent management URL"
+        )
 
 
-# Removed - transaction logs endpoint
+@router.post(
+    "/belvo/consent-renewal",
+    response_model=ConsentRenewalResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Generate Consent Renewal Portal URL",
+    description="Generate URL for users to renew expired consents via My Belvo Portal (MBP)"
+)
+async def get_consent_renewal_url(
+    request: ConsentRenewalRequest,
+    current_user: User = Depends(get_current_user)
+) -> ConsentRenewalResponse:
+    """
+    Generate consent renewal portal URL for user to renew an expired consent.
+    
+    This is typically called after receiving a consent_expired webhook from Belvo.
+    """
+    try:
+        logger.info(f"Generating consent renewal URL for user {current_user.id}, consent {request.consent_id}")
+        
+        # Generate access token for consent management
+        access_token = await belvo_service.get_consent_management_token(
+            cpf=request.cpf,
+            full_name=request.full_name,
+            cnpj=request.cnpj,
+            terms_and_conditions_url=request.terms_and_conditions_url
+        )
+        
+        # URL encode the institution display name
+        import urllib.parse
+        encoded_display_name = urllib.parse.quote(request.institution_display_name)
+        
+        # Construct MBP renewal URL with all required parameters
+        consent_renewal_url = (
+            f"https://meuportal.belvo.com/"
+            f"?access_token={access_token}"
+            f"&link_id={request.link_id}"
+            f"&consent_id={request.consent_id}"
+            f"&institution={request.institution}"
+            f"&institution_display_name={encoded_display_name}"
+            f"&action=renew"
+        )
+        
+        # Add institution logo if provided
+        if request.institution_icon_logo:
+            consent_renewal_url += f"&institution_icon_logo={urllib.parse.quote(request.institution_icon_logo)}"
+        
+        logger.info(f"Successfully generated consent renewal URL for user {current_user.id}")
+        
+        return ConsentRenewalResponse(
+            consent_renewal_url=consent_renewal_url,
+            access_token=access_token,
+            expires_in=3600
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to generate consent renewal URL for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate consent renewal URL"
+        )
 
 
 @router.post("/belvo/webhook")
@@ -527,9 +635,17 @@ async def belvo_webhook(
         external_id = payload.get('external_id', '')
         data = payload.get('data', {})
         
-        logger.info(f"Received Belvo webhook {webhook_id}: {webhook_type}.{webhook_code} for link {link_id}")
-        logger.info(f"Request ID: {request_id}, External ID: {external_id}")
-        logger.info(f"Webhook data: {json.dumps(data, indent=2)}")
+        # 📝 LOG ALL WEBHOOKS RECEIVED
+        logger.info("=" * 80)
+        logger.info(f"🔔 BELVO WEBHOOK RECEIVED")
+        logger.info(f"   📋 Webhook ID: {webhook_id}")
+        logger.info(f"   🔗 Link ID: {link_id}")
+        logger.info(f"   📂 Type: {webhook_type}")
+        logger.info(f"   🏷️  Code: {webhook_code}")
+        logger.info(f"   🆔 Request ID: {request_id}")
+        logger.info(f"   👤 External ID: {external_id}")
+        logger.info(f"   📊 Data: {json.dumps(data, indent=2)}")
+        logger.info("=" * 80)
         
         # Find integration by link_id
         repo = IntegrationRepository(db)
@@ -537,32 +653,66 @@ async def belvo_webhook(
         
         if not integration:
             logger.warning(f"No integration found for link_id: {link_id}")
+            # Debug: List existing integrations to help troubleshoot
+            try:
+                all_integrations = await repo.get_all()
+                logger.info(f"Total integrations in database: {len(all_integrations)}")
+                for i, integration_item in enumerate(all_integrations[:5]):  # Show first 5
+                    logger.info(f"Integration {i}: access_token={integration_item.access_token}, account_id={integration_item.account_id}")
+            except Exception as debug_e:
+                logger.error(f"Failed to debug integrations: {debug_e}")
             # Still return 202 to acknowledge webhook
             return JSONResponse(
                 status_code=202,
                 content={"status": "acknowledged", "reason": "Integration not found"}
             )
         
-        # Handle different webhook types and codes
-        if webhook_code == 'historical_update':
-            # This is the asynchronous historical data ready notification
-            await handle_historical_update_webhook(
-                webhook_type, link_id, integration, data, db
-            )
-            
-        elif webhook_code == 'historical_ready':
-            # Legacy webhook code - handle the same way
-            await handle_historical_update_webhook(
-                webhook_type, link_id, integration, data, db
-            )
-            
-        elif webhook_code.endswith('_updated'):
-            # New data available (for recurrent links)
-            logger.info(f"New {webhook_type} data available for link {link_id}")
-            # Could trigger incremental sync here
-            
+        # 🎯 ONLY PROCESS TRANSACTIONS WEBHOOKS
+        if webhook_type != 'TRANSACTIONS':
+            logger.info(f"⏭️ SKIPPING non-TRANSACTIONS webhook: {webhook_type}.{webhook_code}")
+            logger.info(f"   ℹ️ Only TRANSACTIONS webhooks are processed")
         else:
-            logger.info(f"Webhook acknowledged: {webhook_type}.{webhook_code}")
+            logger.info(f"✅ PROCESSING TRANSACTIONS webhook: {webhook_code}")
+            
+            # Handle different TRANSACTIONS webhook codes per official Belvo documentation
+            if webhook_code == 'historical_update':
+                # Initial historical data load (past year of transactions)
+                logger.info(f"📊 Processing historical_update webhook")
+                await handle_historical_update_webhook(
+                    webhook_type, link_id, integration, data, db
+                )
+                
+            elif webhook_code == 'new_transactions_available':
+                # New transactions found since last update (recurrent links)
+                logger.info(f"🆕 Processing new_transactions_available webhook")
+                await handle_new_transactions_webhook(
+                    webhook_type, link_id, integration, data, db
+                )
+                
+            elif webhook_code == 'transactions_updated':
+                # Existing transactions were modified by the institution
+                logger.info(f"✏️ Processing transactions_updated webhook")
+                await handle_transactions_updated_webhook(
+                    webhook_type, link_id, integration, data, db
+                )
+                
+            elif webhook_code == 'transactions_deleted':
+                # Transactions were deleted/deduplicated by Belvo
+                logger.info(f"🗑️ Processing transactions_deleted webhook")
+                await handle_transactions_deleted_webhook(
+                    webhook_type, link_id, integration, data, db
+                )
+                
+            elif webhook_code == 'consent_expired':
+                # Handle consent expiration - user needs to renew consent
+                logger.info(f"⚠️ Processing consent_expired webhook")
+                await handle_consent_expired_webhook(
+                    webhook_type, link_id, integration, data, db
+                )
+                
+            else:
+                logger.warning(f"🚨 Unknown TRANSACTIONS webhook code: {webhook_code}")
+                logger.info(f"   📊 Data: {json.dumps(data, indent=2)}")
         
         # Always return 202 Accepted as per Belvo best practices
         return JSONResponse(
@@ -632,23 +782,187 @@ async def handle_historical_update_webhook(
             
             logger.info(f"Historical update processed: {created_count} expenses created")
             
-        elif webhook_type == 'ACCOUNTS':
-            logger.info(f"ACCOUNTS historical update received for link {link_id}")
-            # Could fetch and store account information here if needed
-            
-        elif webhook_type == 'OWNERS':
-            logger.info(f"OWNERS historical update received for link {link_id}")
-            # Could fetch and store owner information here if needed
-            
-        elif webhook_type == 'BALANCES':
-            logger.info(f"BALANCES historical update received for link {link_id}")
-            # Could fetch and store balance information here if needed
-            
         else:
-            logger.info(f"Unhandled webhook type: {webhook_type}")
+            logger.info(f"⚠️ Unexpected TRANSACTIONS webhook type: {webhook_type} (should only be TRANSACTIONS)")
+            logger.info(f"   📊 Data: {webhook_data}")
             
     except Exception as e:
         logger.error(f"Failed to process historical update for {webhook_type}: {e}")
+        raise
+
+
+async def handle_consent_expired_webhook(
+    webhook_type: str, 
+    link_id: str, 
+    integration, 
+    webhook_data: dict,
+    db: AsyncSession
+):
+    """Handle consent_expired webhook by updating integration status."""
+    try:
+        logger.info(f"Processing consent_expired webhook for link {link_id}")
+        logger.info(f"Consent data: {webhook_data}")
+        
+        # Extract consent expiration data
+        consent_id = webhook_data.get('consent_id')
+        action = webhook_data.get('action', 'renew')
+        institution = webhook_data.get('institution')
+        institution_display_name = webhook_data.get('institution_display_name')
+        institution_icon_logo = webhook_data.get('institution_icon_logo')
+        
+        # Update integration status to indicate consent has expired
+        repo = IntegrationRepository(db)
+        update_data = IntegrationUpdate(
+            status=IntegrationStatus.ERROR,
+            error_message=f"Consent expired for {institution_display_name}. User needs to renew consent."
+        )
+        await repo.update(integration.id, update_data)
+        
+        logger.info(f"Updated integration {integration.id} status due to consent expiration")
+        logger.info(f"Consent {consent_id} for institution {institution_display_name} requires renewal")
+        
+        # TODO: You could also:
+        # 1. Send notification to user about consent expiration
+        # 2. Store consent renewal data for later use
+        # 3. Trigger automatic consent renewal process
+        
+    except Exception as e:
+        logger.error(f"Failed to process consent_expired webhook: {e}")
+        raise
+
+
+async def handle_new_transactions_webhook(
+    webhook_type: str, 
+    link_id: str, 
+    integration, 
+    webhook_data: dict,
+    db: AsyncSession
+):
+    """Handle new_transactions_available webhook for recurrent links.
+    
+    Official Belvo webhook for new transactions found since last update.
+    Data format: {"new_transactions": 19}
+    """
+    try:
+        new_count = webhook_data.get('new_transactions', 0)
+        logger.info(f"📈 New transactions available: {new_count} transactions for link {link_id}")
+        
+        if new_count > 0:
+            # Fetch all transactions using GET request (as per async workflow)
+            transactions = await belvo_service.get_all_transactions_paginated(link_id)
+            logger.info(f"Fetched {len(transactions)} total transactions")
+            
+            # Convert to expenses
+            expenses = await belvo_service.convert_to_expenses(transactions)
+            logger.info(f"Converted {len(expenses)} transactions to expenses")
+            
+            # Save new expenses to database
+            expense_repo = ExpenseRepository(db)
+            created_count = 0
+            
+            for expense_data in expenses:
+                try:
+                    await expense_repo.create(expense_data)
+                    created_count += 1
+                except Exception as e:
+                    # Skip duplicates - normal for incremental updates
+                    error_msg = str(e).lower()
+                    if 'duplicate' in error_msg or 'unique constraint' in error_msg:
+                        logger.debug(f"Skipping duplicate transaction: {expense_data.description}")
+                    else:
+                        logger.warning(f"Failed to save expense: {e}")
+            
+            # Update integration last sync time
+            repo = IntegrationRepository(db)
+            update_data = IntegrationUpdate(last_sync=datetime.now())
+            await repo.update(integration.id, update_data)
+            
+            logger.info(f"✅ New transactions processed: {created_count} new expenses created")
+        else:
+            logger.info(f"ℹ️ No new transactions to process")
+            
+    except Exception as e:
+        logger.error(f"Failed to process new_transactions_available webhook: {e}")
+        raise
+
+
+async def handle_transactions_updated_webhook(
+    webhook_type: str, 
+    link_id: str, 
+    integration, 
+    webhook_data: dict,
+    db: AsyncSession
+):
+    """Handle transactions_updated webhook.
+    
+    Official Belvo webhook for existing transactions that were modified.
+    Data format: {"count": 5, "updated_transactions": ["id1", "id2", ...]}
+    """
+    try:
+        count = webhook_data.get('count', 0)
+        updated_ids = webhook_data.get('updated_transactions', [])
+        
+        logger.info(f"✏️ Transactions updated: {count} transactions modified for link {link_id}")
+        logger.info(f"   📋 Updated transaction IDs: {updated_ids}")
+        
+        if count > 0 and updated_ids:
+            # Note: We could implement specific update logic here
+            # For now, we'll re-fetch all transactions to ensure consistency
+            transactions = await belvo_service.get_all_transactions_paginated(link_id)
+            logger.info(f"Re-fetched {len(transactions)} transactions to handle updates")
+            
+            # Convert and save (duplicates will be skipped automatically)
+            expenses = await belvo_service.convert_to_expenses(transactions)
+            expense_repo = ExpenseRepository(db)
+            
+            updated_count = 0
+            for expense_data in expenses:
+                try:
+                    await expense_repo.create(expense_data)
+                    updated_count += 1
+                except Exception as e:
+                    # Expected for existing transactions
+                    pass
+            
+            logger.info(f"✅ Transaction updates processed: {updated_count} expenses affected")
+        else:
+            logger.info(f"ℹ️ No transaction updates to process")
+            
+    except Exception as e:
+        logger.error(f"Failed to process transactions_updated webhook: {e}")
+        raise
+
+
+async def handle_transactions_deleted_webhook(
+    webhook_type: str, 
+    link_id: str, 
+    integration, 
+    webhook_data: dict,
+    db: AsyncSession
+):
+    """Handle transactions_deleted webhook.
+    
+    Official Belvo webhook for transactions that were deleted/deduplicated.
+    Data format: {"count": 5, "deleted_transactions": ["id1", "id2", ...]}
+    """
+    try:
+        count = webhook_data.get('count', 0)
+        deleted_ids = webhook_data.get('deleted_transactions', [])
+        
+        logger.info(f"🗑️ Transactions deleted: {count} transactions removed for link {link_id}")
+        logger.info(f"   📋 Deleted transaction IDs: {deleted_ids}")
+        
+        if count > 0 and deleted_ids:
+            # Note: We could implement specific deletion logic here
+            # This would require storing Belvo transaction IDs in our expense records
+            # For now, we'll log the deletion event
+            logger.info(f"ℹ️ Belvo cleaned up {count} duplicate transactions")
+            logger.info(f"   💡 Consider implementing expense cleanup if needed")
+        else:
+            logger.info(f"ℹ️ No transactions were deleted")
+            
+    except Exception as e:
+        logger.error(f"Failed to process transactions_deleted webhook: {e}")
         raise
 
 
