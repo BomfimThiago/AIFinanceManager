@@ -1,6 +1,7 @@
-from typing import Optional, List
-from pydantic import BaseModel
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel
 
 
 class BelvoInstitutionType(str, Enum):
@@ -17,6 +18,7 @@ class BelvoInstitutionStatus(str, Enum):
 
 class BelvoInstitution(BaseModel):
     """Pydantic model for Belvo institution data."""
+
     id: int
     belvo_id: int  # The actual ID from Belvo API
     name: str  # Internal name from Belvo
@@ -35,6 +37,7 @@ class BelvoInstitution(BaseModel):
 
 class BelvoInstitutionCreate(BaseModel):
     """Pydantic model for creating a Belvo institution."""
+
     belvo_id: int
     name: str
     display_name: str
@@ -52,6 +55,7 @@ class BelvoInstitutionCreate(BaseModel):
 
 class BelvoInstitutionUpdate(BaseModel):
     """Pydantic model for updating a Belvo institution."""
+
     name: Optional[str] = None
     display_name: Optional[str] = None
     code: Optional[str] = None

@@ -13,7 +13,7 @@ const Integrations: React.FC = () => {
   const [connectingIntegration, setConnectingIntegration] = useState<string | null>(null);
   const [showConnectedIntegrationsModal, setShowConnectedIntegrationsModal] = useState(false);
   const [showConsentManagementModal, setShowConsentManagementModal] = useState(false);
-  const [consentOption, setConsentOption] = useState<'public' | 'custom'>('public');
+  // Removed unused state - consent option is managed in the modal
   const { showSuccess, showError, showWarning, showInfo } = useNotificationContext();
   const { isSDKLoaded, isLoading: belvoLoading, openBelvoWidget } = useBelvoSDK();
   const {

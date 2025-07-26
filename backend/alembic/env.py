@@ -1,20 +1,24 @@
 import asyncio
-from logging.config import fileConfig
 import os
 import sys
-
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
+from logging.config import fileConfig
 
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from app.db.base import Base
-from app.db.models import ExpenseModel, BudgetModel, InsightModel, UserModel  # Import all models
-from app.core.config import settings
+from alembic import context  # noqa: E402
+from sqlalchemy import pool  # noqa: E402
+from sqlalchemy.engine import Connection  # noqa: E402
+from sqlalchemy.ext.asyncio import async_engine_from_config  # noqa: E402
+
+from app.core.config import settings  # noqa: E402
+from app.db.base import Base  # noqa: E402
+from app.db.models import (  # noqa: E402
+    BudgetModel,
+    ExpenseModel,
+    InsightModel,
+    UserModel,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

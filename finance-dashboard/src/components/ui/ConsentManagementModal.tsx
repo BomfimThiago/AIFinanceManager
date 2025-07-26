@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Shield, AlertCircle, ExternalLink, User, Building } from 'lucide-react';
 import { useConsentManagement } from '../../hooks/useConsentManagement';
-import { useNotifications } from '../../hooks/useNotifications';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 
 interface ConsentManagementModalProps {
   isOpen: boolean;
@@ -30,13 +30,13 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
   });
 
   const { openConsentManagement, openConsentRenewal, isLoading, error } = useConsentManagement();
-  const { showNotification } = useNotifications();
+  const { showError, showSuccess } = useNotificationContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.cpf || !formData.full_name) {
-      showNotification('Please fill in all required fields', 'error');
+      showError('Validation Error', 'Please fill in all required fields');
       return;
     }
 
@@ -61,16 +61,16 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
       }
 
       if (success) {
-        showNotification(
+        showSuccess(
+          'Success',
           mode === 'management' 
             ? 'Consent management portal opened in new window' 
-            : 'Consent renewal portal opened in new window',
-          'success'
+            : 'Consent renewal portal opened in new window'
         );
         onClose();
       }
     } catch (err) {
-      showNotification('Failed to open consent portal', 'error');
+      showError('Error', 'Failed to open consent portal');
     }
   };
 

@@ -1,14 +1,28 @@
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
+
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update, func
 from sqlalchemy.orm import selectinload
 
-from .models import ExpenseModel, BudgetModel, InsightModel, UserModel, UploadHistoryModel, IntegrationModel, BelvoInstitutionModel, ExpenseType, ExpenseSource, UploadStatus, IntegrationType, IntegrationStatus
-from ..models.expense import Expense, ExpenseCreate, Budget, BudgetCreate, AIInsight
-from ..models.auth import User, UserCreate, UserUpdate
-from ..models.integration import Integration, IntegrationCreate, IntegrationUpdate
-from ..models.belvo_institution import BelvoInstitutionCreate, BelvoInstitutionUpdate
 from ..core.auth import get_password_hash
+from ..models.auth import User, UserCreate, UserUpdate
+from ..models.belvo_institution import BelvoInstitutionCreate, BelvoInstitutionUpdate
+from ..models.expense import AIInsight, Budget, BudgetCreate, Expense, ExpenseCreate
+from ..models.integration import Integration, IntegrationCreate, IntegrationUpdate
+from .models import (
+    BelvoInstitutionModel,
+    BudgetModel,
+    ExpenseModel,
+    ExpenseSource,
+    ExpenseType,
+    InsightModel,
+    IntegrationModel,
+    IntegrationStatus,
+    IntegrationType,
+    UploadHistoryModel,
+    UploadStatus,
+    UserModel,
+)
 
 
 class ExpenseRepository:
@@ -38,20 +52,26 @@ class ExpenseRepository:
             description=expense_data.description,
             merchant=expense_data.merchant,
             type=ExpenseType(expense_data.type),
-            source=ExpenseSource(expense_data.source) if expense_data.source else ExpenseSource.MANUAL,
+            source=(
+                ExpenseSource(expense_data.source)
+                if expense_data.source
+                else ExpenseSource.MANUAL
+            ),
             items=expense_data.items,
             # Multi-currency fields
             original_currency=expense_data.original_currency or "EUR",
             amounts=expense_data.amounts,
             exchange_rates=expense_data.exchange_rates,
-            exchange_date=expense_data.exchange_date
+            exchange_date=expense_data.exchange_date,
         )
         self.db.add(db_expense)
         await self.db.commit()
         await self.db.refresh(db_expense)
         return db_expense
 
-    async def update(self, expense_id: int, expense_data: ExpenseCreate) -> Optional[ExpenseModel]:
+    async def update(
+        self, expense_id: int, expense_data: ExpenseCreate
+    ) -> Optional[ExpenseModel]:
         """Update an expense."""
         result = await self.db.execute(
             update(ExpenseModel)
@@ -63,13 +83,17 @@ class ExpenseRepository:
                 description=expense_data.description,
                 merchant=expense_data.merchant,
                 type=ExpenseType(expense_data.type),
-                source=ExpenseSource(expense_data.source) if expense_data.source else ExpenseSource.MANUAL,
+                source=(
+                    ExpenseSource(expense_data.source)
+                    if expense_data.source
+                    else ExpenseSource.MANUAL
+                ),
                 items=expense_data.items,
                 # Multi-currency fields
                 original_currency=expense_data.original_currency or "EUR",
                 amounts=expense_data.amounts,
                 exchange_rates=expense_data.exchange_rates,
-                exchange_date=expense_data.exchange_date
+                exchange_date=expense_data.exchange_date,
             )
             .returning(ExpenseModel)
         )
@@ -91,10 +115,12 @@ class ExpenseRepository:
         )
         return result.scalars().all()
 
-    async def get_by_date_filter(self, month: Optional[int] = None, year: Optional[int] = None) -> List[ExpenseModel]:
+    async def get_by_date_filter(
+        self, month: Optional[int] = None, year: Optional[int] = None
+    ) -> List[ExpenseModel]:
         """Get expenses filtered by month and/or year."""
         query = select(ExpenseModel)
-        
+
         if year is not None and month is not None:
             # Filter by specific year and month
             month_str = f"{month:02d}"
@@ -106,10 +132,10 @@ class ExpenseRepository:
             # Filter by month across all years
             month_str = f"{month:02d}"
             query = query.where(ExpenseModel.date.like(f"%-{month_str}-%"))
-        
+
         # Order by date descending
         query = query.order_by(ExpenseModel.date.desc())
-        
+
         result = await self.db.execute(query)
         return result.scalars().all()
 
@@ -135,7 +161,7 @@ class BudgetRepository:
     async def create_or_update(self, budget_data: BudgetCreate) -> BudgetModel:
         """Create or update a budget."""
         existing = await self.get_by_category(budget_data.category)
-        
+
         if existing:
             # Update existing budget
             result = await self.db.execute(
@@ -151,14 +177,16 @@ class BudgetRepository:
             db_budget = BudgetModel(
                 category=budget_data.category,
                 limit_amount=budget_data.limit,
-                spent_amount=0.0
+                spent_amount=0.0,
             )
             self.db.add(db_budget)
             await self.db.commit()
             await self.db.refresh(db_budget)
             return db_budget
 
-    async def update_spent_amount(self, category: str, spent_amount: float) -> Optional[BudgetModel]:
+    async def update_spent_amount(
+        self, category: str, spent_amount: float
+    ) -> Optional[BudgetModel]:
         """Update spent amount for a budget."""
         result = await self.db.execute(
             update(BudgetModel)
@@ -195,7 +223,7 @@ class InsightRepository:
             title=insight_data.title,
             message=insight_data.message,
             type=insight_data.type,
-            actionable=insight_data.actionable
+            actionable=insight_data.actionable,
         )
         self.db.add(db_insight)
         await self.db.commit()
@@ -210,15 +238,15 @@ class InsightRepository:
                 title=insight_data.title,
                 message=insight_data.message,
                 type=insight_data.type,
-                actionable=insight_data.actionable
+                actionable=insight_data.actionable,
             )
             db_insights.append(db_insight)
             self.db.add(db_insight)
-        
+
         await self.db.commit()
         for insight in db_insights:
             await self.db.refresh(insight)
-        
+
         return db_insights
 
     async def delete_all(self) -> int:
@@ -250,24 +278,22 @@ class UserRepository:
 
     async def get_by_id(self, user_id: int) -> Optional[UserModel]:
         """Get user by ID."""
-        result = await self.db.execute(
-            select(UserModel).where(UserModel.id == user_id)
-        )
+        result = await self.db.execute(select(UserModel).where(UserModel.id == user_id))
         return result.scalar_one_or_none()
 
     async def create(self, user_data: UserCreate) -> UserModel:
         """Create a new user."""
         hashed_password = get_password_hash(user_data.password)
-        
+
         db_user = UserModel(
             email=user_data.email,
             username=user_data.username,
             full_name=user_data.full_name,
             hashed_password=hashed_password,
             is_active=True,
-            is_verified=False
+            is_verified=False,
         )
-        
+
         self.db.add(db_user)
         await self.db.commit()
         await self.db.refresh(db_user)
@@ -276,14 +302,16 @@ class UserRepository:
     async def update(self, user_id: int, user_data: UserUpdate) -> Optional[UserModel]:
         """Update a user."""
         update_data = user_data.dict(exclude_unset=True)
-        
+
         # Hash password if provided
         if "password" in update_data:
-            update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
-        
+            update_data["hashed_password"] = get_password_hash(
+                update_data.pop("password")
+            )
+
         if not update_data:
             return await self.get_by_id(user_id)
-        
+
         result = await self.db.execute(
             update(UserModel)
             .where(UserModel.id == user_id)
@@ -295,9 +323,7 @@ class UserRepository:
 
     async def delete(self, user_id: int) -> bool:
         """Delete a user."""
-        result = await self.db.execute(
-            delete(UserModel).where(UserModel.id == user_id)
-        )
+        result = await self.db.execute(delete(UserModel).where(UserModel.id == user_id))
         await self.db.commit()
         return result.rowcount > 0
 
@@ -334,27 +360,32 @@ class UploadHistoryRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create(self, user_id: int, filename: str, file_size: int, status: UploadStatus = UploadStatus.PROCESSING) -> UploadHistoryModel:
+    async def create(
+        self,
+        user_id: int,
+        filename: str,
+        file_size: int,
+        status: UploadStatus = UploadStatus.PROCESSING,
+    ) -> UploadHistoryModel:
         """Create a new upload history record."""
         db_upload = UploadHistoryModel(
-            user_id=user_id,
-            filename=filename,
-            file_size=file_size,
-            status=status
+            user_id=user_id, filename=filename, file_size=file_size, status=status
         )
         self.db.add(db_upload)
         await self.db.commit()
         await self.db.refresh(db_upload)
         return db_upload
 
-    async def update_status(self, upload_id: int, status: UploadStatus, error_message: Optional[str] = None) -> Optional[UploadHistoryModel]:
+    async def update_status(
+        self, upload_id: int, status: UploadStatus, error_message: Optional[str] = None
+    ) -> Optional[UploadHistoryModel]:
         """Update upload status and optional error message."""
         result = await self.db.execute(
             update(UploadHistoryModel)
             .where(UploadHistoryModel.id == upload_id)
             .values(status=status, error_message=error_message)
         )
-        
+
         if result.rowcount > 0:
             await self.db.commit()
             return await self.get_by_id(upload_id)
@@ -391,34 +422,44 @@ class IntegrationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_user_and_type(self, user_id: int, integration_type: IntegrationType) -> Optional[IntegrationModel]:
+    async def get_by_user_and_type(
+        self, user_id: int, integration_type: IntegrationType
+    ) -> Optional[IntegrationModel]:
         """Get integration by user and type (returns first one found)."""
         result = await self.db.execute(
             select(IntegrationModel).where(
                 IntegrationModel.user_id == user_id,
-                IntegrationModel.integration_type == integration_type
+                IntegrationModel.integration_type == integration_type,
             )
         )
         return result.scalar_one_or_none()
-    
-    async def get_by_access_token(self, access_token: str) -> Optional[IntegrationModel]:
+
+    async def get_by_access_token(
+        self, access_token: str
+    ) -> Optional[IntegrationModel]:
         """Get integration by access token (link_id for Belvo)."""
         result = await self.db.execute(
-            select(IntegrationModel).where(IntegrationModel.access_token == access_token)
+            select(IntegrationModel).where(
+                IntegrationModel.access_token == access_token
+            )
         )
         return result.scalar_one_or_none()
-    
-    async def get_all_by_user_and_type(self, user_id: int, integration_type: IntegrationType) -> List[IntegrationModel]:
+
+    async def get_all_by_user_and_type(
+        self, user_id: int, integration_type: IntegrationType
+    ) -> List[IntegrationModel]:
         """Get all integrations by user and type."""
         result = await self.db.execute(
             select(IntegrationModel).where(
                 IntegrationModel.user_id == user_id,
-                IntegrationModel.integration_type == integration_type
+                IntegrationModel.integration_type == integration_type,
             )
         )
         return result.scalars().all()
 
-    async def create(self, user_id: int, integration_data: IntegrationCreate) -> IntegrationModel:
+    async def create(
+        self, user_id: int, integration_data: IntegrationCreate
+    ) -> IntegrationModel:
         """Create a new integration."""
         db_integration = IntegrationModel(
             user_id=user_id,
@@ -436,14 +477,16 @@ class IntegrationRepository:
         await self.db.refresh(db_integration)
         return db_integration
 
-    async def update(self, integration_id: int, update_data: IntegrationUpdate) -> Optional[IntegrationModel]:
+    async def update(
+        self, integration_id: int, update_data: IntegrationUpdate
+    ) -> Optional[IntegrationModel]:
         """Update an integration."""
         update_dict = update_data.model_dump(exclude_unset=True)
-        
+
         # Remove metadata from update_dict as it's not stored in database
         if 'metadata' in update_dict:
             update_dict.pop('metadata')
-        
+
         if not update_dict:
             return await self.get_by_id(integration_id)
 
@@ -469,7 +512,7 @@ class IntegrationRepository:
         result = await self.db.execute(
             select(IntegrationModel).where(
                 IntegrationModel.user_id == user_id,
-                IntegrationModel.status == IntegrationStatus.CONNECTED
+                IntegrationModel.status == IntegrationStatus.CONNECTED,
             )
         )
         return result.scalars().all()
@@ -482,24 +525,26 @@ class IntegrationRepository:
 
 class BelvoInstitutionRepository:
     """Repository for managing Belvo institutions."""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def get_by_belvo_id(self, belvo_id: int) -> Optional[BelvoInstitutionModel]:
         """Get institution by Belvo ID."""
         result = await self.db.execute(
-            select(BelvoInstitutionModel).where(BelvoInstitutionModel.belvo_id == belvo_id)
+            select(BelvoInstitutionModel).where(
+                BelvoInstitutionModel.belvo_id == belvo_id
+            )
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_code(self, code: str) -> Optional[BelvoInstitutionModel]:
         """Get institution by code."""
         result = await self.db.execute(
             select(BelvoInstitutionModel).where(BelvoInstitutionModel.code == code)
         )
         return result.scalar_one_or_none()
-    
+
     async def get_by_country(self, country_code: str) -> List[BelvoInstitutionModel]:
         """Get all institutions for a specific country."""
         result = await self.db.execute(
@@ -508,15 +553,17 @@ class BelvoInstitutionRepository:
             .order_by(BelvoInstitutionModel.display_name)
         )
         return result.scalars().all()
-    
+
     async def get_all(self) -> List[BelvoInstitutionModel]:
         """Get all institutions."""
         result = await self.db.execute(
             select(BelvoInstitutionModel).order_by(BelvoInstitutionModel.display_name)
         )
         return result.scalars().all()
-    
-    async def create(self, institution_data: BelvoInstitutionCreate) -> BelvoInstitutionModel:
+
+    async def create(
+        self, institution_data: BelvoInstitutionCreate
+    ) -> BelvoInstitutionModel:
         """Create a new institution."""
         db_institution = BelvoInstitutionModel(
             belvo_id=institution_data.belvo_id,
@@ -531,20 +578,22 @@ class BelvoInstitutionRepository:
             logo=institution_data.logo,
             icon_logo=institution_data.icon_logo,
             text_logo=institution_data.text_logo,
-            website=institution_data.website
+            website=institution_data.website,
         )
         self.db.add(db_institution)
         await self.db.commit()
         await self.db.refresh(db_institution)
         return db_institution
-    
-    async def update(self, belvo_id: int, update_data: BelvoInstitutionUpdate) -> Optional[BelvoInstitutionModel]:
+
+    async def update(
+        self, belvo_id: int, update_data: BelvoInstitutionUpdate
+    ) -> Optional[BelvoInstitutionModel]:
         """Update an institution."""
         update_dict = update_data.model_dump(exclude_unset=True)
-        
+
         if not update_dict:
             return await self.get_by_belvo_id(belvo_id)
-        
+
         result = await self.db.execute(
             update(BelvoInstitutionModel)
             .where(BelvoInstitutionModel.belvo_id == belvo_id)
@@ -553,17 +602,13 @@ class BelvoInstitutionRepository:
         )
         await self.db.commit()
         return result.scalar_one_or_none()
-    
+
     async def count(self) -> int:
         """Get total count of institutions."""
-        result = await self.db.execute(
-            select(func.count(BelvoInstitutionModel.id))
-        )
+        result = await self.db.execute(select(func.count(BelvoInstitutionModel.id)))
         return result.scalar()
-    
+
     async def get_existing_belvo_ids(self) -> List[int]:
         """Get list of all existing Belvo IDs to avoid duplicates."""
-        result = await self.db.execute(
-            select(BelvoInstitutionModel.belvo_id)
-        )
+        result = await self.db.execute(select(BelvoInstitutionModel.belvo_id))
         return [row[0] for row in result.fetchall()]

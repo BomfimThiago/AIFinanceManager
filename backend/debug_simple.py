@@ -4,7 +4,6 @@ Simple debug script for the Finance Dashboard backend.
 This script can be used to run the FastAPI server with debugging enabled.
 """
 
-import uvicorn
 import os
 from pathlib import Path
 
@@ -12,15 +11,16 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 os.chdir(backend_dir)
 
-# Import the FastAPI app
-from app.main import app
+import uvicorn  # noqa: E402
+
+from app.main import app  # noqa: E402
 
 if __name__ == "__main__":
     print("Starting Finance Dashboard Backend in Debug Mode...")
     print(f"Working directory: {os.getcwd()}")
     print("Server will be available at: http://localhost:8001")
     print("API docs will be available at: http://localhost:8001/docs")
-    
+
     # Run the server with debug settings
     uvicorn.run(
         "app.main:app",

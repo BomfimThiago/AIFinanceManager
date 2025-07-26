@@ -1,6 +1,7 @@
-from typing import Optional, List, Literal, Dict
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Dict, List, Literal, Optional
+
+from pydantic import BaseModel
 
 
 class ExpenseBase(BaseModel):
@@ -15,7 +16,9 @@ class ExpenseBase(BaseModel):
     # Multi-currency support
     original_currency: Optional[str] = "EUR"  # Currency of the original amount
     amounts: Optional[Dict[str, float]] = None  # Amounts in all supported currencies
-    exchange_rates: Optional[Dict[str, float]] = None  # Exchange rates at time of creation
+    exchange_rates: Optional[Dict[str, float]] = (
+        None  # Exchange rates at time of creation
+    )
     exchange_date: Optional[str] = None  # Date when exchange rates were captured
 
 

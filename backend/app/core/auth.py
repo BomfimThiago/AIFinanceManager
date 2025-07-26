@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Optional, Union
+
+from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
@@ -29,12 +30,12 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
-    
+
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -58,14 +59,14 @@ def get_token_data(token: str) -> dict:
     payload = verify_token(token)
     user_id_str = payload.get("sub")
     email: str = payload.get("email")
-    
+
     if user_id_str is None or email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     try:
         # Convert string user_id back to integer for database query
         user_id = int(user_id_str)
@@ -75,5 +76,5 @@ def get_token_data(token: str) -> dict:
             detail="Invalid token format",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return {"user_id": user_id, "email": email}

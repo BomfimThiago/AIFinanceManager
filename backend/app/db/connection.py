@@ -1,11 +1,11 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
-from typing import AsyncGenerator
 import os
+from typing import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from ..core.config import settings
 from .base import Base
-
 
 # Create async engine
 engine = create_async_engine(
