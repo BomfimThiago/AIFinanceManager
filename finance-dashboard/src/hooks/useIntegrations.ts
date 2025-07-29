@@ -100,7 +100,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
   const fetchConnectedIntegrations = useCallback(async () => {
     try {
       setError(null);
-      const response = await fetch('/api/belvo/integrations', {
+      const response = await fetch('/api/integrations/belvo/integrations', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         }
@@ -125,7 +125,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
 
   const syncIntegration = useCallback(async (integrationId: number) => {
     try {
-      const response = await fetch(`/api/belvo/sync/${integrationId}`, {
+      const response = await fetch(`/api/integrations/belvo/sync/${integrationId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -159,7 +159,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
     try {
       setConfirmationState(prev => ({ ...prev, isLoading: true }));
       
-      const response = await fetch(`/api/belvo/integrations/${integrationId}`, {
+      const response = await fetch(`/api/integrations/belvo/integrations/${integrationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -220,7 +220,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
     try {
       setConfirmationState(prev => ({ ...prev, isLoading: true }));
       
-      const response = await fetch(`/api/belvo/integrations/${integrationId}/sync-transactions`, {
+      const response = await fetch(`/api/integrations/belvo/integrations/${integrationId}/sync-transactions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

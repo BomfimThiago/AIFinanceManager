@@ -22,6 +22,7 @@ The development server runs on http://localhost:5173
 cd backend
 uv sync              # Install dependencies with uv
 uv run python run.py # Start FastAPI server
+./scripts/lint.sh    # Run linter and formatter (Ruff)
 ```
 
 The backend server runs on http://localhost:8001
@@ -39,6 +40,8 @@ Create `.env` file in `backend/` directory:
 ```env
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+ENVIRONMENT=development
+DATABASE_URL=postgresql://user:password@localhost:5432/finance_db
 ```
 
 ## Architecture Overview
@@ -64,6 +67,7 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **Belvo API** for bank integrations and transaction data in Latin America
 - **aiohttp** for async HTTP requests
 - **uv** for Python dependency management
+- **Ruff** for code linting and formatting
 
 ### Application Structure
 
@@ -76,13 +80,20 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **Type Safety**: Full TypeScript coverage with interfaces and proper typing
 
 #### Backend
-- **FastAPI Structure**: Organized into api/, models/, services/, utils/, db/, and core/
-- **API Endpoints**: RESTful endpoints for expenses, budgets, AI insights, authentication, upload history, and currency conversion
-- **Database Layer**: Repository pattern with SQLAlchemy models and Alembic migrations
-- **Authentication**: JWT-based authentication with user management and protected routes
-- **Currency Service**: Real-time exchange rates with historical rate freezing
-- **AI Service**: Centralized AI processing service using Anthropic Claude with currency detection
-- **Data Models**: Pydantic models for request/response validation with multi-currency support
+- **Modular Structure**: Organized using `src/` package with domain modules:
+  - `src/auth/` - Authentication (JWT, users, permissions)
+  - `src/expenses/` - Expense management and processing
+  - `src/budgets/` - Budget tracking and calculations
+  - `src/insights/` - AI-powered financial insights
+  - `src/integrations/` - Bank integration system (Belvo)
+  - `src/currency/` - Multi-currency support and conversion
+  - `src/shared/` - Shared models, constants, and utilities
+  - `src/database/` - Database configuration and connection
+- **API Layer**: RESTful endpoints with proper HTTP status codes and error handling
+- **Repository Pattern**: Clean separation between data access and business logic
+- **Authentication**: JWT-based authentication with dependency injection
+- **Environment-based Configuration**: Development vs production settings
+- **Code Quality**: Ruff linting and formatting with comprehensive rules
 
 ### Core Features
 
@@ -195,6 +206,47 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **Type Safety**: Full TypeScript frontend and Pydantic backend validation
 - **Development Experience**: Hot reload, automatic type checking, and modern tooling
 - **Code Quality**: ESLint, TypeScript strict mode, and consistent code formatting
+
+### Backend Coding Standards & Best Practices
+
+#### Code Organization
+- **Absolute Imports**: Always use `from src.module` instead of relative imports
+- **Domain Modules**: Group related functionality (auth, expenses, budgets, etc.)
+- **Separation of Concerns**: Models, schemas, repositories, and services in separate files
+- **Dependency Injection**: Use FastAPI's dependency system for database sessions and auth
+
+#### Code Quality Tools
+- **Ruff**: Primary linter and formatter - run `./scripts/lint.sh` before commits
+- **Type Hints**: All functions must have proper type annotations
+- **Pydantic Models**: Use for all API request/response validation
+- **Docstrings**: Document all public functions and classes
+
+#### Database Practices
+- **Async Operations**: Always use `AsyncSession` for database operations
+- **Repository Pattern**: Separate data access logic from business logic
+- **Migrations**: Use Alembic for all schema changes with proper naming conventions
+- **Connection Management**: Proper session handling with context managers
+
+#### Migration Standards
+- **Naming Convention**: Use `YYYY-MM-DD_descriptive_slug.py` format (e.g., `2025-01-29_add_user_preferences.py`)
+- **Static & Revertable**: Migrations must be static and fully revertable
+- **Descriptive Names**: Use clear, descriptive slugs that explain the changes
+- **Data Independence**: If migrations depend on dynamic data, only the data should be dynamic, not the structure
+- **Generation Command**: `uv run alembic revision --autogenerate -m "descriptive_slug"`
+
+#### API Design
+- **HTTP Status Codes**: Use appropriate status codes (200, 201, 400, 401, 404, 500)
+- **Error Responses**: Consistent error format with proper error messages
+- **Request/Response Models**: Pydantic schemas for all endpoints
+- **OpenAPI Documentation**: Proper endpoint descriptions and examples
+- **Environment Configuration**: Show docs only in development mode
+
+#### Security
+- **Authentication**: JWT tokens with proper expiration and validation
+- **Password Hashing**: bcrypt for password storage
+- **CORS Configuration**: Proper CORS settings for frontend integration
+- **Input Validation**: Validate all inputs using Pydantic models
+- **Error Messages**: Don't expose sensitive information in error responses
 
 ### Database Schema
 

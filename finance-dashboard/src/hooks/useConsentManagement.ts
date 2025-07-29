@@ -95,7 +95,7 @@ export const useConsentManagement = () => {
 
     try {
       const response = await apiRequest<ConsentManagementResponse>(
-        '/api/belvo/consent-management',
+        '/api/integrations/belvo/consent-management',
         {
           method: 'POST',
           body: JSON.stringify(request),
@@ -120,7 +120,7 @@ export const useConsentManagement = () => {
 
     try {
       const response = await apiRequest<ConsentRenewalResponse>(
-        '/api/belvo/consent-renewal',
+        '/api/integrations/belvo/consent-renewal',
         {
           method: 'POST',
           body: JSON.stringify(request),

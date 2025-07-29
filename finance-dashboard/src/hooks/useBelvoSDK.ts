@@ -53,7 +53,7 @@ export const useBelvoSDK = () => {
   }, []);
 
   const getAccessToken = async (): Promise<string> => {
-    const response = await fetch('/api/belvo/widget-token', {
+    const response = await fetch('/api/integrations/belvo/widget-token', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

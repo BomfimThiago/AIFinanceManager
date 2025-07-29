@@ -221,7 +221,11 @@ export const generateAIInsights = async (_expenses: Expense[], _budgets: Budgets
 
 // Currency API functions
 export const getCurrencies = async (): Promise<CurrencyInfo> => {
-  return apiRequest<CurrencyInfo>('/api/currencies');
+  const response = await apiRequest<{currencies: Record<string, {name: string, symbol: string, flag: string, code: string}>}>('/api/currencies');
+  return {
+    currencies: response.currencies,
+    supported: Object.keys(response.currencies)
+  };
 };
 
 export const getExchangeRates = async (): Promise<ExchangeRates> => {
@@ -231,21 +235,43 @@ export const getExchangeRates = async (): Promise<ExchangeRates> => {
 // Authentication API calls
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthToken> => {
-    const response = await apiRequest<AuthToken>('/api/auth/login-json', {
+    const response = await apiRequest<any>('/api/auth/login', {
       method: 'POST', 
       body: JSON.stringify(credentials),
     });
-    setAuthToken(response.access_token);
-    return response;
+    
+    // Handle new auth response structure
+    if (response.success && response.token) {
+      setAuthToken(response.token.access_token);
+      return {
+        access_token: response.token.access_token,
+        refresh_token: response.token.refresh_token,
+        token_type: response.token.token_type,
+        expires_in: response.token.expires_in,
+        user: response.token.user
+      };
+    }
+    throw new Error(response.message || 'Login failed');
   },
 
   signup: async (credentials: SignupCredentials): Promise<AuthToken> => {
-    const response = await apiRequest<AuthToken>('/api/auth/signup', {
+    const response = await apiRequest<any>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify(credentials),
+      body: JSON.stringify({
+        ...credentials,
+        terms_accepted: true
+      }),
     });
-    setAuthToken(response.access_token);
-    return response;
+    
+    // Handle new auth response structure
+    if (response.success && response.user) {
+      // For registration, we need to login separately
+      return await authApi.login({
+        email: credentials.email,
+        password: credentials.password
+      });
+    }
+    throw new Error(response.message || 'Registration failed');
   },
 
   logout: (): void => {
@@ -255,9 +281,10 @@ export const authApi = {
   getCurrentUser: (): Promise<User> =>
     apiRequest<User>('/api/auth/me'),
 
-  refreshToken: (): Promise<AuthToken> =>
+  refreshToken: (refreshToken: string): Promise<AuthToken> =>
     apiRequest<AuthToken>('/api/auth/refresh', {
       method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken }),
     }),
 };
 

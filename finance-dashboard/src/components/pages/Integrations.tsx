@@ -44,45 +44,19 @@ const Integrations: React.FC = () => {
       }
       
       // Send link data to backend
-      const response = await fetch('/api/belvo/save-connection', {
+      // Note: The Belvo callback provides link (string) and institution (string name)
+      const response = await fetch('/api/integrations/belvo/save-connection', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          link_id: link,
+          link_id: link,  // This is the Belvo link ID
           institution: {
-            // Core identification (from Belvo institution structure)
-            id: institution.id,
-            name: institution.name,
-            display_name: institution.display_name,
-            code: institution.code,
-            
-            // Visual branding
-            logo: institution.logo,
-            icon_logo: institution.icon_logo,
-            text_logo: institution.text_logo,
-            primary_color: institution.primary_color,
-            
-            // Geographic info
-            country_code: institution.country_code,
-            country_codes: institution.country_codes,
-            
-            // Technical details
-            type: institution.type,
-            website: institution.website,
-            status: institution.status,
-            integration_type: institution.integration_type,
-            
-            // Capabilities
-            resources: institution.resources,
-            features: institution.features,
-            form_fields: institution.form_fields,
-            openbanking_information: institution.openbanking_information,
-            
-            // Store the complete original data
-            raw_data: institution
+            raw_data: institution,  // This is the institution name string from Belvo
+            name: institution,      // Use the institution name
+            id: link               // Use link_id as fallback ID
           }
         })
       });

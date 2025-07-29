@@ -11,14 +11,16 @@ from sqlalchemy import pool  # noqa: E402
 from sqlalchemy.engine import Connection  # noqa: E402
 from sqlalchemy.ext.asyncio import async_engine_from_config  # noqa: E402
 
-from app.core.config import settings  # noqa: E402
-from app.db.base import Base  # noqa: E402
-from app.db.models import (  # noqa: E402
-    BudgetModel,
-    ExpenseModel,
-    InsightModel,
-    UserModel,
-)
+from src.config import settings  # noqa: E402
+from src.database import Base  # noqa: E402
+
+# Import all models to ensure they are registered with Base.metadata
+from src.integrations.models import Integration, ConnectedAccount, SyncLog  # noqa: E402
+# TODO: Import other module models when created
+# from src.auth.models import User  # noqa: E402
+# from src.expenses.models import Expense  # noqa: E402
+# from src.budgets.models import Budget  # noqa: E402
+# from src.insights.models import Insight  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -41,7 +43,7 @@ target_metadata = Base.metadata
 
 def get_url():
     """Get database URL from settings."""
-    return settings.DATABASE_URL
+    return str(settings.DATABASE_URL)
 
 
 def run_migrations_offline() -> None:
