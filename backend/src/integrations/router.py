@@ -7,13 +7,16 @@ including provider connections, transaction sync, and webhook processing.
 
 import json
 import logging
-from datetime import datetime
+import urllib.parse
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.expenses.repository import ExpenseRepository
+from src.expenses.schemas import ExpenseUpdate
 from src.integrations.dependencies import (
     get_current_user_id,
     get_integration_service,
@@ -30,8 +33,11 @@ from src.integrations.schemas import (
     ConsentRenewalRequest,
     IntegrationCreate,
     IntegrationFilter,
+    SyncRequest,
 )
 from src.integrations.service import IntegrationService
+from src.services.belvo_service import belvo_service
+from src.services.webhook_logger import webhook_logger
 from src.shared.constants import IntegrationProvider, IntegrationStatus
 from src.shared.dependencies import get_db
 from src.shared.models import (
@@ -92,9 +98,7 @@ def integration_to_dict(integration: Integration) -> dict:
 async def get_belvo_widget_token(user_id: Annotated[int, Depends(get_current_user_id)]):
     """Generate Belvo widget access token for bank account connection."""
     try:
-        # Import Belvo service from the old structure for now
-        # TODO: Refactor to use new service structure
-        from src.services.belvo_service import belvo_service
+        # Using belvo_service imported at module level
 
         # Generate external_id for tracking this user's request
         external_id = f"user_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -116,7 +120,7 @@ async def get_belvo_widget_token(user_id: Annotated[int, Depends(get_current_use
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate widget token: {e!s}",
-        )
+        ) from e
 
 
 @router.post(
@@ -240,7 +244,7 @@ async def save_belvo_connection(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save connection: {e!s}",
-        )
+        ) from e
 
 
 @router.post(
@@ -268,8 +272,7 @@ async def belvo_webhook(request: Request, db: Annotated[AsyncSession, Depends(ge
         external_id = payload.get("external_id", "")
         data = payload.get("data", {})
 
-        # Import webhook logger
-        from src.services.webhook_logger import webhook_logger
+        # Using webhook_logger imported at module level
 
         # Log all webhooks received
         webhook_logger.log_webhook_received(
@@ -386,7 +389,7 @@ async def belvo_webhook(request: Request, db: Annotated[AsyncSession, Depends(ge
             and "webhook_code" in locals()
             and "link_id" in locals()
         ):
-            from src.services.webhook_logger import webhook_logger
+            # Using webhook_logger imported at module level
 
             webhook_logger.log_webhook_error(webhook_type, webhook_code, link_id, e)
         # Return 202 even for errors to prevent retries
@@ -499,7 +502,7 @@ async def get_belvo_integrations(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get Belvo integrations: {e!s}",
-        )
+        ) from e
 
 
 @router.post(
@@ -528,7 +531,7 @@ async def sync_belvo_integration(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sync failed: {e!s}",
-        )
+        ) from e
 
 
 @router.delete(
@@ -569,7 +572,7 @@ async def delete_belvo_integration(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete integration: {e!s}",
-        )
+        ) from e
 
 
 @router.post(
@@ -591,7 +594,7 @@ async def sync_belvo_transactions(
 ):
     """Synchronize transaction data from a specific Belvo bank integration."""
     try:
-        from src.integrations.schemas import SyncRequest
+        # Using SyncRequest imported at module level
 
         sync_request = SyncRequest(sync_type="incremental", data_types=["transactions"])
         result = await service.sync_integration(
@@ -603,7 +606,7 @@ async def sync_belvo_transactions(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Transaction sync failed for {integration.institution_name}: {e!s}",
-        )
+        ) from e
 
 
 @router.post(
@@ -624,7 +627,7 @@ async def get_consent_management_url(
 ) -> ConsentManagementUrlResponse:
     """Generate a secure URL for users to access the Belvo consent management portal."""
     try:
-        from src.services.belvo_service import belvo_service
+        # Using belvo_service imported at module level
 
         logger.info(f"Generating consent management URL for user {user_id}")
 
@@ -656,7 +659,7 @@ async def get_consent_management_url(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate consent management URL",
-        )
+        ) from e
 
 
 @router.post(
@@ -677,9 +680,7 @@ async def get_consent_renewal_url(
 ) -> ConsentRenewalUrlResponse:
     """Generate a secure URL for users to renew expired Belvo bank consents."""
     try:
-        import urllib.parse
-
-        from src.services.belvo_service import belvo_service
+        # Using urllib.parse and belvo_service imported at module level
 
         logger.info(
             f"Generating consent renewal URL for user {user_id}, consent {request.consent_id}"
@@ -724,7 +725,7 @@ async def get_consent_renewal_url(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate consent renewal URL",
-        )
+        ) from e
 
 
 # Webhook Handler Functions
@@ -734,33 +735,70 @@ async def get_consent_renewal_url(
 async def handle_historical_update_webhook(
     webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
 ):
-    """Handle historical_update webhook by fetching data from Belvo."""
-    from src.services.belvo_service import belvo_service
-    from src.services.webhook_logger import webhook_logger
+    """Handle historical_update webhook by fetching and saving all transactions."""
+    # Using belvo_service and webhook_logger imported at module level
 
     try:
         if webhook_type == "TRANSACTIONS":
             logger.info(f"Processing historical TRANSACTIONS update for link {link_id}")
             webhook_logger.log_transaction_summary(link_id, 0, webhook_data)
 
-            # Fetch all transactions using GET request as per async workflow
-            transactions = await belvo_service.get_all_transactions_paginated(link_id)
-            logger.info(f"Fetched {len(transactions)} transactions from Belvo")
+            # Extract date range from webhook data if available
+            total_transactions = webhook_data.get("total_transactions", 0)
+            first_transaction_date = webhook_data.get("first_transaction_date")
+            last_transaction_date = webhook_data.get("last_transaction_date")
+
+            logger.info("Historical update details:")
+            logger.info(f"  Total transactions: {total_transactions}")
+            logger.info(f"  Date range: {first_transaction_date} to {last_transaction_date}")
+
+            # Fetch all transactions for the link with optional date range filtering
+            transactions = await belvo_service.get_all_transactions_paginated(
+                link_id,
+                date_from=first_transaction_date,
+                date_to=last_transaction_date
+            )
+            logger.info(f"Fetched {len(transactions)} transactions from Belvo API")
             webhook_logger.log_transaction_summary(
                 link_id, len(transactions), webhook_data
             )
 
-            # Convert to expenses (filter out income) - but don't save yet, just log
+            # Convert to expenses (includes both income and expenses)
             expenses = await belvo_service.convert_to_expenses(transactions)
             logger.info(f"Converted {len(expenses)} transactions to expenses")
 
-            # TODO: Save expenses to database when ready
-            # For now, just log the processing result
+            # Save expenses to database with duplicate checking
+            # Using ExpenseRepository imported at module level
+            expense_repo = ExpenseRepository(db)
+
+            created_count = 0
+            skipped_count = 0
+            error_count = 0
+
+            for expense_data in expenses:
+                try:
+                    # Check if transaction already exists to avoid duplicates
+                    if expense_data.transaction_id and await expense_repo.transaction_id_exists(expense_data.transaction_id):
+                        skipped_count += 1
+                        logger.debug(f"Skipping duplicate transaction {expense_data.transaction_id}")
+                        continue
+
+                    await expense_repo.create(expense_data)
+                    created_count += 1
+                except Exception as e:
+                    error_count += 1
+                    logger.warning(f"Failed to save expense: {e}")
+
             processing_result = {
                 "webhook_type": "historical_update",
+                "total_transactions_reported": total_transactions,
                 "transactions_fetched": len(transactions),
                 "expenses_converted": len(expenses),
-                "action": "logged_only_not_saved",
+                "expenses_created": created_count,
+                "expenses_skipped": skipped_count,
+                "expenses_errors": error_count,
+                "date_range": f"{first_transaction_date} to {last_transaction_date}",
+                "action": "historical_transactions_saved_to_database",
             }
 
             webhook_logger.log_webhook_processed(
@@ -768,13 +806,13 @@ async def handle_historical_update_webhook(
             )
 
             # Update integration last sync time
-            integration.last_sync_at = datetime.now(timezone.utc)
-            integration.last_successful_sync_at = datetime.now(timezone.utc)
+            integration.last_sync_at = datetime.now(UTC)
+            integration.last_successful_sync_at = datetime.now(UTC)
             db.add(integration)
             await db.commit()
 
             logger.info(
-                f"Historical update processed: {len(expenses)} expenses converted (not saved)"
+                f"✅ Historical update processed: {created_count} expenses created, {skipped_count} skipped, {error_count} errors"
             )
 
         else:
@@ -805,32 +843,57 @@ async def handle_new_transactions_webhook(
     webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
 ):
     """Handle new_transactions_available webhook for recurrent links."""
-    from src.services.belvo_service import belvo_service
-    from src.services.webhook_logger import webhook_logger
+    # Using belvo_service and webhook_logger imported at module level
 
     try:
         new_count = webhook_data.get("new_transactions", 0)
+        new_transaction_ids = webhook_data.get("new_transaction_ids", [])
         logger.info(
             f"📈 New transactions available: {new_count} transactions for link {link_id}"
         )
+        logger.info(f"   📋 New transaction IDs: {new_transaction_ids}")
 
-        if new_count > 0:
-            # Fetch all transactions using GET request (as per async workflow)
-            transactions = await belvo_service.get_all_transactions_paginated(link_id)
-            logger.info(f"Fetched {len(transactions)} total transactions")
+        if new_count > 0 and new_transaction_ids:
+            # Fetch only the specific new transactions by their IDs
+            transactions = await belvo_service.get_transactions_by_ids(new_transaction_ids)
+            logger.info(f"Fetched {len(transactions)} specific new transactions from Belvo API")
 
             # Convert to expenses
             expenses = await belvo_service.convert_to_expenses(transactions)
-            logger.info(f"Converted {len(expenses)} transactions to expenses")
+            logger.info(f"Converted {len(expenses)} new transactions to expenses")
 
-            # TODO: Save new expenses to database when ready
-            # For now, just log the processing result
+            # Save expenses to database
+            # Using ExpenseRepository imported at module level
+            expense_repo = ExpenseRepository(db)
+
+            created_count = 0
+            skipped_count = 0
+            error_count = 0
+
+            for expense_data in expenses:
+                try:
+                    # Check if transaction already exists to avoid duplicates
+                    if expense_data.transaction_id and await expense_repo.transaction_id_exists(expense_data.transaction_id):
+                        skipped_count += 1
+                        logger.debug(f"Skipping duplicate transaction {expense_data.transaction_id}")
+                        continue
+
+                    await expense_repo.create(expense_data)
+                    created_count += 1
+                except Exception as e:
+                    error_count += 1
+                    logger.warning(f"Failed to save expense: {e}")
+
             processing_result = {
                 "webhook_type": "new_transactions_available",
                 "new_transactions_reported": new_count,
+                "new_transaction_ids": new_transaction_ids,
                 "transactions_fetched": len(transactions),
                 "expenses_converted": len(expenses),
-                "action": "logged_only_not_saved",
+                "expenses_created": created_count,
+                "expenses_skipped": skipped_count,
+                "expenses_errors": error_count,
+                "action": "new_transactions_saved_to_database",
             }
 
             webhook_logger.log_webhook_processed(
@@ -838,19 +901,20 @@ async def handle_new_transactions_webhook(
             )
 
             # Update integration last sync time
-            integration.last_sync_at = datetime.now(timezone.utc)
-            integration.last_successful_sync_at = datetime.now(timezone.utc)
+            integration.last_sync_at = datetime.now(UTC)
+            integration.last_successful_sync_at = datetime.now(UTC)
             db.add(integration)
             await db.commit()
 
             logger.info(
-                f"✅ New transactions processed: {len(expenses)} expenses converted (not saved)"
+                f"✅ New transactions processed: {created_count} expenses created, {skipped_count} skipped, {error_count} errors"
             )
         else:
             logger.info("ℹ️ No new transactions to process")
             processing_result = {
                 "webhook_type": "new_transactions_available",
-                "new_transactions_reported": 0,
+                "new_transactions_reported": new_count,
+                "new_transaction_ids": new_transaction_ids,
                 "action": "no_transactions_to_process",
             }
             webhook_logger.log_webhook_processed(
@@ -870,11 +934,10 @@ async def handle_new_transactions_webhook(
 
 
 async def handle_transactions_updated_webhook(
-    webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
+    webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession  # noqa: ARG001
 ):
     """Handle transactions_updated webhook."""
-    from src.services.belvo_service import belvo_service
-    from src.services.webhook_logger import webhook_logger
+    # Using belvo_service and webhook_logger imported at module level
 
     try:
         count = webhook_data.get("count", 0)
@@ -886,15 +949,59 @@ async def handle_transactions_updated_webhook(
         logger.info(f"   📋 Updated transaction IDs: {updated_ids}")
 
         if count > 0 and updated_ids:
-            # Note: We could implement specific update logic here
-            # For now, we'll re-fetch all transactions to ensure consistency
-            transactions = await belvo_service.get_all_transactions_paginated(link_id)
+            # Fetch specific updated transactions by their IDs
+            transactions = await belvo_service.get_transactions_by_ids(updated_ids)
             logger.info(
-                f"Re-fetched {len(transactions)} transactions to handle updates"
+                f"Fetched {len(transactions)} specific updated transactions"
             )
 
-            # Convert and process (but don't save yet)
+            # Convert to expenses
             expenses = await belvo_service.convert_to_expenses(transactions)
+            logger.info(f"Converted {len(expenses)} updated transactions to expenses")
+
+            # Update existing expenses or create new ones
+            # Using ExpenseRepository imported at module level
+            expense_repo = ExpenseRepository(db)
+
+            updated_count = 0
+            created_count = 0
+            error_count = 0
+
+            for expense_data in expenses:
+                try:
+                    if expense_data.transaction_id:
+                        # Try to update existing expense
+                        existing_expense = await expense_repo.get_by_transaction_id(expense_data.transaction_id)
+                        if existing_expense:
+                            # Update existing expense
+                            # Using ExpenseUpdate imported at module level
+                            update_data = ExpenseUpdate(
+                                date=expense_data.date,
+                                amount=expense_data.amount,
+                                category=expense_data.category,
+                                description=expense_data.description,
+                                merchant=expense_data.merchant,
+                                type=expense_data.type,
+                                source=expense_data.source,
+                                items=expense_data.items,
+                                transaction_id=expense_data.transaction_id,
+                                original_currency=expense_data.original_currency,
+                            )
+                            await expense_repo.update(existing_expense.id, update_data)
+                            updated_count += 1
+                            logger.debug(f"Updated expense for transaction {expense_data.transaction_id}")
+                        else:
+                            # Create new expense if it doesn't exist
+                            await expense_repo.create(expense_data)
+                            created_count += 1
+                            logger.debug(f"Created new expense for transaction {expense_data.transaction_id}")
+                    else:
+                        # No transaction ID, just create new expense
+                        await expense_repo.create(expense_data)
+                        created_count += 1
+                except Exception as e:
+                    error_count += 1
+                    logger.warning(f"Failed to process updated expense: {e}")
 
             processing_result = {
                 "webhook_type": "transactions_updated",
@@ -902,7 +1009,10 @@ async def handle_transactions_updated_webhook(
                 "updated_ids": updated_ids,
                 "transactions_fetched": len(transactions),
                 "expenses_converted": len(expenses),
-                "action": "logged_only_not_saved",
+                "expenses_updated": updated_count,
+                "expenses_created": created_count,
+                "expenses_errors": error_count,
+                "action": "transactions_updated_in_database",
             }
 
             webhook_logger.log_webhook_processed(
@@ -910,7 +1020,7 @@ async def handle_transactions_updated_webhook(
             )
 
             logger.info(
-                f"✅ Transaction updates processed: {len(expenses)} expenses affected (not saved)"
+                f"✅ Transaction updates processed: {updated_count} expenses updated, {created_count} expenses created, {error_count} errors"
             )
         else:
             logger.info("ℹ️ No transaction updates to process")
@@ -936,10 +1046,10 @@ async def handle_transactions_updated_webhook(
 
 
 async def handle_transactions_deleted_webhook(
-    webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
+    webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession  # noqa: ARG001
 ):
     """Handle transactions_deleted webhook."""
-    from src.services.webhook_logger import webhook_logger
+    # Using webhook_logger imported at module level
 
     try:
         count = webhook_data.get("count", 0)
@@ -994,7 +1104,7 @@ async def handle_consent_expired_webhook(
     webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
 ):
     """Handle consent_expired webhook by updating integration status."""
-    from src.services.webhook_logger import webhook_logger
+    # Using webhook_logger imported at module level
 
     try:
         logger.info(f"Processing consent_expired webhook for link {link_id}")
@@ -1007,7 +1117,7 @@ async def handle_consent_expired_webhook(
         # Update integration status to indicate consent has expired
         integration.status = IntegrationStatus.ERROR
         integration.error_message = f"Consent expired for {institution_display_name}. User needs to renew consent."
-        integration.consent_expiry_date = datetime.now(timezone.utc)
+        integration.consent_expiry_date = datetime.now(UTC)
         db.add(integration)
         await db.commit()
 

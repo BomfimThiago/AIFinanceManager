@@ -48,6 +48,14 @@ Thumbs.db
 logs
 *.log
 
+# Webhook logs
+webhook_logs/
+backend/webhook_logs/
+all_webhooks.jsonl
+processed_webhooks.jsonl
+**/all_webhooks.jsonl
+**/processed_webhooks.jsonl
+
 # Temporary folders
 tmp/
 temp/

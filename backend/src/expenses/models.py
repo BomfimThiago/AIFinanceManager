@@ -49,6 +49,9 @@ class ExpenseModel(Base):
     )
     items = mapped_column(JSON, nullable=True)
 
+    # Integration tracking
+    transaction_id: Mapped[str] = mapped_column(String, nullable=True, index=True, unique=True)  # Belvo transaction ID
+
     # Multi-currency support
     original_currency: Mapped[str] = mapped_column(String, nullable=False, default="EUR")
     amounts = mapped_column(JSON, nullable=True)

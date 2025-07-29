@@ -26,6 +26,9 @@ class ExpenseBase(CustomModel):
     )
     items: list[str] | None = Field(None, description="List of items")
 
+    # Integration tracking
+    transaction_id: str | None = Field(None, description="External transaction ID (e.g., Belvo)")
+
     # Multi-currency support
     original_currency: str | None = Field(
         default="EUR", description="Currency of the original amount"
@@ -59,6 +62,7 @@ class ExpenseUpdate(CustomModel):
         None, description="Data source"
     )
     items: list[str] | None = Field(None, description="List of items")
+    transaction_id: str | None = Field(None, description="External transaction ID (e.g., Belvo)")
     original_currency: str | None = Field(None, description="Original currency")
 
 

@@ -6,11 +6,15 @@ account fetching, transaction synchronization, institution management, and expen
 """
 
 import logging
+from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
 
 from src.config import settings
+from src.currency.constants import Currency
+from src.currency.service import currency_service
+from src.expenses.schemas import ExpenseCreate
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +29,9 @@ class BelvoService:
             if settings.BELVO_ENVIRONMENT == "sandbox"
             else "https://api.belvo.com"
         )
-        self.secret_id = settings.BELVO_SECRET_ID
-        self.secret_password = settings.BELVO_SECRET_PASSWORD
+        # Ensure credentials are strings
+        self.secret_id = str(settings.BELVO_SECRET_ID) if settings.BELVO_SECRET_ID else ""
+        self.secret_password = str(settings.BELVO_SECRET_PASSWORD) if settings.BELVO_SECRET_PASSWORD else ""
 
     async def get_widget_access_token(self, external_id: str) -> str:
         """Generate widget access token for Belvo Connect Widget using the working API structure."""
@@ -308,50 +313,88 @@ class BelvoService:
 
     async def convert_to_expenses(
         self, transactions: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
-        """Convert Belvo transactions to expense format, filtering out income."""
+    ) -> list:
+        """Convert Belvo transactions to ExpenseCreate objects, including both expenses and income."""
+        # Using imports from module level
+
         expenses = []
 
         for transaction in transactions:
             try:
-                # Skip income transactions (positive amounts in most cases)
+                # Get transaction details with proper None handling
+                transaction_id = transaction.get("id")
                 amount = float(transaction.get("amount", 0))
-                if amount >= 0:
-                    continue  # Skip income
-
-                # Map Belvo transaction fields to expense format
-                expense_data = {
-                    "amount": abs(amount),  # Convert to positive for expense
-                    "description": transaction.get("description", "").strip()
-                    or "Unknown transaction",
-                    "date": transaction.get("value_date")
-                    or transaction.get("accounting_date"),
-                    "category": self._map_transaction_category(transaction),
-                    "currency": transaction.get("currency", "USD"),
-                    "provider_transaction_id": transaction.get("id"),
-                    "provider_data": {
-                        "belvo_id": transaction.get("id"),
-                        "account_id": transaction.get("account", {}).get("id")
-                        if isinstance(transaction.get("account"), dict)
-                        else transaction.get("account"),
-                        "reference": transaction.get("reference"),
-                        "type": transaction.get("type"),
-                        "status": transaction.get("status"),
-                        "merchant": transaction.get("merchant", {})
-                        if isinstance(transaction.get("merchant"), dict)
-                        else None,
-                        "category": transaction.get("category"),
-                        "subcategory": transaction.get("subcategory"),
-                    },
-                }
+                transaction_type = (transaction.get("type") or "").upper()  # INFLOW or OUTFLOW
+                description = (transaction.get("description") or "").strip() or "Unknown transaction"
+                transaction_date = transaction.get("value_date") or transaction.get("accounting_date")
+                original_currency = transaction.get("currency") or "BRL"
 
                 # Validate required fields
-                if expense_data["date"] and expense_data["amount"] > 0:
-                    expenses.append(expense_data)
-                else:
+                if not transaction_id or not transaction_date or amount <= 0:
                     logger.warning(
-                        f"Skipping transaction with missing required fields: {transaction.get('id')}"
+                        f"Skipping transaction {transaction_id} with missing required fields"
                     )
+                    continue
+
+                # Determine if it's income or expense based on Belvo's type field
+                if transaction_type == "INFLOW":
+                    expense_type = "income"
+                elif transaction_type == "OUTFLOW":
+                    expense_type = "expense"
+                else:
+                    logger.warning(f"Unknown transaction type {transaction_type}, defaulting to expense")
+                    expense_type = "expense"
+
+                # Convert currency enum if needed
+                try:
+                    currency_enum = Currency(original_currency)
+                except ValueError:
+                    logger.warning(f"Unknown currency {original_currency}, defaulting to BRL")
+                    currency_enum = Currency.BRL
+
+                # Get current exchange rates for multi-currency support
+                exchange_rates = await currency_service.get_current_rates()
+
+                # Convert to all supported currencies
+                amounts = await currency_service.convert_to_all_currencies(
+                    amount, currency_enum, exchange_rates
+                )
+
+                # Extract date properly (handle both date string and datetime)
+                if isinstance(transaction_date, str):
+                    # Handle different date formats
+                    if "T" in transaction_date:
+                        # ISO datetime format, extract date part
+                        date_str = transaction_date.split("T")[0]
+                    else:
+                        # Already in YYYY-MM-DD format
+                        date_str = transaction_date
+                else:
+                    # Convert datetime object to string
+                    date_str = transaction_date.strftime("%Y-%m-%d") if transaction_date else None
+
+                if not date_str:
+                    logger.warning(f"Invalid date for transaction {transaction_id}")
+                    continue
+
+                # Create expense data
+                expense_data = ExpenseCreate(
+                    date=date_str,
+                    amount=amount,
+                    category=self._map_transaction_category(transaction),
+                    description=description,
+                    merchant=self._extract_merchant_name(transaction),
+                    type=expense_type,
+                    source="belvo-integration",
+                    items=None,
+                    transaction_id=transaction_id,
+                    original_currency=original_currency,
+                    amounts=amounts,
+                    exchange_rates=exchange_rates,
+                    exchange_date=datetime.now(UTC).isoformat(),
+                )
+
+                expenses.append(expense_data)
 
             except Exception as e:
                 logger.warning(
@@ -360,61 +403,122 @@ class BelvoService:
                 continue
 
         logger.info(
-            f"Converted {len(expenses)} transactions to expenses (filtered out income)"
+            f"Converted {len(expenses)} Belvo transactions (both income and expenses)"
         )
         return expenses
 
     def _map_transaction_category(self, transaction: dict[str, Any]) -> str:
         """Map Belvo transaction category to our expense categories."""
-        belvo_category = transaction.get("category", "").lower()
-        belvo_subcategory = transaction.get("subcategory", "").lower()
+        belvo_category = (transaction.get("category") or "").lower()
+        belvo_subcategory = (transaction.get("subcategory") or "").lower()
+        description = (transaction.get("description") or "").lower()
 
-        # Category mapping based on Belvo's standard categories
+        # Category mapping based on Belvo's categories (from the example)
         category_mapping = {
-            "food_and_drinks": "Food & Dining",
-            "groceries": "Groceries",
-            "restaurants": "Food & Dining",
-            "transportation": "Transportation",
-            "fuel": "Transportation",
-            "public_transport": "Transportation",
-            "shopping": "Shopping",
-            "entertainment": "Entertainment",
-            "health": "Healthcare",
-            "education": "Education",
-            "bills": "Bills & Utilities",
-            "utilities": "Bills & Utilities",
-            "insurance": "Insurance",
-            "home": "Home & Garden",
-            "travel": "Travel",
-            "fees": "Fees & Charges",
-            "atm": "Fees & Charges",
-            "transfer": "Transfer",
-            "investment": "Investment",
-            "income": "Income",
-            "salary": "Income",
+            # Online & Digital
+            "online platforms & leisure": "entertainment",
+            "online platforms": "shopping",
+            "digital services": "utilities",
+
+            # Food & Dining
+            "food & drinks": "food",
+            "food and drinks": "food",
+            "restaurants": "food",
+            "groceries": "food",
+            "food_and_drinks": "food",
+
+            # Transportation
+            "transportation": "transport",
+            "fuel": "transport",
+            "public transport": "transport",
+            "taxi": "transport",
+            "uber": "transport",
+
+            # Shopping
+            "shopping": "shopping",
+            "retail": "shopping",
+
+            # Entertainment
+            "entertainment": "entertainment",
+            "leisure": "entertainment",
+
+            # Health
+            "health": "healthcare",
+            "healthcare": "healthcare",
+            "medical": "healthcare",
+            "pharmacy": "healthcare",
+
+            # Education
+            "education": "education",
+
+            # Bills & Utilities
+            "bills": "utilities",
+            "utilities": "utilities",
+            "internet": "utilities",
+            "phone": "utilities",
+            "electricity": "utilities",
+            "water": "utilities",
+
+            # Financial Services
+            "bank fees": "other",
+            "fees": "other",
+            "atm": "other",
+            "transfer": "other",
+            "investment": "other",
+
+            # Income categories
+            "salary": "other",  # Will be marked as income by type
+            "income": "other",  # Will be marked as income by type
+            "dividends": "other",
+            "interest": "other",
         }
 
-        # First try exact match
+        # First try exact match on category
         if belvo_category in category_mapping:
             return category_mapping[belvo_category]
 
-        # Try subcategory
-        if belvo_subcategory in category_mapping:
+        # Try subcategory if exists
+        if belvo_subcategory and belvo_subcategory in category_mapping:
             return category_mapping[belvo_subcategory]
 
         # Fallback based on keywords in description
-        description = transaction.get("description", "").lower()
-        if any(word in description for word in ["restaurant", "food", "cafe", "pizza"]):
-            return "Food & Dining"
-        elif any(word in description for word in ["gas", "fuel", "uber", "taxi"]):
-            return "Transportation"
-        elif any(word in description for word in ["market", "supermarket", "grocery"]):
-            return "Groceries"
-        elif any(word in description for word in ["pharmacy", "hospital", "clinic"]):
-            return "Healthcare"
+        if any(word in description for word in ["restaurant", "food", "cafe", "pizza", "delivery"]):
+            return "food"
+        elif any(word in description for word in ["gas", "fuel", "uber", "taxi", "transport"]):
+            return "transport"
+        elif any(word in description for word in ["market", "supermarket", "grocery", "mercado"]):
+            return "food"
+        elif any(word in description for word in ["pharmacy", "hospital", "clinic", "doctor", "medical"]):
+            return "healthcare"
+        elif any(word in description for word in ["internet", "phone", "electricity", "water", "bill"]):
+            return "utilities"
+        elif any(word in description for word in ["education", "school", "university", "course"]):
+            return "education"
+        elif any(word in description for word in ["entertainment", "movie", "game", "streaming"]):
+            return "entertainment"
+        elif any(word in description for word in ["shopping", "store", "purchase", "buy"]):
+            return "shopping"
 
         # Default category
-        return "Other"
+        return "other"
+
+    def _extract_merchant_name(self, transaction: dict[str, Any]) -> str:
+        """Extract merchant name from Belvo transaction data."""
+        # Try different sources for merchant name
+        merchant_data = transaction.get("merchant", {})
+
+        if isinstance(merchant_data, dict):
+            # Try merchant name from merchant object
+            merchant_name = (merchant_data.get("name") or "").strip()
+            if merchant_name:
+                return merchant_name
+
+        # Fallback to description or reference with None handling
+        description = (transaction.get("description") or "").strip()
+        reference = (transaction.get("reference") or "").strip()
+
+        # Use description if available, otherwise reference, otherwise "Unknown"
+        return description or reference or "Unknown Merchant"
 
     async def trigger_historical_update(
         self, link_id: str, resources: list[str]
@@ -454,89 +558,6 @@ class BelvoService:
             logger.error(f"Error triggering historical update: {e}")
             raise
 
-    async def get_institutions(self) -> list[dict[str, Any]]:
-        """Fetch all institutions from Belvo API.
-
-        Returns:
-            List of institution dictionaries from Belvo API
-
-        Raises:
-            Exception: If API request fails
-        """
-        all_institutions = []
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                page = 1
-
-                while True:
-                    # Use GET request with pagination
-                    url = f"{self.base_url}/api/institutions/?page={page}"
-
-                    logger.info(f"Fetching institutions page {page} from: {url}")
-
-                    async with session.get(
-                        url,
-                        auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
-                        headers={"Content-Type": "application/json"},
-                    ) as response:
-                        if response.status != 200:
-                            error_text = await response.text()
-                            logger.error(
-                                f"Failed to get institutions page {page}: {error_text}"
-                            )
-                            raise Exception(
-                                f"Failed to get institutions: {response.status}"
-                            )
-
-                        result = await response.json()
-
-                        # Handle Belvo's paginated response format
-                        if isinstance(result, dict):
-                            page_institutions = result.get("results", [])
-                            has_next = result.get("next") is not None
-                            total_count = result.get("count", 0)
-
-                            if page == 1:
-                                logger.info(
-                                    f"Total institutions available: {total_count}"
-                                )
-                        else:
-                            # Fallback for unexpected format
-                            logger.warning(
-                                f"Unexpected response format: {type(result)}"
-                            )
-                            page_institutions = (
-                                result if isinstance(result, list) else []
-                            )
-                            has_next = False
-
-                        logger.info(
-                            f"Page {page}: Got {len(page_institutions)} institutions"
-                        )
-
-                        # Add institutions to our list
-                        all_institutions.extend(page_institutions)
-
-                        # If no institutions on this page, we're done
-                        if not page_institutions or not has_next:
-                            break
-
-                        page += 1
-
-                        # Safety check to prevent infinite loops
-                        if page > 100:  # Reasonable limit
-                            logger.warning("Reached page limit (100) for institutions")
-                            break
-
-            logger.info(
-                f"Completed institutions fetch: {len(all_institutions)} total institutions"
-            )
-            return all_institutions
-
-        except Exception as e:
-            logger.error(f"Error fetching institutions from Belvo: {e}")
-            raise
 
     def convert_institution_to_create_model(self, institution_data: dict[str, Any]):
         """Convert Belvo institution data to our create model.
@@ -619,6 +640,45 @@ class BelvoService:
                 f"Error converting institution data {institution_data.get('id', 'unknown')}: {e}"
             )
             return None
+
+    async def get_transaction_by_id(self, transaction_id: str) -> dict[str, Any] | None:
+        """Get a specific transaction by its ID."""
+        try:
+            url = f"{self.base_url}/api/transactions/{transaction_id}/"
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url,
+                    auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        logger.info(f"Retrieved transaction {transaction_id}")
+                        return data
+                    else:
+                        error_text = await response.text()
+                        logger.error(
+                            f"Failed to get transaction {transaction_id}: {response.status} - {error_text}"
+                        )
+                        return None
+
+        except Exception as e:
+            logger.error(f"Error getting transaction {transaction_id}: {e}")
+            return None
+
+    async def get_transactions_by_ids(self, transaction_ids: list[str]) -> list[dict[str, Any]]:
+        """Get multiple transactions by their IDs."""
+        transactions = []
+
+        for transaction_id in transaction_ids:
+            transaction = await self.get_transaction_by_id(transaction_id)
+            if transaction:
+                transactions.append(transaction)
+            else:
+                logger.warning(f"Failed to retrieve transaction {transaction_id}")
+
+        logger.info(f"Retrieved {len(transactions)} out of {len(transaction_ids)} transactions")
+        return transactions
 
     async def _handle_response(
         self, response: aiohttp.ClientResponse, operation: str

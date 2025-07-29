@@ -64,3 +64,24 @@ class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdat
         query = select(self.model).where(self.model.source == source)
         result = await self.db.execute(query)
         return list(result.scalars().all())
+
+    async def get_by_transaction_id(self, transaction_id: str) -> ExpenseModel | None:
+        """Get expense by transaction ID."""
+        query = select(self.model).where(self.model.transaction_id == transaction_id)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def transaction_id_exists(self, transaction_id: str) -> bool:
+        """Check if transaction ID already exists."""
+        expense = await self.get_by_transaction_id(transaction_id)
+        return expense is not None
+
+    async def update_by_transaction_id(
+        self, transaction_id: str, update_data: ExpenseUpdate
+    ) -> ExpenseModel | None:
+        """Update expense by transaction ID."""
+        expense = await self.get_by_transaction_id(transaction_id)
+        if not expense:
+            return None
+        
+        return await self.update(expense.id, update_data)
