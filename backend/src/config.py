@@ -117,9 +117,7 @@ class Settings(BaseSettings):
     def set_debug_mode(cls, v, values):
         """Set debug mode based on environment."""
         environment = values.get("ENVIRONMENT")
-        if environment in [Environment.LOCAL, Environment.DEVELOPMENT]:
-            return True
-        return False
+        return environment in [Environment.LOCAL, Environment.DEVELOPMENT]
 
     @property
     def cors_origins_list(self) -> list[str]:

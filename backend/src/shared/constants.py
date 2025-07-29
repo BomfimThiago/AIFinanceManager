@@ -117,6 +117,14 @@ class WebhookEventType(str, Enum):
     ERROR = "error"
 
 
+class InsightType(str, Enum):
+    """AI insight types."""
+
+    WARNING = "warning"
+    SUCCESS = "success"
+    INFO = "info"
+
+
 # API Constants
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100

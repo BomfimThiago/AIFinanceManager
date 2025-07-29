@@ -1,0 +1,66 @@
+"""
+Expense repository for database operations.
+
+This module contains the repository class for expense-related database operations.
+"""
+
+
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.expenses.models import ExpenseModel
+from src.expenses.schemas import ExpenseCreate, ExpenseUpdate
+from src.shared.repository import BaseRepository
+
+
+class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdate]):
+    """Repository for expense database operations."""
+
+    def __init__(self, db: AsyncSession):
+        super().__init__(ExpenseModel, db)
+
+    async def get_by_date_filter(
+        self, month: int | None = None, year: int | None = None
+    ) -> list[ExpenseModel]:
+        """Get expenses filtered by month and/or year."""
+        query = select(self.model)
+
+        conditions = []
+
+        if year is not None:
+            # Extract year from date string (assuming YYYY-MM-DD format)
+            conditions.append(self.model.date.like(f"{year}-%"))
+
+        if month is not None:
+            # Extract month from date string
+            month_str = f"{month:02d}"
+            if year is not None:
+                conditions.append(self.model.date.like(f"{year}-{month_str}-%"))
+            else:
+                conditions.append(self.model.date.like(f"%-{month_str}-%"))
+
+        if conditions:
+            query = query.where(and_(*conditions))
+
+        query = query.order_by(self.model.date.desc())
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_by_category(self, category: str) -> list[ExpenseModel]:
+        """Get expenses by category."""
+        query = select(self.model).where(self.model.category == category)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_by_type(self, expense_type: str) -> list[ExpenseModel]:
+        """Get expenses by type (expense/income)."""
+        query = select(self.model).where(self.model.type == expense_type)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_by_source(self, source: str) -> list[ExpenseModel]:
+        """Get expenses by source."""
+        query = select(self.model).where(self.model.source == source)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

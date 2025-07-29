@@ -139,20 +139,19 @@ class BelvoService:
         try:
             url = f"{self.base_url}/api/institutions/"
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    url, auth=aiohttp.BasicAuth(self.secret_id, self.secret_password)
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        logger.info(f"Retrieved {len(data['results'])} institutions")
-                        return data["results"]
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to get institutions: {response.status} - {error_text}"
-                        )
-                        return []
+            async with aiohttp.ClientSession() as session, session.get(
+                url, auth=aiohttp.BasicAuth(self.secret_id, self.secret_password)
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    logger.info(f"Retrieved {len(data['results'])} institutions")
+                    return data["results"]
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to get institutions: {response.status} - {error_text}"
+                    )
+                    return []
 
         except Exception as e:
             logger.error(f"Error getting Belvo institutions: {e}")
@@ -163,24 +162,23 @@ class BelvoService:
         try:
             url = f"{self.base_url}/api/accounts/"
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url,
-                    auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
-                    json={"link": link_id},
-                ) as response:
-                    if response.status == 201:
-                        data = await response.json()
-                        logger.info(
-                            f"Retrieved {len(data)} accounts for link {link_id}"
-                        )
-                        return data
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to get accounts: {response.status} - {error_text}"
-                        )
-                        return []
+            async with aiohttp.ClientSession() as session, session.post(
+                url,
+                auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
+                json={"link": link_id},
+            ) as response:
+                if response.status == 201:
+                    data = await response.json()
+                    logger.info(
+                        f"Retrieved {len(data)} accounts for link {link_id}"
+                    )
+                    return data
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to get accounts: {response.status} - {error_text}"
+                    )
+                    return []
 
         except Exception as e:
             logger.error(f"Error getting Belvo accounts: {e}")
@@ -199,24 +197,23 @@ class BelvoService:
             if date_to:
                 payload["date_to"] = date_to
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url,
-                    auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
-                    json=payload,
-                ) as response:
-                    if response.status == 201:
-                        data = await response.json()
-                        logger.info(
-                            f"Retrieved {len(data)} transactions for link {link_id}"
-                        )
-                        return data
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to get transactions: {response.status} - {error_text}"
-                        )
-                        return []
+            async with aiohttp.ClientSession() as session, session.post(
+                url,
+                auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
+                json=payload,
+            ) as response:
+                if response.status == 201:
+                    data = await response.json()
+                    logger.info(
+                        f"Retrieved {len(data)} transactions for link {link_id}"
+                    )
+                    return data
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to get transactions: {response.status} - {error_text}"
+                    )
+                    return []
 
         except Exception as e:
             logger.error(f"Error getting Belvo transactions: {e}")

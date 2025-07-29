@@ -58,7 +58,7 @@ class UserRepository(BaseRepository[UserModel, UserCreate, UserUpdate]):
     async def get_active_users(self, limit: int | None = None) -> list[UserModel]:
         """Get all active users."""
         try:
-            query = select(UserModel).where(UserModel.is_active == True)
+            query = select(UserModel).where(UserModel.is_active)
             if limit:
                 query = query.limit(limit)
 
@@ -71,7 +71,7 @@ class UserRepository(BaseRepository[UserModel, UserCreate, UserUpdate]):
     async def get_verified_users(self, limit: int | None = None) -> list[UserModel]:
         """Get all verified users."""
         try:
-            query = select(UserModel).where(UserModel.is_verified == True)
+            query = select(UserModel).where(UserModel.is_verified)
             if limit:
                 query = query.limit(limit)
 
@@ -191,7 +191,7 @@ class UserRepository(BaseRepository[UserModel, UserCreate, UserUpdate]):
         """Count active users."""
         try:
             result = await self.session.execute(
-                select(UserModel).where(UserModel.is_active == True)
+                select(UserModel).where(UserModel.is_active)
             )
             return len(list(result.scalars().all()))
         except Exception as e:
@@ -202,7 +202,7 @@ class UserRepository(BaseRepository[UserModel, UserCreate, UserUpdate]):
         """Count verified users."""
         try:
             result = await self.session.execute(
-                select(UserModel).where(UserModel.is_verified == True)
+                select(UserModel).where(UserModel.is_verified)
             )
             return len(list(result.scalars().all()))
         except Exception as e:

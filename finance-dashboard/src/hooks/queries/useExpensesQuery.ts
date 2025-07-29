@@ -18,7 +18,7 @@ export const expenseKeys = {
     [...expenseKeys.all, 'category-spending', params] as const,
 };
 
-// Queries - TEMPORARILY DISABLED - Backend not migrated yet
+// Queries
 export function useExpenses(filters?: { month?: number; year?: number }) {
   const normalizedFilters = {
     month: filters?.month && filters.month > 0 ? filters.month : undefined,
@@ -27,7 +27,7 @@ export function useExpenses(filters?: { month?: number; year?: number }) {
 
   return useQuery({
     queryKey: expenseKeys.list(normalizedFilters),
-    queryFn: () => Promise.resolve([]), // Return empty array instead of API call
+    queryFn: () => expenseApi.getAll(normalizedFilters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     placeholderData: (prev) => prev,
@@ -37,36 +37,28 @@ export function useExpenses(filters?: { month?: number; year?: number }) {
 export function useExpenseSummary() {
   return useQuery({
     queryKey: expenseKeys.summary(),
-    queryFn: () => Promise.resolve({
-      total_income: 0,
-      total_expenses: 0,
-      net_amount: 0,
-      category_spending: {}
-    }), // Return mock data instead of API call
+    queryFn: () => expenseApi.getSummary(),
   });
 }
 
 export function useCategoryChartData() {
   return useQuery({
     queryKey: expenseKeys.chartCategories(),
-    queryFn: () => Promise.resolve([]), // Return empty array instead of API call
+    queryFn: () => expenseApi.getCategoriesChart(),
   });
 }
 
 export function useMonthlyChartData() {
   return useQuery({
     queryKey: expenseKeys.chartMonthly(),
-    queryFn: () => Promise.resolve([]), // Return empty array instead of API call
+    queryFn: () => expenseApi.getMonthlyChart(),
   });
 }
 
 export function useCategorySpending(params: { currency?: string; month?: number; year?: number } = {}) {
   return useQuery({
     queryKey: expenseKeys.categorySpending(params),
-    queryFn: () => Promise.resolve({
-      currency: 'EUR',
-      category_spending: {}
-    }), // Return mock data instead of API call
+    queryFn: () => expenseApi.getCategorySpending(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

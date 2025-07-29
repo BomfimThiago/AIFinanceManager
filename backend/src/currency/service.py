@@ -132,6 +132,33 @@ class CurrencyService:
         """Get display information for all supported currencies."""
         return {currency.value: info for currency, info in CURRENCY_INFO.items()}
 
+    async def convert_to_all_currencies(
+        self,
+        amount: float,
+        from_currency: Currency,
+        exchange_rates: dict[str, float] | None = None,
+    ) -> dict[str, float]:
+        """
+        Convert amount to all supported currencies.
+
+        Args:
+            amount: Amount to convert
+            from_currency: Source currency
+            exchange_rates: Optional pre-fetched exchange rates
+
+        Returns:
+            Dictionary with currency codes as keys and converted amounts as values
+        """
+        if exchange_rates is None:
+            exchange_rates = await self.get_current_rates()
+
+        converted_amounts = {}
+        for currency in Currency:
+            converted_amounts[currency.value] = await self.convert_amount(
+                amount, from_currency, currency, exchange_rates
+            )
+        return converted_amounts
+
     def detect_currency_from_text(self, text: str) -> Currency:
         """Detect currency from text based on symbols and currency codes."""
         text_upper = text.upper()

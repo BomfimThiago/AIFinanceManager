@@ -14,12 +14,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.auth.router import router as auth_router
+from src.budgets.router import router as budgets_router
 from src.config import settings
 from src.currency.router import router as currency_router
 from src.database import close_database, init_database
+from src.expenses.router import router as expenses_router
+from src.insights.router import router as insights_router
 from src.integrations.router import router as integrations_router
 from src.shared.exceptions import AppException
 from src.shared.models import HealthResponse
+from src.upload_history.router import router as upload_history_router
 
 # Configure logging
 logging.basicConfig(
@@ -283,7 +287,11 @@ async def root():
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(budgets_router)
 app.include_router(currency_router)
+app.include_router(expenses_router)
+app.include_router(insights_router)
+app.include_router(upload_history_router)
 app.include_router(
     integrations_router,
     prefix=settings.API_PREFIX,

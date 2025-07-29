@@ -184,7 +184,7 @@ class IntegrationRepository(
                 select(Integration).where(
                     and_(
                         Integration.status == "connected",
-                        Integration.auto_sync_enabled == True,
+                        Integration.auto_sync_enabled,
                         Integration.consent_expiry_date.is_(None)
                         | (Integration.consent_expiry_date > func.now()),
                     )

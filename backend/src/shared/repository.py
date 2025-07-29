@@ -5,7 +5,7 @@ This module contains base repository classes that provide common
 database operations for all modules.
 """
 
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -20,7 +20,7 @@ CreateSchemaType = TypeVar("CreateSchemaType")
 UpdateSchemaType = TypeVar("UpdateSchemaType")
 
 
-class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaType]:
     """Base repository class with common CRUD operations."""
 
     def __init__(self, model: type[ModelType], db: AsyncSession):
@@ -75,6 +75,18 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 operation="get_by_field",
                 table=self.model.__tablename__,
                 details={"field": field_name, "value": field_value, "error": str(e)},
+            )
+
+    async def get_all(self) -> list[ModelType]:
+        """Get all records without pagination."""
+        try:
+            result = await self.db.execute(select(self.model))
+            return list(result.scalars().all())
+        except Exception as e:
+            raise DatabaseError(
+                operation="get_all",
+                table=self.model.__tablename__,
+                details={"error": str(e)},
             )
 
     async def get_multi(

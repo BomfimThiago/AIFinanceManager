@@ -10,11 +10,11 @@ export const budgetKeys = {
   detail: (category: string) => [...budgetKeys.details(), category] as const,
 };
 
-// Queries - TEMPORARILY DISABLED - Backend not migrated yet
+// Queries
 export function useBudgets() {
   return useQuery({
     queryKey: budgetKeys.lists(),
-    queryFn: () => Promise.resolve({}), // Return empty object instead of API call
+    queryFn: () => budgetApi.getAll(),
   });
 }
 

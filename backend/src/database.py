@@ -87,15 +87,16 @@ async def init_database():
         async with engine.begin() as conn:
             # Import all models to ensure they are registered
             from .auth.models import UserModel  # noqa: F401
+            from .budgets.models import BudgetModel  # noqa: F401
+            from .expenses.models import ExpenseModel  # noqa: F401
+            from .insights.models import InsightModel  # noqa: F401
             from .integrations.institution_models import BelvoInstitution  # noqa: F401
             from .integrations.models import (  # noqa: F401
                 ConnectedAccount,
                 Integration,
                 SyncLog,
             )
-            # from .expenses.models import Expense  # TODO: Create expenses module
-            # from .budgets.models import Budget  # TODO: Create budgets module
-            # from .insights.models import Insight  # TODO: Create insights module
+            from .upload_history.models import UploadHistoryModel  # noqa: F401
 
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
@@ -115,8 +116,9 @@ async def close_database():
 async def check_database_health() -> bool:
     """Check if database is healthy."""
     try:
+        from sqlalchemy import text
         async with AsyncSessionLocal() as session:
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
             return True
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
