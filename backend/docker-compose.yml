@@ -5,16 +5,16 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-finance_manager}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_finance_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ai_finance_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_finance_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_finance_user}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
       dockerfile: Dockerfile
     environment:
       # Database
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-finance_manager}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ai_finance_user}:${POSTGRES_PASSWORD:-ai_finance_password}@postgres:5432/${POSTGRES_DB:-ai_finance_db}
       
       # API Keys (set these in your .env file)
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}

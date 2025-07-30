@@ -136,7 +136,7 @@ class Integration(Base):
 
     def get_status_color(self) -> str:
         """Get color code for status."""
-        from src.integrations.constants import STATUS_COLORS
+        from src.integrations.constants import STATUS_COLORS  # noqa: PLC0415
 
         return STATUS_COLORS.get(self.status.value, "#6B7280")
 
@@ -235,7 +235,7 @@ class ConnectedAccount(Base):
         if self.current_balance is None:
             return "N/A"
 
-        from src.shared.constants import CURRENCY_SYMBOLS
+        from src.shared.constants import CURRENCY_SYMBOLS  # noqa: PLC0415
 
         symbol = CURRENCY_SYMBOLS.get(self.currency, self.currency.value)
         return f"{symbol}{self.current_balance:.2f}"
@@ -254,7 +254,7 @@ class ConnectedAccount(Base):
         if not self.balance_updated_at:
             return True
 
-        from datetime import timedelta
+        from datetime import timedelta  # noqa: PLC0415
 
         return datetime.now(UTC) - self.balance_updated_at > timedelta(hours=hours)
 

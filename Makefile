@@ -16,7 +16,9 @@ help:
 	@echo "Build & Test:"
 	@echo "  make build       Build frontend for production"
 	@echo "  make test        Run all tests"
-	@echo "  make lint        Run linting on all code"
+	@echo "  make lint        Run linting and auto-fix code (frontend + backend)"
+	@echo "  make lint-check  Check code style without fixing"
+	@echo "  make format      Format all code"
 	@echo "  make typecheck   Run TypeScript type checking"
 	@echo ""
 	@echo "Docker:"
@@ -46,10 +48,12 @@ install:
 
 # Development
 dev:
-	@echo "Starting development servers..."
+	@echo "Starting database and development servers..."
+	@echo "Starting PostgreSQL database on port 5433..."
+	cd backend && docker compose up postgres -d
 	@echo "Frontend will be available at: http://localhost:5173"
 	@echo "Backend will be available at: http://localhost:8001"
-	@echo "Use Ctrl+C to stop both servers"
+	@echo "Use Ctrl+C to stop servers (database will keep running)"
 	@make -j2 dev-fe dev-be
 
 dev-fe:
@@ -72,12 +76,24 @@ test:
 	@echo "Running backend tests..."
 	cd backend && uv run pytest || true
 
-# Linting
+# Linting and Formatting
 lint:
-	@echo "Running frontend linting..."
+	@echo "Running frontend linting and formatting..."
 	cd finance-dashboard && npm run lint
-	@echo "Running backend linting..."
-	cd backend && uv run ruff check .
+	@echo "Running backend linting and formatting..."
+	cd backend && ./scripts/lint.sh
+
+lint-check:
+	@echo "Checking frontend code style..."
+	cd finance-dashboard && npm run lint:check
+	@echo "Checking backend code style..."
+	cd backend && uv run ruff check src
+
+format:
+	@echo "Formatting frontend code..."
+	cd finance-dashboard && npm run format
+	@echo "Formatting backend code..."
+	cd backend && ./scripts/format.sh
 
 typecheck:
 	@echo "Running TypeScript type checking..."

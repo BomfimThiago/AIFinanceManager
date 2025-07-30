@@ -20,6 +20,7 @@ from src.expenses.schemas import (
     Expense,
     ExpenseCreate,
     ExpenseSummary,
+    ExpenseUpdate,
     MonthlyData,
 )
 from src.expenses.service import ExpenseService
@@ -62,7 +63,7 @@ async def create_expense(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create expense: {e!s}",
-        )
+        ) from e
 
 
 @router.post("/bulk", response_model=list[Expense])
@@ -90,7 +91,7 @@ async def create_bulk_expenses(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create expenses: {e!s}",
-        )
+        ) from e
 
 
 @router.post("/upload", response_model=list[Expense])
@@ -191,7 +192,7 @@ async def upload_expenses_from_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {e!s}",
-        )
+        ) from e
 
 
 @router.get("/summary", response_model=ExpenseSummary)
@@ -258,8 +259,6 @@ async def update_expense(
             )
 
         # Convert ExpenseCreate to ExpenseUpdate (all fields optional in update)
-        from src.expenses.schemas import ExpenseUpdate
-
         expense_update = ExpenseUpdate(
             date=expense.date,
             amount=expense.amount,
@@ -313,7 +312,7 @@ async def update_expense(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update expense: {e!s}",
-        )
+        ) from e
 
 
 @router.delete("/{expense_id}")
@@ -341,4 +340,4 @@ async def delete_expense(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete expense: {e!s}",
-        )
+        ) from e

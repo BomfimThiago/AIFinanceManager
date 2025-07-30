@@ -3,6 +3,7 @@ import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { SignupCredentials } from '../../types';
+import { getUserFriendlyError, formatValidationErrors } from '../../utils/errorMessages';
 
 interface SignupProps {
   onToggleMode: () => void;
@@ -47,15 +48,27 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
       return;
     }
 
+    // Validate username format (letters, numbers, hyphens, underscores only)
+    const usernamePattern = /^[a-zA-Z0-9_-]+$/;
+    if (!usernamePattern.test(credentials.username)) {
+      setError('Username can only contain letters, numbers, hyphens, and underscores');
+      return;
+    }
+
     try {
       await signup(credentials);
       showSuccess('Account Created', 'Account created successfully! Welcome to AI Finance Manager.');
       // Navigation will be handled by the app component
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Signup failed';
-      setError(errorMessage);
-      showError('Signup Failed', errorMessage);
       console.error('Signup error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      
+      // Format validation errors if present
+      const validationDetails = formatValidationErrors(friendlyError);
+      const errorMessage = validationDetails || friendlyError.message;
+      
+      setError(errorMessage);
+      showError(friendlyError.title, errorMessage);
     }
   };
 
@@ -135,9 +148,12 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   value={credentials.username}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Choose a username"
+                  placeholder="e.g., johndoe or john_doe"
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Only letters, numbers, hyphens (-), and underscores (_) are allowed
+              </p>
             </div>
 
             <div>
@@ -195,6 +211,9 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   </button>
                 </div>
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Must be at least 6 characters long
+              </p>
             </div>
 
             <div>
@@ -230,6 +249,9 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   </button>
                 </div>
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Must match the password above
+              </p>
             </div>
           </div>
 

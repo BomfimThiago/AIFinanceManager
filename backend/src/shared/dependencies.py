@@ -187,8 +187,8 @@ multipart_content_type = validate_content_type(["multipart/form-data"])
 def get_current_user_id():
     """Create a dependency to get current user ID from authentication."""
     # Import here to avoid circular imports
-    from src.auth.dependencies import get_current_user
-    from src.auth.schemas import User
+    from src.auth.dependencies import get_current_user  # noqa: PLC0415
+    from src.auth.schemas import User  # noqa: PLC0415
 
     def _dependency(user: User = Depends(get_current_user)) -> int:
         return user.id

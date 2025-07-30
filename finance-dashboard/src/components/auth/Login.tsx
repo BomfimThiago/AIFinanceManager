@@ -3,6 +3,7 @@ import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { LoginCredentials } from '../../types';
+import { getUserFriendlyError } from '../../utils/errorMessages';
 
 interface LoginProps {
   onToggleMode: () => void;
@@ -32,10 +33,11 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
       showSuccess('Login Successful', 'Welcome back! Login successful.');
       // Navigation will be handled by the app component
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
-      setError(errorMessage);
-      showError('Login Failed', errorMessage);
       console.error('Login error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      
+      setError(friendlyError.message);
+      showError(friendlyError.title, friendlyError.message);
     }
   };
 

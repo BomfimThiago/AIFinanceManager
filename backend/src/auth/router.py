@@ -70,16 +70,35 @@ async def register_user(
     try:
         return await auth_service.register_user(user_data)
     except UserAlreadyExistsError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
+        ) from e
     except AuthException as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
         ) from e
     except Exception as e:
         logger.error(f"Registration error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registration failed",
+            detail={
+                "success": False,
+                "error": "Registration failed",
+                "error_code": "INTERNAL_SERVER_ERROR",
+                "details": {}
+            }
         ) from e
 
 
@@ -104,19 +123,44 @@ async def login_user(
         return await auth_service.authenticate_user(login_data)
     except InvalidCredentialsError as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
         ) from e
     except InactiveUserError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
+        ) from e
     except AuthException as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
         ) from e
     except Exception as e:
         logger.error(f"Login error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication failed",
+            detail={
+                "success": False,
+                "error": "Authentication failed",
+                "error_code": "INTERNAL_SERVER_ERROR",
+                "details": {}
+            }
         ) from e
 
 
@@ -140,17 +184,34 @@ async def refresh_access_token(
         return await auth_service.refresh_token(refresh_data.refresh_token)
     except (InvalidCredentialsError, UserNotFoundError, InactiveUserError) as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
         ) from e
     except AuthException as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "success": False,
+                "error": str(e),
+                "error_code": e.error_code,
+                "details": e.details
+            }
         ) from e
     except Exception as e:
         logger.error(f"Token refresh error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Token refresh failed",
+            detail={
+                "success": False,
+                "error": "Token refresh failed",
+                "error_code": "INTERNAL_SERVER_ERROR",
+                "details": {}
+            }
         ) from e
 
 

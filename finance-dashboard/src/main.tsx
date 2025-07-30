@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { CurrencyProvider } from './contexts/CurrencyContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import App from './App.tsx'
 import './index.css'
 
@@ -26,7 +27,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CurrencyProvider>
-          <App />
+          <NotificationProvider>
+            <App />
+          </NotificationProvider>
         </CurrencyProvider>
       </AuthProvider>
     </QueryClientProvider>

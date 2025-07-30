@@ -14,6 +14,8 @@ import { useGenerateInsights } from '../hooks/queries';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { usePrivacyMode } from '../hooks/usePrivacyMode';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useNotificationContext } from '../contexts/NotificationContext';
+import { getUserFriendlyError } from '../utils/errorMessages';
 import { convertAPICategoriesList } from '../utils/categoryMapper';
 import type { TabId, AIInsight } from '../types';
 import CategoryManagement from './pages/CategoryManagement';
@@ -24,6 +26,7 @@ const FinanceManager: React.FC = () => {
   const [expenseFilters, setExpenseFilters] = useState<{ month?: number; year?: number; category?: string; type?: string }>({});
   
   const { convertAmount, selectedCurrency } = useCurrency();
+  const { showError, showSuccess } = useNotificationContext();
 
   // TanStack Query hooks
   // Note: Backend supports month/year/type filtering, category filtering is done on frontend
@@ -73,10 +76,17 @@ const FinanceManager: React.FC = () => {
   };
 
   const addBudget = async (category: string, limit: string | number) => {
-    await createBudgetMutation.mutateAsync({ 
-      category, 
-      limit: parseFloat(limit.toString()) 
-    });
+    try {
+      await createBudgetMutation.mutateAsync({ 
+        category, 
+        limit: parseFloat(limit.toString()) 
+      });
+      showSuccess('Budget Created', 'Budget created successfully');
+    } catch (error: any) {
+      console.error('Create budget error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      showError(friendlyError.title, friendlyError.message);
+    }
   };
 
   const updateBudgetSpent = async (category: string, amount: number) => {
@@ -105,8 +115,11 @@ const FinanceManager: React.FC = () => {
     try {
       const insights = await generateInsightsMutation.mutateAsync();
       setAiInsights(insights);
-    } catch (error) {
-      console.error('Failed to generate insights:', error);
+      showSuccess('Insights Generated', 'AI insights generated successfully');
+    } catch (error: any) {
+      console.error('Generate insights error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      showError(friendlyError.title, friendlyError.message);
     }
   };
 

@@ -63,10 +63,10 @@ class BelvoService:
             if external_id:
                 payload["external_id"] = external_id
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url, json=payload, headers={"Content-Type": "application/json"}
-                ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(url, json=payload, headers={"Content-Type": "application/json"}) as response,
+            ):
                     if response.status in [200, 201]:
                         data = await response.json()
                         logger.info(
@@ -125,10 +125,10 @@ class BelvoService:
                 },
             }
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url, json=payload, headers={"Content-Type": "application/json"}
-                ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(url, json=payload, headers={"Content-Type": "application/json"}) as response,
+            ):
                     if response.status in [200, 201]:
                         data = await response.json()
                         logger.info("Successfully generated consent management token")
@@ -607,12 +607,14 @@ class BelvoService:
                 "async_": True,  # Use async workflow
             }
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
                     url,
                     auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
                     json=payload,
-                ) as response:
+                ) as response,
+            ):
                     if response.status == 201:
                         data = await response.json()
                         logger.info(
@@ -642,7 +644,7 @@ class BelvoService:
             Dict with institution data for creation or None if data is invalid
         """
         try:
-            from ..integrations.institution_models import (
+            from ..integrations.institution_models import (  # noqa: PLC0415
                 BelvoInstitutionStatus,
                 BelvoInstitutionType,
             )
@@ -719,11 +721,13 @@ class BelvoService:
         try:
             url = f"{self.base_url}/api/transactions/{transaction_id}/"
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
                     url,
                     auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
-                ) as response:
+                ) as response,
+            ):
                     if response.status == 200:
                         data = await response.json()
                         logger.info(f"Retrieved transaction {transaction_id}")

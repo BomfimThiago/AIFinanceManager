@@ -56,7 +56,7 @@ async def generate_insights(
         logger.error(f"Error generating insights: {e}")
         raise ExternalServiceError(
             "AI service", "insights generation", details={"error": str(e)}
-        )
+        ) from e
 
 
 @router.get("", response_model=list[AIInsight])
@@ -70,7 +70,7 @@ async def get_insights(
         raise
     except Exception as e:
         logger.error(f"Error fetching insights: {e}")
-        raise DatabaseError("get insights", details={"error": str(e)})
+        raise DatabaseError("get insights", details={"error": str(e)}) from e
 
 
 @router.get("/detailed", response_model=list[Insight])
@@ -84,7 +84,7 @@ async def get_detailed_insights(
         raise
     except Exception as e:
         logger.error(f"Error fetching detailed insights: {e}")
-        raise DatabaseError("get detailed insights", details={"error": str(e)})
+        raise DatabaseError("get detailed insights", details={"error": str(e)}) from e
 
 
 @router.get("/summary", response_model=InsightSummary)
@@ -98,7 +98,7 @@ async def get_insight_summary(
         raise
     except Exception as e:
         logger.error(f"Error fetching insight summary: {e}")
-        raise DatabaseError("get insight summary", details={"error": str(e)})
+        raise DatabaseError("get insight summary", details={"error": str(e)}) from e
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
@@ -116,4 +116,4 @@ async def delete_all_insights(
         raise
     except Exception as e:
         logger.error(f"Error deleting insights: {e}")
-        raise DatabaseError("delete insights", details={"error": str(e)})
+        raise DatabaseError("delete insights", details={"error": str(e)}) from e

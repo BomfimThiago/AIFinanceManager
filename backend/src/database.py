@@ -9,7 +9,7 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -84,24 +84,24 @@ async def get_database_session_context() -> AsyncGenerator[AsyncSession, None]:
 async def init_database():
     """Initialize database tables."""
     try:
-        async with engine.begin() as conn:
-            # Import all models to ensure they are registered
-            from .auth.models import UserModel  # noqa: F401
-            from .budgets.models import BudgetModel  # noqa: F401
-            from .expenses.models import ExpenseModel  # noqa: F401
-            from .insights.models import InsightModel  # noqa: F401
-            from .integrations.institution_models import BelvoInstitution  # noqa: F401
-            from .integrations.models import (  # noqa: F401
-                ConnectedAccount,
-                Integration,
-                SyncLog,
-            )
-            from .upload_history.models import UploadHistoryModel  # noqa: F401
-            from .user_preferences.models import (  # noqa: F401
-                UserCategoryPreference,
-                UserPreferences,
-            )
+        # Import all models to ensure they are registered
+        from .auth.models import UserModel  # noqa: F401, PLC0415
+        from .budgets.models import BudgetModel  # noqa: F401, PLC0415
+        from .expenses.models import ExpenseModel  # noqa: F401, PLC0415
+        from .insights.models import InsightModel  # noqa: F401, PLC0415
+        from .integrations.institution_models import BelvoInstitution  # noqa: F401, PLC0415
+        from .integrations.models import (  # noqa: F401, PLC0415
+            ConnectedAccount,
+            Integration,
+            SyncLog,
+        )
+        from .upload_history.models import UploadHistoryModel  # noqa: F401, PLC0415
+        from .user_preferences.models import (  # noqa: F401, PLC0415
+            UserCategoryPreference,
+            UserPreferences,
+        )
 
+        async with engine.begin() as conn:
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
             logger.info("Database tables created successfully")
@@ -120,8 +120,6 @@ async def close_database():
 async def check_database_health() -> bool:
     """Check if database is healthy."""
     try:
-        from sqlalchemy import text
-
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
             return True

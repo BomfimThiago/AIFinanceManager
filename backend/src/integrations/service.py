@@ -124,7 +124,7 @@ class IntegrationService:
 
         except Exception as e:
             logger.error(f"Error creating integration: {e}")
-            raise ValidationError(f"Failed to create integration: {e!s}")
+            raise ValidationError(f"Failed to create integration: {e!s}") from e
 
     async def get_user_integrations(
         self, user_id: int, filters: IntegrationFilter | None = None
@@ -171,7 +171,7 @@ class IntegrationService:
             raise
         except Exception as e:
             logger.error(f"Error updating integration {integration_id}: {e}")
-            raise ValidationError(f"Failed to update integration: {e!s}")
+            raise ValidationError(f"Failed to update integration: {e!s}") from e
 
     async def delete_integration(self, integration_id: int, user_id: int) -> bool:
         """Delete integration."""
@@ -191,7 +191,7 @@ class IntegrationService:
             raise
         except Exception as e:
             logger.error(f"Error deleting integration {integration_id}: {e}")
-            raise ValidationError(f"Failed to delete integration: {e!s}")
+            raise ValidationError(f"Failed to delete integration: {e!s}") from e
 
     async def sync_integration(
         self, integration_id: int, user_id: int, sync_request: SyncRequest | None = None
@@ -295,7 +295,7 @@ class IntegrationService:
 
             raise SyncFailed(
                 provider=provider, data_type="integration_sync", reason=str(e)
-            )
+            ) from e
 
     async def get_integration_statistics(
         self, user_id: int, days: int = 30
@@ -307,7 +307,7 @@ class IntegrationService:
 
         except Exception as e:
             logger.error(f"Error getting integration statistics: {e}")
-            raise ValidationError(f"Failed to get statistics: {e!s}")
+            raise ValidationError(f"Failed to get statistics: {e!s}") from e
 
     # Private helper methods
 

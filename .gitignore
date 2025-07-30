@@ -60,6 +60,10 @@ processed_webhooks.jsonl
 tmp/
 temp/
 
+# Data folder (categories now in database)
+backend/data/
+data/
+
 # Cache directories
 .cache/
 .parcel-cache/

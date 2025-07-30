@@ -110,6 +110,3 @@ DEFAULT_CATEGORIES: list[DefaultCategory] = [
         "icon": "more-horizontal",
     },
 ]
-
-# File paths for LLM integration
-CATEGORIES_FILE_PATH = "data/categories.txt"

@@ -41,7 +41,7 @@ Create `.env` file in `backend/` directory:
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ENVIRONMENT=development
-DATABASE_URL=postgresql://user:password@localhost:5432/finance_db
+DATABASE_URL=postgresql://user:password@localhost:5433/finance_db
 ```
 
 ## Architecture Overview

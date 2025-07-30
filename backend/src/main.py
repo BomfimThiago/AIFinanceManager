@@ -5,6 +5,7 @@ This module creates and configures the FastAPI application instance
 following best practices for structure and organization.
 """
 
+import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -16,12 +17,16 @@ from fastapi.responses import JSONResponse
 from src.auth.router import router as auth_router
 from src.budgets.router import router as budgets_router
 from src.categories.router import router as categories_router
+from src.categories.service import CategoryService
 from src.config import settings
 from src.currency.router import router as currency_router
-from src.database import close_database, init_database
+from src.database import close_database, get_database_session, init_database, check_database_health
 from src.expenses.router import router as expenses_router
 from src.insights.router import router as insights_router
+from src.integrations.institution_repository import BelvoInstitutionRepository
 from src.integrations.router import router as integrations_router
+from src.services.belvo_service import belvo_service
+from src.shared.dependencies import get_db
 from src.shared.exceptions import AppException
 from src.shared.models import HealthResponse
 from src.upload_history.router import router as upload_history_router
@@ -43,9 +48,6 @@ async def seed_default_categories():
         logger.info("📂 Starting default categories seeding...")
 
         # Get database session directly
-        from src.categories.service import CategoryService
-        from src.database import get_database_session
-
         async for db in get_database_session():
             try:
                 service = CategoryService(db)
@@ -78,10 +80,6 @@ async def populate_belvo_institutions():
         logger.info("🏦 Starting Belvo institutions population...")
 
         # Get database session
-        from src.integrations.institution_repository import BelvoInstitutionRepository
-        from src.services.belvo_service import belvo_service
-        from src.shared.dependencies import get_db
-
         async for db in get_db():
             repo = BelvoInstitutionRepository(db)
 
@@ -173,8 +171,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         raise
 
     # Seed default categories and populate Belvo institutions in background (don't block startup)
-    import asyncio
-
     asyncio.create_task(seed_default_categories())
     asyncio.create_task(populate_belvo_institutions())
 
@@ -284,8 +280,6 @@ async def general_exception_handler(request, exc: Exception):
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """Health check endpoint."""
-    from src.database import check_database_health
-
     components = {}
 
     # Check database

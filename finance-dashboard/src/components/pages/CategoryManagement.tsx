@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { getUserFriendlyError } from '../../utils/errorMessages';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { 
   useCategories, 
@@ -243,11 +244,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       }
       resetForm();
     } catch (error: any) {
-      addNotification(
-        'error',
-        'Error',
-        error?.response?.data?.detail || 'Failed to save category'
-      );
+      console.error('Save category error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      addNotification('error', friendlyError.title, friendlyError.message);
     }
   };
 
@@ -267,11 +266,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       await deleteCategoryMutation.mutateAsync(category.id);
       addNotification('success', 'Success', 'Category deleted successfully');
     } catch (error: any) {
-      addNotification(
-        'error',
-        'Error',
-        error?.response?.data?.detail || 'Failed to delete category'
-      );
+      console.error('Delete category error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      addNotification('error', friendlyError.title, friendlyError.message);
     }
     
     setDeleteModal({ show: false, category: null });

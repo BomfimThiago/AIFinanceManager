@@ -5,14 +5,9 @@ This module contains the service class for category-related business operations,
 including LLM integration and file management.
 """
 
-from pathlib import Path
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.categories.constants import (
-    CATEGORIES_FILE_PATH,
-    DEFAULT_CATEGORIES,
-)
+from src.categories.constants import DEFAULT_CATEGORIES
 from src.categories.models import CategoryModel
 from src.categories.repository import CategoryRepository
 from src.categories.schemas import CategoryCreate, CategoryStats, CategoryUpdate
@@ -44,10 +39,6 @@ class CategoryService:
 
         # Create the category
         category = await self.repository.create_user_category(user_id, category_data)
-
-        # Update categories file for LLM
-        await self._update_categories_file()
-
         return category
 
     async def update_category(
@@ -74,19 +65,11 @@ class CategoryService:
 
         # Update the category
         updated_category = await self.repository.update(category_id, update_data)
-
-        # Update categories file for LLM
-        await self._update_categories_file()
-
         return updated_category
 
     async def delete_category(self, category_id: int, user_id: int) -> bool:
         """Delete (deactivate) a user's custom category."""
         success = await self.repository.deactivate_category(category_id, user_id)
-
-        if success:
-            # Update categories file for LLM
-            await self._update_categories_file()
 
         return success
 
@@ -115,9 +98,6 @@ class CategoryService:
                 await self.repository.create_default_category(category_data)
                 created_count += 1
 
-        # Update categories file for LLM
-        await self._update_categories_file()
-
         return created_count
 
     async def get_category_names_for_llm(self, user_id: int | None = None) -> list[str]:
@@ -130,40 +110,3 @@ class CategoryService:
             category_names = [cat.name for cat in default_categories]
 
         return category_names
-
-    async def _update_categories_file(self) -> None:
-        """Update the categories.txt file for LLM integration."""
-        try:
-            # Ensure data directory exists
-            data_dir = Path("data")
-            data_dir.mkdir(exist_ok=True)
-
-            # Get all active categories (default + all users' custom categories)
-            all_categories = await self.repository.get_all()
-            active_categories = [cat for cat in all_categories if cat.is_active]
-
-            # Write to categories file
-            categories_file = Path(CATEGORIES_FILE_PATH)
-            with categories_file.open("w", encoding="utf-8") as f:
-                f.write("# Available expense categories for LLM processing\n")
-                f.write("# Format: category_name - description\n\n")
-
-                for category in sorted(active_categories, key=lambda x: x.name):
-                    description = category.description or "No description"
-                    f.write(f"{category.name} - {description}\n")
-
-        except Exception as e:
-            # Log error but don't fail the operation
-            print(f"Warning: Failed to update categories file: {e}")
-
-    def get_categories_file_content(self) -> str:
-        """Get the content of categories.txt file for LLM processing."""
-        try:
-            categories_file = Path(CATEGORIES_FILE_PATH)
-            if categories_file.exists():
-                return categories_file.read_text(encoding="utf-8")
-        except Exception as e:
-            print(f"Warning: Failed to read categories file: {e}")
-
-        # Return default categories as fallback
-        return "\n".join([cat["name"] for cat in DEFAULT_CATEGORIES])

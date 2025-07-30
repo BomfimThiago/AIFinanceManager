@@ -5,6 +5,7 @@ import { Expense, Category } from '../../types';
 import { useCreateExpense, useUpdateExpense, useDeleteExpense } from '../../hooks/queries';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { getUserFriendlyError } from '../../utils/errorMessages';
 import EditExpenseModal from '../ui/EditExpenseModal';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
@@ -54,7 +55,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
         setExpenseToDelete(null);
       },
       onError: (error: any) => {
-        showError('Delete Failed', error?.message || 'Failed to delete expense');
+        console.error('Delete expense error:', error);
+        const friendlyError = getUserFriendlyError(error);
+        showError(friendlyError.title, friendlyError.message);
         setIsConfirmModalOpen(false);
         setExpenseToDelete(null);
       },
@@ -78,7 +81,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
             setEditingExpense(null);
           },
           onError: (error: any) => {
-            showError('Update Failed', error?.message || 'Failed to update expense');
+            console.error('Update expense error:', error);
+            const friendlyError = getUserFriendlyError(error);
+            showError(friendlyError.title, friendlyError.message);
           },
         }
       );
@@ -91,7 +96,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
           setEditingExpense(null);
         },
         onError: (error: any) => {
-          showError('Create Failed', error?.message || 'Failed to create expense');
+          console.error('Create expense error:', error);
+          const friendlyError = getUserFriendlyError(error);
+          showError(friendlyError.title, friendlyError.message);
         },
       });
     }

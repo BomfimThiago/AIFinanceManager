@@ -42,20 +42,28 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
     // Handle 401 unauthorized - token might be expired
     if (response.status === 401) {
-      setAuthToken(null);
-      // Don't redirect if we're already on auth endpoints
+      // Only clear token and redirect if NOT on auth endpoints
       if (!endpoint.includes('/api/auth/')) {
+        setAuthToken(null);
         window.location.href = '/login';
+        throw new Error('Unauthorized - please login again');
       }
-      throw new Error('Unauthorized - please login again');
+      // For auth endpoints, let the normal error handling process the response
     }
 
     if (!response.ok) {
+      let errorData: any = null;
       let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+      
       try {
-        const errorData = await response.json();
+        errorData = await response.json();
         if (errorData.detail) {
-          errorMessage = errorData.detail;
+          // Handle new structured error format
+          if (typeof errorData.detail === 'object' && errorData.detail.error) {
+            errorMessage = errorData.detail.error;
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          }
         } else if (errorData.message) {
           errorMessage = errorData.message;
         }
@@ -65,7 +73,15 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
           errorMessage = errorText;
         }
       }
-      throw new Error(errorMessage);
+      
+      // Create error object with response data for better error handling
+      const error = new Error(errorMessage) as any;
+      error.response = {
+        status: response.status,
+        statusText: response.statusText,
+        data: errorData
+      };
+      throw error;
     }
 
     // Handle empty response body
