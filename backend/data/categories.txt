@@ -9,6 +9,7 @@ Food - Food and dining expenses
 Gifts - Gifts and donations
 Healthcare - Healthcare and medical expenses
 Home - Home and household expenses
+My Cool Category - Brief description
 Other - Other miscellaneous expenses
 Pets - Pet care and expenses
 Shopping - Shopping and retail purchases
