@@ -1,19 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Wallet, Eye, EyeOff, User, LogOut, ChevronDown } from 'lucide-react';
+import { Wallet, Eye, EyeOff, User, LogOut, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCurrency } from '../../contexts/CurrencyContext';
-import CurrencySelector from '../ui/CurrencySelector';
+import PreferencesModal from '../ui/PreferencesModal';
 
 interface HeaderProps {
-  netAmount: number;
   hideAmounts: boolean;
   onTogglePrivacy: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy }) => {
+const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
   const { user, logout } = useAuth();
-  const { formatAmount: formatCurrencyAmount } = useCurrency();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -54,15 +52,6 @@ const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy
             >
               {hideAmounts ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </button>
-            
-            <CurrencySelector />
-            
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Net Balance</div>
-              <div className={`font-semibold ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {hideAmounts ? '****' : formatCurrencyAmount(netAmount)}
-              </div>
-            </div>
 
             {/* User dropdown */}
             <div className="relative" ref={dropdownRef}>
@@ -88,6 +77,17 @@ const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy
                   </div>
                   
                   <button
+                    onClick={() => {
+                      setIsPreferencesOpen(true);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Preferences</span>
+                  </button>
+                  
+                  <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   >
@@ -100,6 +100,12 @@ const Header: React.FC<HeaderProps> = ({ netAmount, hideAmounts, onTogglePrivacy
           </div>
         </div>
       </div>
+      
+      {/* Preferences Modal */}
+      <PreferencesModal 
+        isOpen={isPreferencesOpen}
+        onClose={() => setIsPreferencesOpen(false)}
+      />
     </header>
   );
 };

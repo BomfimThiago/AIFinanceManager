@@ -1,10 +1,14 @@
-import React from 'react';
-import { TrendingUp, CreditCard, Wallet, Target } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { TrendingUp, CreditCard, Wallet, Target, RefreshCw } from 'lucide-react';
 import SummaryCard from '../ui/SummaryCard';
-import { LineChartComponent, PieChartComponent } from '../ui/Chart';
+import InteractiveExpenseFlow from '../charts/InteractiveExpenseFlow';
+import InteractiveSpendingTimeline from '../charts/InteractiveSpendingTimeline';
+import SpendingHeatmap from '../charts/SpendingHeatmap';
 import { Expense, Budgets } from '../../types';
 import { useExpenseSummary, useCategoryChartData, useMonthlyChartData } from '../../hooks/queries';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
+import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 
 interface DashboardProps {
   expenses: Expense[];
@@ -14,6 +18,45 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts }) => {
   const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency, exchangeRates, currencies } = useCurrency();
+  const { filters, clearFilters } = useGlobalFilters();
+  
+  // Dashboard interaction state
+  const [dashboardState, setDashboardState] = useState({
+    selectedCategory: null as string | null,
+    selectedTimeRange: null as { start: string; end: string } | null,
+    selectedDate: null as string | null
+  });
+
+  // Chart interaction handlers
+  const handleCategoryClick = useCallback((category: string) => {
+    setDashboardState(prev => ({
+      ...prev,
+      selectedCategory: category
+    }));
+  }, []);
+
+  const handleTimeRangeSelect = useCallback((startDate: string, endDate: string) => {
+    setDashboardState(prev => ({
+      ...prev,
+      selectedTimeRange: { start: startDate, end: endDate }
+    }));
+  }, []);
+
+  const handleDateClick = useCallback((date: string) => {
+    setDashboardState(prev => ({
+      ...prev,
+      selectedDate: date
+    }));
+  }, []);
+
+  const resetDashboardFilters = useCallback(() => {
+    setDashboardState({
+      selectedCategory: null,
+      selectedTimeRange: null,
+      selectedDate: null
+    });
+    clearFilters();
+  }, [clearFilters]);
 
   // TanStack Query hooks
   const {
@@ -35,13 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
 
   // Helper function to convert expense amounts to selected currency
   const getConvertedAmount = (expense: Expense) => {
-    // If expense has pre-calculated amounts for the selected currency, use that
-    if (expense.amounts && expense.amounts[selectedCurrency]) {
-      return expense.amounts[selectedCurrency];
-    }
-    // Otherwise, convert using current rates (assuming EUR as original currency for older data)
-    const originalCurrency = expense.original_currency || 'EUR';
-    return convertAmount(expense.amount, originalCurrency);
+    return getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
   };
 
   // Get conversion rates for display
@@ -89,6 +126,10 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
     );
   }
 
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== null && value !== '');
+  const hasActiveDashboardState = dashboardState.selectedCategory || dashboardState.selectedTimeRange || dashboardState.selectedDate;
+
   return (
     <div className="space-y-8">
       {errorMessage && (
@@ -97,6 +138,31 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
             <div className="ml-3">
               <p className="text-sm text-yellow-700">{errorMessage}</p>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Active Filters Banner */}
+      {(hasActiveFilters || hasActiveDashboardState) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-blue-700">
+                <span className="font-medium">Active Filters:</span>
+                {filters.category && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">Category: {filters.category}</span>}
+                {filters.type && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">Type: {filters.type}</span>}
+                {filters.startDate && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">From: {filters.startDate}</span>}
+                {filters.endDate && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">To: {filters.endDate}</span>}
+                {filters.search && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">Search: "{filters.search}"</span>}
+              </div>
+            </div>
+            <button
+              onClick={resetDashboardFilters}
+              className="flex items-center space-x-2 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="text-sm">Clear All</span>
+            </button>
           </div>
         </div>
       )}
@@ -147,10 +213,27 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <LineChartComponent data={monthlyData} hideAmounts={hideAmounts} />
-        <PieChartComponent data={categoryData} hideAmounts={hideAmounts} />
+      {/* Interactive Charts */}
+      <div className="space-y-8">
+        {/* Top Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <InteractiveSpendingTimeline 
+            expenses={expenses} 
+            onTimeRangeSelect={handleTimeRangeSelect}
+          />
+          <InteractiveExpenseFlow 
+            expenses={expenses} 
+            onCategoryClick={handleCategoryClick}
+          />
+        </div>
+        
+        {/* Heatmap Chart */}
+        <div className="grid grid-cols-1 gap-8">
+          <SpendingHeatmap 
+            expenses={expenses} 
+            onDateClick={handleDateClick}
+          />
+        </div>
       </div>
     </div>
   );

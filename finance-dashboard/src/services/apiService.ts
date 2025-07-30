@@ -404,3 +404,57 @@ export const categoryApi = {
       method: 'POST',
     }),
 };
+
+// User Preferences API
+export interface UserPreferences {
+  id: number;
+  user_id: number;
+  default_currency: 'USD' | 'EUR' | 'BRL';
+  language: 'en' | 'es' | 'pt';
+  ui_preferences?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPreferencesResponse {
+  preferences: UserPreferences;
+  available_currencies: string[];
+  available_languages: Array<{
+    code: string;
+    label: string;
+    native_label: string;
+  }>;
+}
+
+export interface UserPreferencesUpdate {
+  default_currency?: 'USD' | 'EUR' | 'BRL';
+  language?: 'en' | 'es' | 'pt';
+  ui_preferences?: Record<string, any>;
+}
+
+export const userPreferencesApi = {
+  get: (): Promise<UserPreferencesResponse> =>
+    apiRequest<UserPreferencesResponse>('/api/user/preferences/'),
+
+  update: (preferences: UserPreferencesUpdate): Promise<UserPreferences> =>
+    apiRequest<UserPreferences>('/api/user/preferences/', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    }),
+
+  updateCurrency: (currency: string): Promise<UserPreferences> =>
+    apiRequest<UserPreferences>(`/api/user/preferences/currency/${currency}`, {
+      method: 'PUT',
+    }),
+
+  updateLanguage: (language: string): Promise<UserPreferences> =>
+    apiRequest<UserPreferences>(`/api/user/preferences/language/${language}`, {
+      method: 'PUT',
+    }),
+
+  updateUI: (uiPreferences: Record<string, any>): Promise<UserPreferences> =>
+    apiRequest<UserPreferences>('/api/user/preferences/ui', {
+      method: 'PUT',
+      body: JSON.stringify(uiPreferences),
+    }),
+};

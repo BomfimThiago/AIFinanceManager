@@ -33,7 +33,7 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
   // Helper function to convert budget amounts (assuming they're stored in EUR)
   const convertBudgetAmount = (amount: number) => {
     // Budget amounts are stored in EUR (base currency), convert to selected currency
-    return convertAmount(amount, 'EUR');
+    return convertAmount(amount, 'EUR', selectedCurrency);
   };
 
   // Get conversion rates for display

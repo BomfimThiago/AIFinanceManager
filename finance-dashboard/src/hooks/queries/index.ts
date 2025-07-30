@@ -45,3 +45,13 @@ export {
   useAddCategoryPreference,
   categoryKeys,
 } from './useCategoriesQuery';
+
+// User Preferences
+export {
+  useUserPreferences,
+  useUpdateUserPreferences,
+  useUpdateCurrencyPreference,
+  useUpdateLanguagePreference,
+  useUpdateUIPreferences,
+  userPreferencesKeys,
+} from './useUserPreferencesQuery';

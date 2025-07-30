@@ -3,6 +3,7 @@ import { Upload as UploadIcon, FileText, Trash2, Clock, CheckCircle, XCircle } f
 import { UploadedFile, UploadHistory } from '../../types';
 import { useUploadHistoryQuery, useDeleteUploadHistoryMutation } from '../../hooks/queries';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
 interface UploadProps {
@@ -164,9 +165,7 @@ const Upload: React.FC<UploadProps> = ({
                         if (hideAmounts) return '*** - ' + item.expense.category;
                         
                         // Convert amount to selected currency
-                        const convertedAmount = item.expense.amounts && item.expense.amounts[selectedCurrency] 
-                          ? item.expense.amounts[selectedCurrency]
-                          : convertAmount(item.expense.amount, item.expense.original_currency || 'EUR');
+                        const convertedAmount = getExpenseAmountInCurrency(item.expense, selectedCurrency, convertAmount);
                         
                         return `${formatCurrencyAmount(convertedAmount)} - ${item.expense.category}`;
                       })()} 

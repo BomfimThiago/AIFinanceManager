@@ -14,7 +14,6 @@ import { useCategories } from '../hooks/queries';
 import { useGenerateInsights } from '../hooks/queries';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { usePrivacyMode } from '../hooks/usePrivacyMode';
-import { useCurrency } from '../contexts/CurrencyContext';
 import { useNotificationContext } from '../contexts/NotificationContext';
 import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
 import { getUserFriendlyError } from '../utils/errorMessages';
@@ -27,7 +26,6 @@ const FinanceManager: React.FC = () => {
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
   const [sidebarVisible, setSidebarVisible] = useState(true);
   
-  const { convertAmount, selectedCurrency } = useCurrency();
   const { showError, showSuccess } = useNotificationContext();
   const { filters: globalFilters } = useGlobalFilters();
 
@@ -55,28 +53,6 @@ const FinanceManager: React.FC = () => {
 
   const { hideAmounts, togglePrivacyMode } = usePrivacyMode();
 
-  // Helper function to convert expense amounts to selected currency
-  const getConvertedAmount = (expense: any) => {
-    // If expense has pre-calculated amounts for the selected currency, use that
-    if (expense.amounts && expense.amounts[selectedCurrency]) {
-      return expense.amounts[selectedCurrency];
-    }
-    // Otherwise, convert using current rates
-    return convertAmount(expense.amount, expense.original_currency || 'EUR');
-  };
-
-  // Calculate net amount in selected currency
-  const calculateNetAmountInCurrency = (expenses: any[]) => {
-    const totalIncome = expenses
-      .filter(expense => expense.type === 'income')
-      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
-    
-    const totalExpenses = expenses
-      .filter(expense => expense.type === 'expense')
-      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
-    
-    return totalIncome - totalExpenses;
-  };
 
   // Wrapper functions for the hooks
   const addExpense = async (expenses: any[]) => {
@@ -115,9 +91,6 @@ const FinanceManager: React.FC = () => {
     onBudgetUpdate: updateBudgetSpent
   });
 
-  // Calculate net amount using summary data or fallback to local calculation
-  // Calculate net amount in selected currency
-  const netAmount = calculateNetAmountInCurrency(expenses);
 
   const handleGenerateInsights = async (): Promise<void> => {
     try {
@@ -221,7 +194,6 @@ const FinanceManager: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
-        netAmount={netAmount}
         hideAmounts={hideAmounts}
         onTogglePrivacy={togglePrivacyMode}
       />

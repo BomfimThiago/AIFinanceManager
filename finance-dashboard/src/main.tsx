@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { CurrencyProvider } from './contexts/CurrencyContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { GlobalFiltersProvider } from './contexts/GlobalFiltersContext'
+import { UserPreferencesProvider } from './contexts/UserPreferencesContext'
 import App from './App.tsx'
 import './index.css'
 
@@ -27,13 +28,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CurrencyProvider>
-          <GlobalFiltersProvider>
-            <NotificationProvider>
-              <App />
-            </NotificationProvider>
-          </GlobalFiltersProvider>
-        </CurrencyProvider>
+        <NotificationProvider>
+          <CurrencyProvider>
+            <UserPreferencesProvider>
+              <GlobalFiltersProvider>
+                <App />
+              </GlobalFiltersProvider>
+            </UserPreferencesProvider>
+          </CurrencyProvider>
+        </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

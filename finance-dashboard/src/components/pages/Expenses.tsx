@@ -6,6 +6,7 @@ import { useCreateExpense, useUpdateExpense, useDeleteExpense } from '../../hook
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { getUserFriendlyError } from '../../utils/errorMessages';
+import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 import EditExpenseModal from '../ui/EditExpenseModal';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
@@ -110,12 +111,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
   // Calculate totals for visible expenses with currency conversion
   const expenseTotals = useMemo(() => {
     const getConvertedAmount = (expense: Expense) => {
-      // If expense has pre-calculated amounts for the selected currency, use that
-      if (expense.amounts && expense.amounts[selectedCurrency]) {
-        return expense.amounts[selectedCurrency];
-      }
-      // Otherwise, convert using current rates
-      return convertAmount(expense.amount, expense.original_currency || 'EUR');
+      return getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
     };
     
     const totalExpenses = expenses
@@ -266,9 +262,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
                         if (hideAmounts) return '***';
                         
                         // Get converted amount
-                        const convertedAmount = expense.amounts && expense.amounts[selectedCurrency] 
-                          ? expense.amounts[selectedCurrency]
-                          : convertAmount(expense.amount, expense.original_currency || 'EUR');
+                        const convertedAmount = getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
                         
                         return `${expense.type === 'income' ? '+' : '-'}${formatCurrencyAmount(convertedAmount)}`;
                       })()} 
