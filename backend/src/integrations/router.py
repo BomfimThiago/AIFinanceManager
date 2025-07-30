@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.categories.service import CategoryService
 from src.expenses.repository import ExpenseRepository
 from src.expenses.schemas import ExpenseUpdate
 from src.integrations.dependencies import (
@@ -36,7 +37,8 @@ from src.integrations.schemas import (
     SyncRequest,
 )
 from src.integrations.service import IntegrationService
-from src.services.belvo_service import belvo_service
+from src.services.ai_service import AIService
+from src.services.belvo_service import belvo_service, create_belvo_service
 from src.services.webhook_logger import webhook_logger
 from src.shared.constants import IntegrationProvider, IntegrationStatus
 from src.shared.dependencies import get_db
@@ -56,9 +58,28 @@ from src.shared.models import (
     WebhookResponse,
     WidgetTokenResponse,
 )
+from src.user_preferences.service import UserCategoryPreferenceService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/integrations", tags=["integrations"])
+
+
+async def get_ai_enhanced_belvo_service(db: AsyncSession):
+    """Create BelvoService with AI categorization capabilities."""
+    try:
+        # Create AI service with dependencies
+        category_service = CategoryService()
+        user_prefs_service = UserCategoryPreferenceService(db)
+        ai_service = AIService(category_service, user_prefs_service)
+
+        # Create BelvoService with AI service
+        return create_belvo_service(ai_service)
+    except Exception as e:
+        logger.warning(
+            f"Failed to create AI-enhanced BelvoService, using fallback: {e}"
+        )
+        # Fallback to basic BelvoService if AI setup fails
+        return create_belvo_service()
 
 
 def integration_to_dict(integration: Integration) -> dict:
@@ -736,7 +757,8 @@ async def handle_historical_update_webhook(
     webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
 ):
     """Handle historical_update webhook by fetching and saving all transactions."""
-    # Using belvo_service and webhook_logger imported at module level
+    # Using AI-enhanced belvo_service and webhook_logger imported at module level
+    ai_belvo_service = await get_ai_enhanced_belvo_service(db)
 
     try:
         if webhook_type == "TRANSACTIONS":
@@ -755,7 +777,7 @@ async def handle_historical_update_webhook(
             )
 
             # Fetch all transactions for the link with optional date range filtering
-            transactions = await belvo_service.get_all_transactions_paginated(
+            transactions = await ai_belvo_service.get_all_transactions_paginated(
                 link_id, date_from=first_transaction_date, date_to=last_transaction_date
             )
             logger.info(f"Fetched {len(transactions)} transactions from Belvo API")
@@ -764,7 +786,9 @@ async def handle_historical_update_webhook(
             )
 
             # Convert to expenses (includes both income and expenses)
-            expenses = await belvo_service.convert_to_expenses(transactions)
+            expenses = await ai_belvo_service.convert_to_expenses(
+                transactions, integration.user_id
+            )
             logger.info(f"Converted {len(expenses)} transactions to expenses")
 
             # Save expenses to database with duplicate checking
@@ -850,7 +874,8 @@ async def handle_new_transactions_webhook(
     webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession
 ):
     """Handle new_transactions_available webhook for recurrent links."""
-    # Using belvo_service and webhook_logger imported at module level
+    # Using AI-enhanced belvo_service and webhook_logger imported at module level
+    ai_belvo_service = await get_ai_enhanced_belvo_service(db)
 
     try:
         new_count = webhook_data.get("new_transactions", 0)
@@ -862,7 +887,7 @@ async def handle_new_transactions_webhook(
 
         if new_count > 0 and new_transaction_ids:
             # Fetch only the specific new transactions by their IDs
-            transactions = await belvo_service.get_transactions_by_ids(
+            transactions = await ai_belvo_service.get_transactions_by_ids(
                 new_transaction_ids
             )
             logger.info(
@@ -870,7 +895,9 @@ async def handle_new_transactions_webhook(
             )
 
             # Convert to expenses
-            expenses = await belvo_service.convert_to_expenses(transactions)
+            expenses = await ai_belvo_service.convert_to_expenses(
+                transactions, integration.user_id
+            )
             logger.info(f"Converted {len(expenses)} new transactions to expenses")
 
             # Save expenses to database
@@ -959,7 +986,8 @@ async def handle_transactions_updated_webhook(
     db: AsyncSession,
 ):
     """Handle transactions_updated webhook."""
-    # Using belvo_service and webhook_logger imported at module level
+    # Using AI-enhanced belvo_service and webhook_logger imported at module level
+    ai_belvo_service = await get_ai_enhanced_belvo_service(db)
 
     try:
         count = webhook_data.get("count", 0)
@@ -972,11 +1000,13 @@ async def handle_transactions_updated_webhook(
 
         if count > 0 and updated_ids:
             # Fetch specific updated transactions by their IDs
-            transactions = await belvo_service.get_transactions_by_ids(updated_ids)
+            transactions = await ai_belvo_service.get_transactions_by_ids(updated_ids)
             logger.info(f"Fetched {len(transactions)} specific updated transactions")
 
             # Convert to expenses
-            expenses = await belvo_service.convert_to_expenses(transactions)
+            expenses = await ai_belvo_service.convert_to_expenses(
+                transactions, integration.user_id
+            )
             logger.info(f"Converted {len(expenses)} updated transactions to expenses")
 
             # Update existing expenses or create new ones

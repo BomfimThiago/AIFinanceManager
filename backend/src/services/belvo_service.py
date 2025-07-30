@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 class BelvoService:
     """Service for Belvo API operations."""
 
-    def __init__(self):
-        """Initialize Belvo service with API credentials."""
+    def __init__(self, ai_service=None):
+        """Initialize Belvo service with API credentials and optional AI service."""
         self.base_url = (
             "https://sandbox.belvo.com"
             if settings.BELVO_ENVIRONMENT == "sandbox"
@@ -38,6 +38,7 @@ class BelvoService:
             if settings.BELVO_SECRET_PASSWORD
             else ""
         )
+        self.ai_service = ai_service
 
     async def get_widget_access_token(self, external_id: str) -> str:
         """Generate widget access token for Belvo Connect Widget using the working API structure."""
@@ -324,7 +325,9 @@ class BelvoService:
             logger.error(f"Error getting paginated transactions: {e}")
             return all_transactions  # Return what we got so far
 
-    async def convert_to_expenses(self, transactions: list[dict[str, Any]]) -> list:
+    async def convert_to_expenses(
+        self, transactions: list[dict[str, Any]], user_id: int | None = None
+    ) -> list:
         """Convert Belvo transactions to ExpenseCreate objects, including both expenses and income."""
         # Using imports from module level
 
@@ -402,11 +405,14 @@ class BelvoService:
                     logger.warning(f"Invalid date for transaction {transaction_id}")
                     continue
 
+                # Get category using AI if available, otherwise fallback to rule-based
+                category = await self._map_transaction_category(transaction, user_id)
+
                 # Create expense data
                 expense_data = ExpenseCreate(
                     date=date_str,
                     amount=amount,
-                    category=self._map_transaction_category(transaction),
+                    category=category,
                     description=description,
                     merchant=self._extract_merchant_name(transaction),
                     type=expense_type,
@@ -432,8 +438,38 @@ class BelvoService:
         )
         return expenses
 
-    def _map_transaction_category(self, transaction: dict[str, Any]) -> str:
-        """Map Belvo transaction category to our expense categories."""
+    async def _map_transaction_category(
+        self, transaction: dict[str, Any], user_id: int | None = None
+    ) -> str:
+        """Map Belvo transaction category to our expense categories using AI if available."""
+        # Try AI categorization first if AI service is available
+        if self.ai_service and user_id:
+            try:
+                # Prepare transaction data for AI categorization
+                ai_transaction = {
+                    "description": transaction.get("description", ""),
+                    "merchant": self._extract_merchant_name(transaction),
+                    "category": transaction.get("category", ""),
+                    "subcategory": transaction.get("subcategory", ""),
+                    "amount": transaction.get("amount", 0),
+                }
+
+                category = await self.ai_service.categorize_transaction(
+                    ai_transaction, user_id
+                )
+                logger.info(f"AI categorized transaction as: {category}")
+                return category
+
+            except Exception as e:
+                logger.warning(
+                    f"AI categorization failed, falling back to rule-based: {e}"
+                )
+
+        # Fallback to rule-based categorization
+        return self._fallback_rule_based_categorization(transaction)
+
+    def _fallback_rule_based_categorization(self, transaction: dict[str, Any]) -> str:
+        """Fallback rule-based categorization when AI is not available or fails."""
         belvo_category = (transaction.get("category") or "").lower()
         belvo_subcategory = (transaction.get("subcategory") or "").lower()
         description = (transaction.get("description") or "").lower()
@@ -441,52 +477,52 @@ class BelvoService:
         # Category mapping based on Belvo's categories (from the example)
         category_mapping = {
             # Online & Digital
-            "online platforms & leisure": "entertainment",
-            "online platforms": "shopping",
-            "digital services": "utilities",
+            "online platforms & leisure": "Entertainment",
+            "online platforms": "Shopping",
+            "digital services": "Utilities",
             # Food & Dining
-            "food & drinks": "food",
-            "food and drinks": "food",
-            "restaurants": "food",
-            "groceries": "food",
-            "food_and_drinks": "food",
+            "food & drinks": "Food",
+            "food and drinks": "Food",
+            "restaurants": "Food",
+            "groceries": "Food",
+            "food_and_drinks": "Food",
             # Transportation
-            "transportation": "transport",
-            "fuel": "transport",
-            "public transport": "transport",
-            "taxi": "transport",
-            "uber": "transport",
+            "transportation": "Transport",
+            "fuel": "Transport",
+            "public transport": "Transport",
+            "taxi": "Transport",
+            "uber": "Transport",
             # Shopping
-            "shopping": "shopping",
-            "retail": "shopping",
+            "shopping": "Shopping",
+            "retail": "Shopping",
             # Entertainment
-            "entertainment": "entertainment",
-            "leisure": "entertainment",
+            "entertainment": "Entertainment",
+            "leisure": "Entertainment",
             # Health
-            "health": "healthcare",
-            "healthcare": "healthcare",
-            "medical": "healthcare",
-            "pharmacy": "healthcare",
+            "health": "Healthcare",
+            "healthcare": "Healthcare",
+            "medical": "Healthcare",
+            "pharmacy": "Healthcare",
             # Education
-            "education": "education",
+            "education": "Education",
             # Bills & Utilities
-            "bills": "utilities",
-            "utilities": "utilities",
-            "internet": "utilities",
-            "phone": "utilities",
-            "electricity": "utilities",
-            "water": "utilities",
+            "bills": "Utilities",
+            "utilities": "Utilities",
+            "internet": "Utilities",
+            "phone": "Utilities",
+            "electricity": "Utilities",
+            "water": "Utilities",
             # Financial Services
-            "bank fees": "other",
-            "fees": "other",
-            "atm": "other",
-            "transfer": "other",
-            "investment": "other",
+            "bank fees": "Other",
+            "fees": "Other",
+            "atm": "Other",
+            "transfer": "Other",
+            "investment": "Other",
             # Income categories
-            "salary": "other",  # Will be marked as income by type
-            "income": "other",  # Will be marked as income by type
-            "dividends": "other",
-            "interest": "other",
+            "salary": "Other",  # Will be marked as income by type
+            "income": "Other",  # Will be marked as income by type
+            "dividends": "Other",
+            "interest": "Other",
         }
 
         # First try exact match on category
@@ -502,43 +538,43 @@ class BelvoService:
             word in description
             for word in ["restaurant", "food", "cafe", "pizza", "delivery"]
         ):
-            return "food"
+            return "Food"
         elif any(
             word in description for word in ["gas", "fuel", "uber", "taxi", "transport"]
         ):
-            return "transport"
+            return "Transport"
         elif any(
             word in description
             for word in ["market", "supermarket", "grocery", "mercado"]
         ):
-            return "food"
+            return "Food"
         elif any(
             word in description
             for word in ["pharmacy", "hospital", "clinic", "doctor", "medical"]
         ):
-            return "healthcare"
+            return "Healthcare"
         elif any(
             word in description
             for word in ["internet", "phone", "electricity", "water", "bill"]
         ):
-            return "utilities"
+            return "Utilities"
         elif any(
             word in description
             for word in ["education", "school", "university", "course"]
         ):
-            return "education"
+            return "Education"
         elif any(
             word in description
             for word in ["entertainment", "movie", "game", "streaming"]
         ):
-            return "entertainment"
+            return "Entertainment"
         elif any(
             word in description for word in ["shopping", "store", "purchase", "buy"]
         ):
-            return "shopping"
+            return "Shopping"
 
         # Default category
-        return "other"
+        return "Other"
 
     def _extract_merchant_name(self, transaction: dict[str, Any]) -> str:
         """Extract merchant name from Belvo transaction data."""
@@ -733,5 +769,11 @@ class BelvoService:
             return None
 
 
-# Global service instance
+# Helper function to create BelvoService with dependencies
+def create_belvo_service(ai_service=None) -> BelvoService:
+    """Create BelvoService with optional AI service dependency."""
+    return BelvoService(ai_service=ai_service)
+
+
+# Global service instance (without AI - for backward compatibility)
 belvo_service = BelvoService()

@@ -178,13 +178,13 @@ class UserCategoryPreferenceService:
         if not preferences:
             return ""
 
-        # Format as merchant:category lines
+        # Format as description:category lines
         preference_lines = [
-            f"{merchant}:{category}" for merchant, category in preferences.items()
+            f"{description}:{category}" for description, category in preferences.items()
         ]
         preferences_text = "\n".join(preference_lines)
 
-        return f"\n\nIMPORTANT - User's learned category preferences (merchant:category mappings):\n{preferences_text}\n\nWhen you find an expense with a merchant name that matches a key above, ALWAYS use the corresponding category value. These are the user's preferred categories for specific merchants."
+        return f"\n\nIMPORTANT - User's learned category preferences (description:category mappings):\n{preferences_text}\n\nWhen you find an expense with a description that matches a key above, ALWAYS use the corresponding category value. These are the user's preferred categories for specific transaction descriptions."
 
     async def delete_preference(self, user_id: int, merchant_name: str) -> bool:
         """Delete a user's category preference for a merchant."""

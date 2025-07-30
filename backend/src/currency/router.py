@@ -42,7 +42,7 @@ async def get_currencies() -> CurrenciesResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get currency information",
-        )
+        ) from e
 
 
 @router.get("/exchange-rates", response_model=ExchangeRatesResponse)
@@ -52,11 +52,11 @@ async def get_exchange_rates(base_currency: str = "EUR") -> ExchangeRatesRespons
         # Validate base currency
         try:
             base_curr = Currency(base_currency.upper())
-        except ValueError:
+        except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Unsupported base currency: {base_currency}",
-            )
+            ) from e
 
         rates = await currency_service.get_current_rates(base_curr)
 
@@ -73,7 +73,7 @@ async def get_exchange_rates(base_currency: str = "EUR") -> ExchangeRatesRespons
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get exchange rates",
-        )
+        ) from e
 
 
 @router.post("/convert-amount", response_model=ConvertAmountResponse)
@@ -88,7 +88,7 @@ async def convert_amount(request: ConvertAmountRequest) -> ConvertAmountResponse
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid currency code: {e!s}",
-            )
+            ) from e
 
         # Get current rates and convert
         rates = await currency_service.get_current_rates()
@@ -120,4 +120,4 @@ async def convert_amount(request: ConvertAmountRequest) -> ConvertAmountResponse
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to convert amount",
-        )
+        ) from e

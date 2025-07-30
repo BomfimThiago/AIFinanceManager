@@ -240,7 +240,9 @@ async def update_expense(
     expense_id: int,
     expense: ExpenseCreate,
     expense_service: ExpenseService = Depends(get_expense_service),
-    user_prefs_service: UserCategoryPreferenceService = Depends(get_user_category_preference_service),
+    user_prefs_service: UserCategoryPreferenceService = Depends(
+        get_user_category_preference_service
+    ),
     current_user: User = Depends(get_current_user),
 ):
     """Update an expense."""
@@ -281,25 +283,27 @@ async def update_expense(
         # Learn from category change if the category was updated
         if (
             original_expense.category != expense.category
-            and expense.merchant
-            and expense.merchant.strip()
+            and expense.description
+            and expense.description.strip()
         ):
             try:
                 logger.info(
-                    f"Category changed from '{original_expense.category}' to '{expense.category}' for merchant '{expense.merchant}'"
+                    f"Category changed from '{original_expense.category}' to '{expense.category}' for description '{expense.description}'"
                 )
                 logger.info(
-                    f"Learning category preference: {expense.merchant} -> {expense.category}"
+                    f"Learning category preference: {expense.description} -> {expense.category}"
                 )
 
                 result = await user_prefs_service.add_or_update_preference(
-                    current_user.id, expense.merchant.strip(), expense.category
+                    current_user.id, expense.description.strip(), expense.category
                 )
                 logger.info(f"Successfully saved preference: {result}")
 
             except Exception as e:
                 # Don't fail the expense update if preference learning fails
-                logger.error(f"Failed to update user category preference: {e}", exc_info=True)
+                logger.error(
+                    f"Failed to update user category preference: {e}", exc_info=True
+                )
 
         return updated_expense
     except HTTPException:

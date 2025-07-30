@@ -65,9 +65,12 @@ class CategoryService:
             update_data.name = update_data.name.title()
 
         # Check for name conflicts if name is being updated
-        if update_data.name and update_data.name != category.name:
-            if await self.repository.category_exists(update_data.name, user_id):
-                raise ValueError(f"Category '{update_data.name}' already exists")
+        if (
+            update_data.name
+            and update_data.name != category.name
+            and await self.repository.category_exists(update_data.name, user_id)
+        ):
+            raise ValueError(f"Category '{update_data.name}' already exists")
 
         # Update the category
         updated_category = await self.repository.update(category_id, update_data)

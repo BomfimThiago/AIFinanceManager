@@ -8,6 +8,7 @@ expense extraction from documents and generating financial insights.
 import base64
 import json
 import logging
+from typing import Any
 
 from anthropic import Anthropic
 
@@ -32,20 +33,22 @@ class AIService:
         self.category_service = category_service
         self.user_preferences_service = user_preferences_service
 
-    def _get_categories_for_prompt(self) -> str:
-        """Get available categories for AI processing."""
-        if self.category_service:
+    async def _get_categories_for_prompt(self, user_id: int | None = None) -> str:
+        """Get available categories for AI processing from database."""
+        if self.category_service and user_id:
             try:
-                # Get categories from the category service
-                categories_content = self.category_service.get_categories_file_content()
-                if categories_content.strip():
-                    return categories_content.strip()
+                # Get categories from the database (both default and user's custom categories)
+                categories = await self.category_service.get_user_categories(user_id, include_default=True)
+                if categories:
+                    # Extract just the category names as a comma-separated list
+                    category_names = [category.name for category in categories]
+                    return ", ".join(category_names)
             except Exception as e:
-                logger.warning(f"Failed to get dynamic categories: {e}")
+                logger.warning(f"Failed to get database categories: {e}")
 
         # Fallback to default categories
         return (
-            "Groceries, Utilities, Transport, Dining, Entertainment, Healthcare, Other"
+            "Clothing, Education, Entertainment, Fitness, Food, Gifts, Healthcare, Home, Other, Pets, Shopping, Technology, Transport, Travel, Utilities"
         )
 
     async def _get_user_category_preferences_for_prompt(
@@ -122,7 +125,7 @@ class AIService:
                                 ]
 
                                 Rules:
-                                - Use these categories ONLY: {self._get_categories_for_prompt()}
+                                - Use these categories ONLY: {await self._get_categories_for_prompt(user_id)}
                                 - Use these user category preferences: {await self._get_user_category_preferences_for_prompt(user_id)}
                                 - Keep descriptions under 50 characters
                                 - No spaces after colons/commas in JSON
@@ -174,7 +177,7 @@ class AIService:
                                 Return JSON array (compact format):
                                 [{{"amount":123.45,"date":"2025-01-21","merchant":"Name","category":"Other","description":"Brief desc","currency":"EUR"}}]
 
-                                Categories: {self._get_categories_for_prompt()}
+                                Categories: {await self._get_categories_for_prompt(user_id)}
                                 User category preferences: {await self._get_user_category_preferences_for_prompt(user_id)}
                                 Stop after 20 items maximum.""",
                             },
@@ -393,6 +396,116 @@ class AIService:
         json_text = json_text.replace('""', '"').replace(",,", ",")
 
         return json_text
+
+    async def categorize_transaction(
+        self, transaction: dict[str, Any], user_id: int | None = None
+    ) -> str:
+        """Intelligently categorize a transaction using AI and user preferences."""
+        try:
+            # Extract transaction details
+            description = transaction.get("description", "")
+            merchant = transaction.get("merchant", "")
+            belvo_category = transaction.get("category", "")
+            belvo_subcategory = transaction.get("subcategory", "")
+            amount = transaction.get("amount", 0)
+
+            # Get available categories and user preferences
+            categories = await self._get_categories_for_prompt(user_id)
+            user_preferences = await self._get_user_category_preferences_for_prompt(
+                user_id
+            )
+
+            # Build the AI prompt for categorization
+            prompt = f"""Categorize this financial transaction intelligently.
+                Transaction Details:
+                - Description: {description}
+                - Merchant: {merchant}
+                - Amount: {amount}
+                - Belvo Category: {belvo_category}
+                - Belvo Subcategory: {belvo_subcategory}
+
+                Available Categories: {categories}
+
+                User Category Preferences (learn from these patterns): 
+                {user_preferences}
+
+                Rules:
+                1. ONLY return the category name from the available categories list
+                2. Consider the user's historical preferences for similar merchants/descriptions
+                3. Use context clues from description, merchant name, and amount
+                4. If Belvo category provides good context, consider it but prioritize user preferences
+                5. For unclear transactions, use "Other" as fallback
+                6. Return ONLY the category name, no explanation
+
+                Category:
+            """
+
+            message = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=50,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+            )
+
+            # Extract and clean the response
+            category = message.content[0].text.strip().lower()
+
+            # Validate the category exists in our available categories
+            available_categories = [
+                cat.strip().lower() for cat in categories.split(",")
+            ]
+
+            if category in available_categories:
+                # Return the properly formatted category name
+                category_index = available_categories.index(category)
+                proper_category = categories.split(",")[category_index].strip()
+                logger.info(
+                    f"AI categorized transaction '{description}' as '{proper_category}'"
+                )
+                return proper_category
+            else:
+                # Fallback to "Other" if AI returned invalid category
+                logger.warning(
+                    f"AI returned invalid category '{category}', using 'Other'"
+                )
+                return "Other"
+
+        except Exception as error:
+            logger.error(f"Error in AI transaction categorization: {error}")
+            # Fallback to simple rule-based categorization
+            return self._fallback_categorization(transaction)
+
+    def _fallback_categorization(self, transaction: dict[str, Any]) -> str:
+        """Fallback rule-based categorization when AI fails."""
+        description = (transaction.get("description") or "").lower()
+        belvo_category = (transaction.get("category") or "").lower()
+
+        # Simple keyword-based categorization
+        if any(
+            word in description
+            for word in ["food", "restaurant", "cafe", "pizza", "delivery"]
+        ):
+            return "Food"
+        elif any(
+            word in description for word in ["gas", "fuel", "uber", "taxi", "transport"]
+        ):
+            return "Transport"
+        elif any(
+            word in description for word in ["pharmacy", "hospital", "clinic", "doctor"]
+        ):
+            return "Healthcare"
+        elif any(word in description for word in ["shop", "store", "market", "retail"]):
+            return "Shopping"
+        elif "entertainment" in belvo_category or "leisure" in belvo_category:
+            return "Entertainment"
+        elif "utility" in belvo_category or "bill" in description:
+            return "Utilities"
+        else:
+            return "Other"
 
     async def generate_insights(self, expenses, budgets_dict) -> list:
         """Generate AI insights based on expenses and budgets.

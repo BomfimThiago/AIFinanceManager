@@ -33,9 +33,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
 
         if include_default:
             # Get user's custom categories OR default categories
-            conditions.append(
-                (self.model.user_id == user_id) | (self.model.is_default)
-            )
+            conditions.append((self.model.user_id == user_id) | (self.model.is_default))
         else:
             # Get only user's custom categories
             conditions.append(self.model.user_id == user_id)
@@ -88,9 +86,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
 
         if user_id:
             # Check if category exists for this user OR as default
-            conditions.append(
-                (self.model.user_id == user_id) | (self.model.is_default)
-            )
+            conditions.append((self.model.user_id == user_id) | (self.model.is_default))
         else:
             # Check only default categories
             conditions.append(self.model.is_default)
@@ -114,8 +110,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
             .where(
                 and_(
                     CategoryModel.is_active,
-                    (CategoryModel.user_id == user_id)
-                    | (CategoryModel.is_default),
+                    (CategoryModel.user_id == user_id) | (CategoryModel.is_default),
                 )
             )
             .group_by(CategoryModel.id, CategoryModel.name)
