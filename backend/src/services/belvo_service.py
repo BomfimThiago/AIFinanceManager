@@ -30,8 +30,14 @@ class BelvoService:
             else "https://api.belvo.com"
         )
         # Ensure credentials are strings
-        self.secret_id = str(settings.BELVO_SECRET_ID) if settings.BELVO_SECRET_ID else ""
-        self.secret_password = str(settings.BELVO_SECRET_PASSWORD) if settings.BELVO_SECRET_PASSWORD else ""
+        self.secret_id = (
+            str(settings.BELVO_SECRET_ID) if settings.BELVO_SECRET_ID else ""
+        )
+        self.secret_password = (
+            str(settings.BELVO_SECRET_PASSWORD)
+            if settings.BELVO_SECRET_PASSWORD
+            else ""
+        )
 
     async def get_widget_access_token(self, external_id: str) -> str:
         """Generate widget access token for Belvo Connect Widget using the working API structure."""
@@ -144,9 +150,12 @@ class BelvoService:
         try:
             url = f"{self.base_url}/api/institutions/"
 
-            async with aiohttp.ClientSession() as session, session.get(
-                url, auth=aiohttp.BasicAuth(self.secret_id, self.secret_password)
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
+                    url, auth=aiohttp.BasicAuth(self.secret_id, self.secret_password)
+                ) as response,
+            ):
                 if response.status == 200:
                     data = await response.json()
                     logger.info(f"Retrieved {len(data['results'])} institutions")
@@ -167,16 +176,17 @@ class BelvoService:
         try:
             url = f"{self.base_url}/api/accounts/"
 
-            async with aiohttp.ClientSession() as session, session.post(
-                url,
-                auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
-                json={"link": link_id},
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
+                    url,
+                    auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
+                    json={"link": link_id},
+                ) as response,
+            ):
                 if response.status == 201:
                     data = await response.json()
-                    logger.info(
-                        f"Retrieved {len(data)} accounts for link {link_id}"
-                    )
+                    logger.info(f"Retrieved {len(data)} accounts for link {link_id}")
                     return data
                 else:
                     error_text = await response.text()
@@ -202,11 +212,14 @@ class BelvoService:
             if date_to:
                 payload["date_to"] = date_to
 
-            async with aiohttp.ClientSession() as session, session.post(
-                url,
-                auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
-                json=payload,
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
+                    url,
+                    auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
+                    json=payload,
+                ) as response,
+            ):
                 if response.status == 201:
                     data = await response.json()
                     logger.info(
@@ -311,9 +324,7 @@ class BelvoService:
             logger.error(f"Error getting paginated transactions: {e}")
             return all_transactions  # Return what we got so far
 
-    async def convert_to_expenses(
-        self, transactions: list[dict[str, Any]]
-    ) -> list:
+    async def convert_to_expenses(self, transactions: list[dict[str, Any]]) -> list:
         """Convert Belvo transactions to ExpenseCreate objects, including both expenses and income."""
         # Using imports from module level
 
@@ -324,9 +335,15 @@ class BelvoService:
                 # Get transaction details with proper None handling
                 transaction_id = transaction.get("id")
                 amount = float(transaction.get("amount", 0))
-                transaction_type = (transaction.get("type") or "").upper()  # INFLOW or OUTFLOW
-                description = (transaction.get("description") or "").strip() or "Unknown transaction"
-                transaction_date = transaction.get("value_date") or transaction.get("accounting_date")
+                transaction_type = (
+                    transaction.get("type") or ""
+                ).upper()  # INFLOW or OUTFLOW
+                description = (
+                    transaction.get("description") or ""
+                ).strip() or "Unknown transaction"
+                transaction_date = transaction.get("value_date") or transaction.get(
+                    "accounting_date"
+                )
                 original_currency = transaction.get("currency") or "BRL"
 
                 # Validate required fields
@@ -342,14 +359,18 @@ class BelvoService:
                 elif transaction_type == "OUTFLOW":
                     expense_type = "expense"
                 else:
-                    logger.warning(f"Unknown transaction type {transaction_type}, defaulting to expense")
+                    logger.warning(
+                        f"Unknown transaction type {transaction_type}, defaulting to expense"
+                    )
                     expense_type = "expense"
 
                 # Convert currency enum if needed
                 try:
                     currency_enum = Currency(original_currency)
                 except ValueError:
-                    logger.warning(f"Unknown currency {original_currency}, defaulting to BRL")
+                    logger.warning(
+                        f"Unknown currency {original_currency}, defaulting to BRL"
+                    )
                     currency_enum = Currency.BRL
 
                 # Get current exchange rates for multi-currency support
@@ -371,7 +392,11 @@ class BelvoService:
                         date_str = transaction_date
                 else:
                     # Convert datetime object to string
-                    date_str = transaction_date.strftime("%Y-%m-%d") if transaction_date else None
+                    date_str = (
+                        transaction_date.strftime("%Y-%m-%d")
+                        if transaction_date
+                        else None
+                    )
 
                 if not date_str:
                     logger.warning(f"Invalid date for transaction {transaction_id}")
@@ -419,38 +444,31 @@ class BelvoService:
             "online platforms & leisure": "entertainment",
             "online platforms": "shopping",
             "digital services": "utilities",
-
             # Food & Dining
             "food & drinks": "food",
             "food and drinks": "food",
             "restaurants": "food",
             "groceries": "food",
             "food_and_drinks": "food",
-
             # Transportation
             "transportation": "transport",
             "fuel": "transport",
             "public transport": "transport",
             "taxi": "transport",
             "uber": "transport",
-
             # Shopping
             "shopping": "shopping",
             "retail": "shopping",
-
             # Entertainment
             "entertainment": "entertainment",
             "leisure": "entertainment",
-
             # Health
             "health": "healthcare",
             "healthcare": "healthcare",
             "medical": "healthcare",
             "pharmacy": "healthcare",
-
             # Education
             "education": "education",
-
             # Bills & Utilities
             "bills": "utilities",
             "utilities": "utilities",
@@ -458,14 +476,12 @@ class BelvoService:
             "phone": "utilities",
             "electricity": "utilities",
             "water": "utilities",
-
             # Financial Services
             "bank fees": "other",
             "fees": "other",
             "atm": "other",
             "transfer": "other",
             "investment": "other",
-
             # Income categories
             "salary": "other",  # Will be marked as income by type
             "income": "other",  # Will be marked as income by type
@@ -482,21 +498,43 @@ class BelvoService:
             return category_mapping[belvo_subcategory]
 
         # Fallback based on keywords in description
-        if any(word in description for word in ["restaurant", "food", "cafe", "pizza", "delivery"]):
+        if any(
+            word in description
+            for word in ["restaurant", "food", "cafe", "pizza", "delivery"]
+        ):
             return "food"
-        elif any(word in description for word in ["gas", "fuel", "uber", "taxi", "transport"]):
+        elif any(
+            word in description for word in ["gas", "fuel", "uber", "taxi", "transport"]
+        ):
             return "transport"
-        elif any(word in description for word in ["market", "supermarket", "grocery", "mercado"]):
+        elif any(
+            word in description
+            for word in ["market", "supermarket", "grocery", "mercado"]
+        ):
             return "food"
-        elif any(word in description for word in ["pharmacy", "hospital", "clinic", "doctor", "medical"]):
+        elif any(
+            word in description
+            for word in ["pharmacy", "hospital", "clinic", "doctor", "medical"]
+        ):
             return "healthcare"
-        elif any(word in description for word in ["internet", "phone", "electricity", "water", "bill"]):
+        elif any(
+            word in description
+            for word in ["internet", "phone", "electricity", "water", "bill"]
+        ):
             return "utilities"
-        elif any(word in description for word in ["education", "school", "university", "course"]):
+        elif any(
+            word in description
+            for word in ["education", "school", "university", "course"]
+        ):
             return "education"
-        elif any(word in description for word in ["entertainment", "movie", "game", "streaming"]):
+        elif any(
+            word in description
+            for word in ["entertainment", "movie", "game", "streaming"]
+        ):
             return "entertainment"
-        elif any(word in description for word in ["shopping", "store", "purchase", "buy"]):
+        elif any(
+            word in description for word in ["shopping", "store", "purchase", "buy"]
+        ):
             return "shopping"
 
         # Default category
@@ -557,7 +595,6 @@ class BelvoService:
         except Exception as e:
             logger.error(f"Error triggering historical update: {e}")
             raise
-
 
     def convert_institution_to_create_model(self, institution_data: dict[str, Any]):
         """Convert Belvo institution data to our create model.
@@ -666,7 +703,9 @@ class BelvoService:
             logger.error(f"Error getting transaction {transaction_id}: {e}")
             return None
 
-    async def get_transactions_by_ids(self, transaction_ids: list[str]) -> list[dict[str, Any]]:
+    async def get_transactions_by_ids(
+        self, transaction_ids: list[str]
+    ) -> list[dict[str, Any]]:
         """Get multiple transactions by their IDs."""
         transactions = []
 
@@ -677,7 +716,9 @@ class BelvoService:
             else:
                 logger.warning(f"Failed to retrieve transaction {transaction_id}")
 
-        logger.info(f"Retrieved {len(transactions)} out of {len(transaction_ids)} transactions")
+        logger.info(
+            f"Retrieved {len(transactions)} out of {len(transaction_ids)} transactions"
+        )
         return transactions
 
     async def _handle_response(

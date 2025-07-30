@@ -97,6 +97,10 @@ async def init_database():
                 SyncLog,
             )
             from .upload_history.models import UploadHistoryModel  # noqa: F401
+            from .user_preferences.models import (  # noqa: F401
+                UserCategoryPreference,
+                UserPreferences,
+            )
 
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
@@ -117,6 +121,7 @@ async def check_database_health() -> bool:
     """Check if database is healthy."""
     try:
         from sqlalchemy import text
+
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
             return True

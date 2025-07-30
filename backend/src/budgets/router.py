@@ -41,7 +41,9 @@ async def create_budget(
 ):
     """Create or update a budget for a category."""
     try:
-        logger.info(f"Creating/updating budget for user {current_user.id}: {budget.model_dump()}")
+        logger.info(
+            f"Creating/updating budget for user {current_user.id}: {budget.model_dump()}"
+        )
         return await budget_service.create_or_update(budget)
     except DatabaseError:
         raise

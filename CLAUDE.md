@@ -87,6 +87,9 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
   - `src/insights/` - AI-powered financial insights
   - `src/integrations/` - Bank integration system (Belvo)
   - `src/currency/` - Multi-currency support and conversion
+  - `src/user_preferences/` - Unified user preferences management
+  - `src/categories/` - Category management and operations
+  - `src/upload_history/` - File upload tracking and history
   - `src/shared/` - Shared models, constants, and utilities
   - `src/database/` - Database configuration and connection
 - **API Layer**: RESTful endpoints with proper HTTP status codes and error handling
@@ -101,6 +104,7 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **JWT-based Authentication**: Secure login/signup system with password hashing
 - **Privacy Mode**: Toggle to hide all financial amounts across the application
 - **User Management**: Profile management with secure session handling
+- **User Preferences**: Unified preference management system for currency, language, UI settings, and category preferences
 
 #### 2. Multi-Currency Support
 - **Currency Selection**: Global currency selector (USD, EUR, BRL) with country flags
@@ -118,6 +122,7 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 #### 4. Receipt Upload & Processing
 - **Drag-and-drop Upload**: Support for PDF receipts and images (JPG, PNG)
 - **AI-powered Extraction**: Automatic expense data extraction using Anthropic Claude
+- **User-aware AI Processing**: AI learns from user's category preferences for better categorization
 - **Currency Detection**: AI identifies receipt currency and applies appropriate conversion
 - **Upload History**: Complete tracking of upload status, success/failure states, and file details
 - **Bulk Processing**: Handle multiple file uploads simultaneously
@@ -126,7 +131,8 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **Full CRUD Operations**: Create, read, update, delete expenses with proper validation
 - **Advanced Filtering**: Filter by month, year, category with frontend and backend support
 - **Edit Modal**: In-place editing with form validation and currency conversion
-- **Category Management**: Predefined categories with icons and color coding
+- **Category Management**: Predefined categories with icons and color coding (all capitalized)
+- **User Category Preferences**: AI learns from user's merchant-category mappings for intelligent auto-categorization
 - **Add New Expenses**: Manual expense creation with category selection
 - **Confirmation Modals**: Safe deletion with custom confirmation dialogs
 - **Running Totals**: Real-time calculation of filtered expense totals
@@ -146,7 +152,16 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 - **Actionable Advice**: Specific recommendations for financial improvement
 - **Interactive Generation**: Manual and automatic insight generation with progress indicators
 
-#### 8. Bank Integration System (Belvo)
+#### 8. User Preferences System
+- **Unified Management**: Centralized system for all user preference types
+- **General Preferences**: Currency, language, and UI settings with validation
+- **Category Preferences**: Merchant-category mappings for AI learning and auto-categorization
+- **User Data Isolation**: Proper user-scoped data access and security
+- **Extensible Architecture**: Ready for future preference types (notifications, privacy, etc.)
+- **RESTful API**: Complete CRUD operations with proper validation and error handling
+- **Database-backed**: Persistent storage with proper foreign key relationships
+
+#### 9. Bank Integration System (Belvo)
 - **Widget Integration**: Secure Belvo widget for bank connections in Brazil and Mexico
 - **Institution Management**: Automated synchronization of bank institution data from Belvo API
 - **Multi-Bank Support**: Users can connect multiple banks with individual management
@@ -252,6 +267,9 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 
 #### Core Tables
 - **Users**: Authentication and user management with email/username, password hashing
+- **User Preferences**: General user settings (currency, language, UI preferences)
+- **User Category Preferences**: Merchant-category mappings for AI learning
+- **Categories**: Expense categories with user-scoped custom categories
 - **Expenses**: Transaction records with multi-currency support, categories, amounts, and metadata
 - **Budgets**: Category-based spending limits with actual spending calculation
 - **Insights**: AI-generated financial recommendations and alerts with type classification
@@ -291,6 +309,19 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 #### AI Insights
 - `POST /api/insights/generate` - Generate AI insights
 
+#### User Preferences
+- `GET /api/user/preferences/` - Get user preferences with available options
+- `PUT /api/user/preferences/` - Update user preferences
+- `PUT /api/user/preferences/currency/{currency}` - Update currency preference
+- `PUT /api/user/preferences/language/{language}` - Update language preference
+- `PUT /api/user/preferences/ui` - Update UI preferences
+- `GET /api/user/preferences/categories` - List category preferences
+- `POST /api/user/preferences/categories` - Create category preference
+- `PUT /api/user/preferences/categories/{id}` - Update category preference
+- `DELETE /api/user/preferences/categories/{id}` - Delete category preference
+- `PUT /api/user/preferences/categories/merchant/{merchant_name}` - Quick merchant mapping
+- `DELETE /api/user/preferences/categories/merchant/{merchant_name}` - Delete merchant mapping
+
 #### Upload History
 - `GET /api/upload-history` - Get upload history
 - `DELETE /api/upload-history/{id}` - Delete upload record
@@ -321,3 +352,7 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 8. ✅ AI insights with loading states
 9. ✅ Currency conversion rate displays
 10. ✅ Backend budget calculations for performance
+11. ✅ Unified user preferences system with category learning
+12. ✅ Auto-capitalized category names for consistency
+13. ✅ User-aware AI processing with preference learning
+14. ✅ Database-backed preference storage with proper isolation

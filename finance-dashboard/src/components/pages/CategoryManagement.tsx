@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X, Palette, Tag, Loader2 } from 'lucide-react';
-import { useCurrency } from '../../contexts/CurrencyContext';
-import { useNotifications } from '../../hooks/useNotifications';
+import { 
+  Plus, Edit2, Trash2, X, Palette, Tag, Loader2,
+  Utensils, Car, ShoppingBag, Film, Zap, Heart, Book, Home, 
+  Shirt, Laptop, Dumbbell, Plane, Gift, MoreHorizontal, DollarSign, CreditCard
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { 
   useCategories, 
@@ -9,7 +13,7 @@ import {
   useUpdateCategory, 
   useDeleteCategory 
 } from '../../hooks/queries';
-import type { Category, CategoryCreate, CategoryUpdate } from '../../services/apiService';
+import type { Category } from '../../services/apiService';
 
 interface CategoryFormData {
   name: string;
@@ -18,9 +22,7 @@ interface CategoryFormData {
   icon: string;
 }
 
-interface CategoryManagementProps {
-  hideAmounts: boolean;
-}
+interface CategoryManagementProps {}
 
 const DEFAULT_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
@@ -34,9 +36,40 @@ const DEFAULT_ICONS = [
   'dumbbell', 'plane', 'gift', 'more-horizontal'
 ];
 
-const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) => {
-  const { formatAmount } = useCurrency();
-  const { showNotification } = useNotifications();
+// Map icon strings to Lucide components
+const iconMap: Record<string, LucideIcon> = {
+  utensils: Utensils,
+  car: Car,
+  'shopping-bag': ShoppingBag,
+  film: Film,
+  zap: Zap,
+  heart: Heart,
+  book: Book,
+  home: Home,
+  shirt: Shirt,
+  laptop: Laptop,
+  dumbbell: Dumbbell,
+  plane: Plane,
+  gift: Gift,
+  'more-horizontal': MoreHorizontal,
+  tag: Tag,
+  'dollar-sign': DollarSign,
+  dollar: DollarSign,
+  'credit-card': CreditCard,
+};
+
+// Component to render category icon
+const CategoryIcon: React.FC<{ iconName: string; className?: string; color?: string }> = ({ 
+  iconName, 
+  className = "w-5 h-5", 
+  color 
+}) => {
+  const IconComponent = iconMap[iconName] || Tag;
+  return <IconComponent className={className} style={color ? { color } : undefined} />;
+};
+
+const CategoryManagement: React.FC<CategoryManagementProps> = () => {
+  const { addNotification } = useNotificationContext();
   
   // React Query hooks
   const { data: categoriesData, isLoading, error } = useCategories(true);
@@ -62,9 +95,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) 
   // Handle error state
   React.useEffect(() => {
     if (error) {
-      showNotification('Failed to load categories', 'error');
+      addNotification('error', 'Error', 'Failed to load categories');
     }
-  }, [error, showNotification]);
+  }, [error, addNotification]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,16 +108,17 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) 
           id: editingCategory.id,
           data: formData
         });
-        showNotification('Category updated successfully', 'success');
+        addNotification('success', 'Success', 'Category updated successfully');
       } else {
         await createCategoryMutation.mutateAsync(formData);
-        showNotification('Category created successfully', 'success');
+        addNotification('success', 'Success', 'Category created successfully');
       }
       resetForm();
     } catch (error: any) {
-      showNotification(
-        error?.response?.data?.detail || 'Failed to save category',
-        'error'
+      addNotification(
+        'error',
+        'Error',
+        error?.response?.data?.detail || 'Failed to save category'
       );
     }
   };
@@ -103,11 +137,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) 
   const handleDelete = async (category: Category) => {
     try {
       await deleteCategoryMutation.mutateAsync(category.id);
-      showNotification('Category deleted successfully', 'success');
+      addNotification('success', 'Success', 'Category deleted successfully');
     } catch (error: any) {
-      showNotification(
-        error?.response?.data?.detail || 'Failed to delete category',
-        'error'
+      addNotification(
+        'error',
+        'Error',
+        error?.response?.data?.detail || 'Failed to delete category'
       );
     }
     
@@ -273,12 +308,11 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) 
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: `${category.color}20` }}
                   >
-                    <div 
+                    <CategoryIcon 
+                      iconName={category.icon || 'tag'}
                       className="w-5 h-5"
-                      style={{ color: category.color }}
-                    >
-                      {category.icon}
-                    </div>
+                      color={category.color}
+                    />
                   </div>
                   <div>
                     <h4 className="font-medium text-gray-900">{category.name}</h4>
@@ -306,13 +340,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) 
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Custom Categories</h3>
-            <p className="text-gray-500 mb-4">Create your first custom category to get started.</p>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Add Category
-            </button>
+            <p className="text-gray-500">Create your first custom category to get started.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -324,12 +352,11 @@ const CategoryManagement: React.FC<CategoryManagementProps> = ({ hideAmounts }) 
                       className="w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: `${category.color}20` }}
                     >
-                      <div 
+                      <CategoryIcon 
+                        iconName={category.icon || 'tag'}
                         className="w-5 h-5"
-                        style={{ color: category.color }}
-                      >
-                        {category.icon}
-                      </div>
+                        color={category.color}
+                      />
                     </div>
                     <div>
                       <h4 className="font-medium text-gray-900">{category.name}</h4>

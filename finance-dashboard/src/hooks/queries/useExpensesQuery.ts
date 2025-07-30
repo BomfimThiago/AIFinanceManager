@@ -7,7 +7,7 @@ import { uploadHistoryKeys } from './useUploadHistoryQuery';
 export const expenseKeys = {
   all: ['expenses'] as const,
   lists: () => [...expenseKeys.all, 'list'] as const,
-  list: (filters: { month?: number; year?: number }) => [...expenseKeys.lists(), filters] as const,
+  list: (filters: { month?: number; year?: number; type?: string }) => [...expenseKeys.lists(), filters] as const,
   details: () => [...expenseKeys.all, 'detail'] as const,
   detail: (id: number) => [...expenseKeys.details(), id] as const,
   summary: () => [...expenseKeys.all, 'summary'] as const,
@@ -19,10 +19,11 @@ export const expenseKeys = {
 };
 
 // Queries
-export function useExpenses(filters?: { month?: number; year?: number }) {
+export function useExpenses(filters?: { month?: number; year?: number; type?: string }) {
   const normalizedFilters = {
     month: filters?.month && filters.month > 0 ? filters.month : undefined,
     year: filters?.year && filters.year > 0 ? filters.year : undefined,
+    type: filters?.type || undefined,
   };
 
   return useQuery({

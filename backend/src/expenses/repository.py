@@ -4,11 +4,10 @@ Expense repository for database operations.
 This module contains the repository class for expense-related database operations.
 """
 
-
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.expenses.models import ExpenseModel
+from src.expenses.models import ExpenseModel, ExpenseType
 from src.expenses.schemas import ExpenseCreate, ExpenseUpdate
 from src.shared.repository import BaseRepository
 
@@ -38,6 +37,46 @@ class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdat
                 conditions.append(self.model.date.like(f"{year}-{month_str}-%"))
             else:
                 conditions.append(self.model.date.like(f"%-{month_str}-%"))
+
+        if conditions:
+            query = query.where(and_(*conditions))
+
+        query = query.order_by(self.model.date.desc())
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_by_filters(
+        self,
+        month: int | None = None,
+        year: int | None = None,
+        expense_type: str | None = None,
+    ) -> list[ExpenseModel]:
+        """Get expenses filtered by month, year, and/or type."""
+        query = select(self.model)
+
+        conditions = []
+
+        if year is not None:
+            # Extract year from date string (assuming YYYY-MM-DD format)
+            conditions.append(self.model.date.like(f"{year}-%"))
+
+        if month is not None:
+            # Extract month from date string
+            month_str = f"{month:02d}"
+            if year is not None:
+                conditions.append(self.model.date.like(f"{year}-{month_str}-%"))
+            else:
+                conditions.append(self.model.date.like(f"%-{month_str}-%"))
+
+        if expense_type is not None:
+            try:
+                # Convert string to ExpenseType enum
+                expense_type_enum = ExpenseType(expense_type)
+                conditions.append(self.model.type == expense_type_enum)
+            except ValueError:
+                # Invalid expense type, return empty result
+                return []
 
         if conditions:
             query = query.where(and_(*conditions))

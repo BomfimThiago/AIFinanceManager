@@ -27,7 +27,9 @@ class ExpenseBase(CustomModel):
     items: list[str] | None = Field(None, description="List of items")
 
     # Integration tracking
-    transaction_id: str | None = Field(None, description="External transaction ID (e.g., Belvo)")
+    transaction_id: str | None = Field(
+        None, description="External transaction ID (e.g., Belvo)"
+    )
 
     # Multi-currency support
     original_currency: str | None = Field(
@@ -46,6 +48,7 @@ class ExpenseBase(CustomModel):
 
 class ExpenseCreate(ExpenseBase):
     """Schema for creating a new expense."""
+
     pass
 
 
@@ -57,12 +60,16 @@ class ExpenseUpdate(CustomModel):
     category: str | None = Field(None, min_length=1, description="Expense category")
     description: str | None = Field(None, description="Expense description")
     merchant: str | None = Field(None, description="Merchant or source")
-    type: Literal["expense", "income"] | None = Field(None, description="Transaction type")
+    type: Literal["expense", "income"] | None = Field(
+        None, description="Transaction type"
+    )
     source: Literal["ai-processed", "manual", "belvo-integration"] | None = Field(
         None, description="Data source"
     )
     items: list[str] | None = Field(None, description="List of items")
-    transaction_id: str | None = Field(None, description="External transaction ID (e.g., Belvo)")
+    transaction_id: str | None = Field(
+        None, description="External transaction ID (e.g., Belvo)"
+    )
     original_currency: str | None = Field(None, description="Original currency")
 
 
@@ -81,9 +88,7 @@ class ExpenseSummary(CustomModel):
     total_income: float = Field(description="Total income amount")
     total_expenses: float = Field(description="Total expenses amount")
     net_amount: float = Field(description="Net amount (income - expenses)")
-    category_spending: dict[str, float] = Field(
-        description="Spending by category"
-    )
+    category_spending: dict[str, float] = Field(description="Spending by category")
 
 
 class CategoryData(CustomModel):

@@ -21,11 +21,6 @@ EXPENSE_CATEGORIES = {
 DEFAULT_CURRENCY = Currency.EUR
 
 # File upload settings
-SUPPORTED_FILE_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/jpg",
-    "application/pdf"
-]
+SUPPORTED_FILE_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
 
 MAX_FILE_SIZE_MB = 50

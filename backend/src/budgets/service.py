@@ -22,7 +22,7 @@ class BudgetService:
     def _model_to_schema(self, budget_model: BudgetModel) -> Budget:
         """Convert SQLAlchemy model to Pydantic schema."""
         return Budget(
-            id=getattr(budget_model, 'id', 0),
+            id=getattr(budget_model, "id", 0),
             category=budget_model.category,
             limit=budget_model.limit_amount,
             spent=budget_model.spent_amount,
@@ -38,7 +38,7 @@ class BudgetService:
         result = {}
         for budget_model in budget_models:
             result[budget_model.category] = Budget(
-                id=getattr(budget_model, 'id', 0),
+                id=getattr(budget_model, "id", 0),
                 category=budget_model.category,
                 limit=budget_model.limit_amount,
                 spent=budget_model.spent_amount,
@@ -60,7 +60,9 @@ class BudgetService:
         budget_model = await self.repository.create_or_update(budget_data)
         return self._model_to_schema(budget_model)
 
-    async def update_spent_amount(self, category: str, spent_amount: float) -> Budget | None:
+    async def update_spent_amount(
+        self, category: str, spent_amount: float
+    ) -> Budget | None:
         """Update spent amount for a budget category."""
         try:
             # Get existing budget or create a default one
@@ -71,7 +73,9 @@ class BudgetService:
                 existing_budget = await self.repository.create_or_update(budget_create)
 
             # Update spent amount
-            budget_model = await self.repository.update_spent_amount(category, spent_amount)
+            budget_model = await self.repository.update_spent_amount(
+                category, spent_amount
+            )
 
             if budget_model:
                 return self._model_to_schema(budget_model)
@@ -102,5 +106,5 @@ class BudgetService:
             total_budgets=len(budget_models),
             total_limit=total_limit,
             total_spent=total_spent,
-            categories=categories
+            categories=categories,
         )

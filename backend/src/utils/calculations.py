@@ -5,7 +5,6 @@ This module contains utility functions for financial calculations
 and data preparation for charts and summaries.
 """
 
-
 from src.expenses.schemas import Expense
 
 
@@ -44,11 +43,9 @@ def prepare_category_data(
     for category_name, total in category_totals.items():
         if total > 0:
             color = categories.get(category_name, "#6B7280")  # Default gray color
-            category_data.append({
-                "name": category_name,
-                "value": total,
-                "color": color
-            })
+            category_data.append(
+                {"name": category_name, "value": total, "color": color}
+            )
 
     return category_data
 

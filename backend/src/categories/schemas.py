@@ -15,21 +15,28 @@ class CategoryBase(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100, description="Category name")
     description: str | None = Field(None, description="Category description")
-    color: str | None = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color code")
+    color: str | None = Field(
+        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color code"
+    )
     icon: str | None = Field(None, max_length=50, description="Icon name")
 
 
 class CategoryCreate(CategoryBase):
     """Schema for creating a new category."""
+
     pass
 
 
 class CategoryUpdate(BaseModel):
     """Schema for updating a category."""
 
-    name: str | None = Field(None, min_length=1, max_length=100, description="Category name")
+    name: str | None = Field(
+        None, min_length=1, max_length=100, description="Category name"
+    )
     description: str | None = Field(None, description="Category description")
-    color: str | None = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color code")
+    color: str | None = Field(
+        None, pattern=r"^#[0-9A-Fa-f]{6}$", description="Hex color code"
+    )
     icon: str | None = Field(None, max_length=50, description="Icon name")
     is_active: bool | None = Field(None, description="Whether category is active")
 
@@ -40,7 +47,9 @@ class Category(CategoryBase):
     id: int = Field(..., description="Category ID")
     is_default: bool = Field(..., description="Whether this is a default category")
     is_active: bool = Field(..., description="Whether category is active")
-    user_id: int | None = Field(None, description="User ID (null for default categories)")
+    user_id: int | None = Field(
+        None, description="User ID (null for default categories)"
+    )
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
@@ -68,4 +77,6 @@ class CategoryStatsResponse(BaseModel):
     """Response schema for category statistics."""
 
     stats: list[CategoryStats] = Field(..., description="Category statistics")
-    total_categories: int = Field(..., description="Total number of categories with expenses")
+    total_categories: int = Field(
+        ..., description="Total number of categories with expenses"
+    )

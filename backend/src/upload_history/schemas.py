@@ -14,6 +14,7 @@ from src.shared.models import CustomModel, TimestampMixin
 
 class UploadStatus(str, enum.Enum):
     """Enum for upload status."""
+
     PROCESSING = "processing"
     SUCCESS = "success"
     FAILED = "failed"

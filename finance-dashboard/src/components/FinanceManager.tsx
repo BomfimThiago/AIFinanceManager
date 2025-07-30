@@ -5,30 +5,35 @@ import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Expenses from './pages/Expenses';
 import Budgets from './pages/Budgets';
-import CategoryManagement from './pages/CategoryManagement';
 import Insights from './pages/Insights';
 import Integrations from './pages/Integrations';
 import { useExpenses, useCreateBulkExpenses } from '../hooks/queries';
 import { useBudgets, useCreateBudget, useUpdateBudgetSpent } from '../hooks/queries';
+import { useCategories } from '../hooks/queries';
 import { useGenerateInsights } from '../hooks/queries';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { usePrivacyMode } from '../hooks/usePrivacyMode';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { categories } from '../constants/categories';
+import { convertAPICategoriesList } from '../utils/categoryMapper';
 import type { TabId, AIInsight } from '../types';
+import CategoryManagement from './pages/CategoryManagement';
 
 const FinanceManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
-  const [expenseFilters, setExpenseFilters] = useState<{ month?: number; year?: number; category?: string }>({});
+  const [expenseFilters, setExpenseFilters] = useState<{ month?: number; year?: number; category?: string; type?: string }>({});
   
   const { convertAmount, selectedCurrency } = useCurrency();
 
   // TanStack Query hooks
-  // Note: Backend filtering only supports month/year, category filtering is done on frontend
-  const backendFilters = { month: expenseFilters.month, year: expenseFilters.year };
+  // Note: Backend supports month/year/type filtering, category filtering is done on frontend
+  const backendFilters = { month: expenseFilters.month, year: expenseFilters.year, type: expenseFilters.type };
   const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses(backendFilters);
   const { data: budgets = {}, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategories(true);
+  
+  // Convert API categories to frontend categories
+  const categories = categoriesData?.categories ? convertAPICategoriesList(categoriesData.categories) : [];
   
   // Mutations
   const createBulkExpensesMutation = useCreateBulkExpenses();
@@ -105,12 +110,12 @@ const FinanceManager: React.FC = () => {
     }
   };
 
-  const handleFiltersChange = useCallback((filters: { month?: number; year?: number }) => {
+  const handleFiltersChange = useCallback((filters: { month?: number; year?: number; category?: string; type?: string }) => {
     setExpenseFilters(filters);
-  }, []);
+  }, []); 
 
   // Show loading state
-  if (expensesLoading || budgetsLoading) {
+  if (expensesLoading || budgetsLoading || categoriesLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -122,13 +127,13 @@ const FinanceManager: React.FC = () => {
   }
 
   // Show error state
-  if (expensesError || budgetsError) {
+  if (expensesError || budgetsError || categoriesError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600">
             <p className="text-lg font-semibold">Error loading data</p>
-            <p className="mt-2">{expensesError?.message || budgetsError?.message}</p>
+            <p className="mt-2">{expensesError?.message || budgetsError?.message || categoriesError?.message}</p>
           </div>
         </div>
       </div>
@@ -178,7 +183,7 @@ const FinanceManager: React.FC = () => {
           />
         );
       case 'categories':
-        return <CategoryManagement hideAmounts={hideAmounts} />;
+        return <CategoryManagement />;
       case 'insights':
         return (
           <Insights

@@ -86,7 +86,7 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
               className="border border-gray-300 rounded-lg px-3 py-2"
             >
               <option value="">Select Category</option>
-              {categories.filter(cat => cat.name !== 'Income').map(cat => (
+              {categories.map(cat => (
                 <option key={cat.name} value={cat.name}>{cat.name}</option>
               ))}
             </select>
@@ -118,65 +118,79 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.entries(budgets).map(([category, budget]) => {
-          // Get actual spending from backend (already in selected currency)
-          const actualSpent = getActualSpending(category);
-          const convertedLimit = convertBudgetAmount(budget.limit);
-          const percentage = (actualSpent / convertedLimit) * 100;
-          const CategoryIcon = categories.find(cat => cat.name === category)?.icon || Target;
-          const categoryColor = categories.find(cat => cat.name === category)?.color || '#6B7280';
-          const isOverBudget = actualSpent > convertedLimit;
-          
-          return (
-            <div key={category} className="bg-white p-6 rounded-xl shadow-sm border">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: `${categoryColor}20` }}>
-                    <CategoryIcon className="h-5 w-5" style={{ color: categoryColor }} />
+      {Object.values(budgets).filter(budget => budget.limit > 0).length === 0 ? (
+        // Empty state when no budgets are set
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Budgets Set</h3>
+          <p className="text-gray-500">
+            Create your first budget to start tracking your spending goals.
+          </p>
+        </div>
+      ) : (
+        // Budget cards when budgets exist
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Object.entries(budgets)
+            .filter(([_, budget]) => budget.limit > 0)
+            .map(([category, budget]) => {
+            // Get actual spending from backend (already in selected currency)
+            const actualSpent = getActualSpending(category);
+            const convertedLimit = convertBudgetAmount(budget.limit);
+            const percentage = (actualSpent / convertedLimit) * 100;
+            const CategoryIcon = categories.find(cat => cat.name === category)?.icon || Target;
+            const categoryColor = categories.find(cat => cat.name === category)?.color || '#6B7280';
+            const isOverBudget = actualSpent > convertedLimit;
+            
+            return (
+              <div key={category} className="bg-white p-6 rounded-xl shadow-sm border">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: `${categoryColor}20` }}>
+                      <CategoryIcon className="h-5 w-5" style={{ color: categoryColor }} />
+                    </div>
+                    <h3 className="font-semibold text-gray-900">{category}</h3>
                   </div>
-                  <h3 className="font-semibold text-gray-900">{category}</h3>
+                  {isOverBudget && <AlertCircle className="h-5 w-5 text-red-500" />}
                 </div>
-                {isOverBudget && <AlertCircle className="h-5 w-5 text-red-500" />}
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Spent</span>
+                    <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
+                      {hideAmounts ? '***' : formatCurrencyAmount(actualSpent)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Budget</span>
+                    <span className="font-medium text-gray-900">{hideAmounts ? '***' : formatCurrencyAmount(convertedLimit)}</span>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        isOverBudget ? 'bg-red-500' : percentage > 80 ? 'bg-yellow-500' : 'bg-green-500'
+                      }`}
+                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm">
+                    <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
+                      {percentage.toFixed(1)}% used
+                    </span>
+                    <span className={`font-medium ${
+                      convertedLimit - actualSpent >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {hideAmounts ? '***' : formatCurrencyAmount(Math.abs(convertedLimit - actualSpent))} {convertedLimit - actualSpent >= 0 ? 'left' : 'over'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Spent</span>
-                  <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
-                    {hideAmounts ? '***' : formatCurrencyAmount(actualSpent)}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Budget</span>
-                  <span className="font-medium text-gray-900">{hideAmounts ? '***' : formatCurrencyAmount(convertedLimit)}</span>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      isOverBudget ? 'bg-red-500' : percentage > 80 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  ></div>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
-                    {percentage.toFixed(1)}% used
-                  </span>
-                  <span className={`font-medium ${
-                    convertedLimit - actualSpent >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {hideAmounts ? '***' : formatCurrencyAmount(Math.abs(convertedLimit - actualSpent))} {convertedLimit - actualSpent >= 0 ? 'left' : 'over'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

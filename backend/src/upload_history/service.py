@@ -4,7 +4,6 @@ Upload History service for business logic.
 This module contains the service class for upload history operations.
 """
 
-
 from src.shared.repository import BaseRepository
 from src.upload_history.models import UploadHistoryModel
 from src.upload_history.schemas import (
@@ -24,15 +23,15 @@ class UploadHistoryService:
     def _model_to_schema(self, model: UploadHistoryModel) -> UploadHistory:
         """Convert SQLAlchemy model to Pydantic schema."""
         return UploadHistory(
-            id=getattr(model, 'id', 0),
+            id=getattr(model, "id", 0),
             user_id=model.user_id,
             filename=model.filename,
             file_size=model.file_size,
             status=model.status,
             upload_date=model.upload_date,
             error_message=model.error_message,
-            created_at=getattr(model, 'created_at', model.upload_date),
-            updated_at=getattr(model, 'updated_at', model.upload_date),
+            created_at=getattr(model, "created_at", model.upload_date),
+            updated_at=getattr(model, "updated_at", model.upload_date),
         )
 
     async def create_upload_record(
@@ -63,9 +62,7 @@ class UploadHistoryService:
         """Get all uploads for a user."""
         # Use repository filtering to get uploads by user_id efficiently
         models, _ = await self.repository.get_multi(
-            filters={"user_id": user_id},
-            order_by="upload_date",
-            order_desc=True
+            filters={"user_id": user_id}, order_by="upload_date", order_desc=True
         )
         return [self._model_to_schema(model) for model in models]
 

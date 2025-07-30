@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.categories.constants import (
     CATEGORIES_FILE_PATH,
     DEFAULT_CATEGORIES,
-    USER_CATEGORY_PREFERENCES_FILE_PATH,
 )
 from src.categories.models import CategoryModel
 from src.categories.repository import CategoryRepository
@@ -36,6 +35,9 @@ class CategoryService:
         self, user_id: int, category_data: CategoryCreate
     ) -> CategoryModel:
         """Create a new custom category for a user."""
+        # Capitalize the category name
+        category_data.name = category_data.name.title()
+
         # Check if category already exists
         if await self.repository.category_exists(category_data.name, user_id):
             raise ValueError(f"Category '{category_data.name}' already exists")
@@ -57,6 +59,10 @@ class CategoryService:
         # Verify ownership and that it's not a default category
         if not category or category.is_default or category.user_id != user_id:
             return None
+
+        # Capitalize the category name if being updated
+        if update_data.name:
+            update_data.name = update_data.name.title()
 
         # Check for name conflicts if name is being updated
         if update_data.name and update_data.name != category.name:
@@ -90,7 +96,7 @@ class CategoryService:
                 category_id=stat["category_id"],
                 category_name=stat["category_name"],
                 expense_count=stat["expense_count"],
-                total_amount=stat["total_amount"]
+                total_amount=stat["total_amount"],
             )
             for stat in stats_data
         ]
@@ -147,42 +153,6 @@ class CategoryService:
             # Log error but don't fail the operation
             print(f"Warning: Failed to update categories file: {e}")
 
-    async def add_user_category_preference(
-        self, user_id: int, account_name: str, category_name: str
-    ) -> None:
-        """Add a user's category preference for a specific account/merchant."""
-        try:
-            # Ensure data directory exists
-            data_dir = Path("data")
-            data_dir.mkdir(exist_ok=True)
-
-            # Read existing preferences
-            preferences_file = Path(USER_CATEGORY_PREFERENCES_FILE_PATH)
-            existing_preferences = {}
-
-            if preferences_file.exists():
-                with preferences_file.open("r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith("#") and ":" in line:
-                            account, category = line.split(":", 1)
-                            existing_preferences[account.strip().lower()] = category.strip()
-
-            # Add or update preference
-            existing_preferences[account_name.lower()] = category_name
-
-            # Write updated preferences
-            with preferences_file.open("w", encoding="utf-8") as f:
-                f.write("# User category preferences for LLM processing\n")
-                f.write("# Format: account_name:category_name\n\n")
-
-                for account, category in sorted(existing_preferences.items()):
-                    f.write(f"{account}:{category}\n")
-
-        except Exception as e:
-            # Log error but don't fail the operation
-            print(f"Warning: Failed to update user category preferences: {e}")
-
     def get_categories_file_content(self) -> str:
         """Get the content of categories.txt file for LLM processing."""
         try:
@@ -194,14 +164,3 @@ class CategoryService:
 
         # Return default categories as fallback
         return "\n".join([cat["name"] for cat in DEFAULT_CATEGORIES])
-
-    def get_user_preferences_file_content(self) -> str:
-        """Get the content of user_category_preferences.txt file for LLM processing."""
-        try:
-            preferences_file = Path(USER_CATEGORY_PREFERENCES_FILE_PATH)
-            if preferences_file.exists():
-                return preferences_file.read_text(encoding="utf-8")
-        except Exception as e:
-            print(f"Warning: Failed to read user preferences file: {e}")
-
-        return ""

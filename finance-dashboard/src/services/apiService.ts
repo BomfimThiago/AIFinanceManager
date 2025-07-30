@@ -83,13 +83,16 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 // Expense API calls
 export const expenseApi = {
-  getAll: (filters?: { month?: number; year?: number }): Promise<Expense[]> => {
+  getAll: (filters?: { month?: number; year?: number; type?: string }): Promise<Expense[]> => {
     const params = new URLSearchParams();
     if (filters?.month && filters.month > 0) {
       params.append('month', filters.month.toString());
     }
     if (filters?.year && filters.year > 0) {
       params.append('year', filters.year.toString());
+    }
+    if (filters?.type) {
+      params.append('type', filters.type);
     }
     
     const queryString = params.toString();

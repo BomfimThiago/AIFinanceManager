@@ -21,6 +21,7 @@ class BudgetBase(BaseModel):
 
 class BudgetCreate(BudgetBase):
     """Schema for creating a new budget."""
+
     pass
 
 
@@ -48,6 +49,12 @@ class BudgetSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     total_budgets: int = Field(..., description="Total number of budgets")
-    total_limit: float = Field(..., description="Total budget limit across all categories")
-    total_spent: float = Field(..., description="Total amount spent across all categories")
-    categories: dict[str, Budget] = Field(..., description="Budget breakdown by category")
+    total_limit: float = Field(
+        ..., description="Total budget limit across all categories"
+    )
+    total_spent: float = Field(
+        ..., description="Total amount spent across all categories"
+    )
+    categories: dict[str, Budget] = Field(
+        ..., description="Budget breakdown by category"
+    )

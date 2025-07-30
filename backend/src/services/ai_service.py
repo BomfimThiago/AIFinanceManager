@@ -11,9 +11,11 @@ import logging
 
 from anthropic import Anthropic
 
+from src.categories.service import CategoryService
 from src.config import settings
 from src.expenses.schemas import Expense
 from src.shared.constants import Currency
+from src.user_preferences.service import UserCategoryPreferenceService
 
 logger = logging.getLogger(__name__)
 
@@ -21,23 +23,65 @@ logger = logging.getLogger(__name__)
 class AIService:
     """Service for AI-powered document processing and insights."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        category_service: CategoryService | None = None,
+        user_preferences_service: UserCategoryPreferenceService | None = None,
+    ):
         self.client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        self.category_service = category_service
+        self.user_preferences_service = user_preferences_service
+
+    def _get_categories_for_prompt(self) -> str:
+        """Get available categories for AI processing."""
+        if self.category_service:
+            try:
+                # Get categories from the category service
+                categories_content = self.category_service.get_categories_file_content()
+                if categories_content.strip():
+                    return categories_content.strip()
+            except Exception as e:
+                logger.warning(f"Failed to get dynamic categories: {e}")
+
+        # Fallback to default categories
+        return (
+            "Groceries, Utilities, Transport, Dining, Entertainment, Healthcare, Other"
+        )
+
+    async def _get_user_category_preferences_for_prompt(
+        self, user_id: int | None = None
+    ) -> str:
+        """Get user category preferences for AI processing."""
+        if self.user_preferences_service and user_id:
+            try:
+                # Get user category preferences from the user preferences service
+                preferences_content = await self.user_preferences_service.get_user_preferences_for_ai_prompt(
+                    user_id
+                )
+                return preferences_content
+            except Exception as e:
+                logger.warning(f"Failed to get user category preferences: {e}")
+
+        return ""
 
     async def process_file_with_ai(
-        self, file_content: bytes, file_type: str
+        self, file_content: bytes, file_type: str, user_id: int | None = None
     ) -> list[Expense] | None:
         """Process uploaded file (receipt/document) and extract expense information."""
         try:
             # Try processing with full document first
-            expenses = await self._process_document_full(file_content, file_type)
+            expenses = await self._process_document_full(
+                file_content, file_type, user_id
+            )
 
             # If full processing fails due to size, try chunked processing
             if not expenses:
                 logger.info(
                     "Full document processing failed, attempting chunked processing..."
                 )
-                expenses = await self._process_document_chunked(file_content, file_type)
+                expenses = await self._process_document_chunked(
+                    file_content, file_type, user_id
+                )
 
             return expenses
 
@@ -46,7 +90,7 @@ class AIService:
             return None
 
     async def _process_document_full(
-        self, file_content: bytes, file_type: str
+        self, file_content: bytes, file_type: str, user_id: int | None = None
     ) -> list[Expense] | None:
         """Process the entire document in one AI call."""
         try:
@@ -70,15 +114,16 @@ class AIService:
                             },
                             {
                                 "type": "text",
-                                "text": """Extract ALL expenses from this document. Return ONLY a JSON array with minimal fields:
+                                "text": f"""Extract ALL expenses from this document. Return ONLY a JSON array with minimal fields:
 
                                 [
-                                  {"amount":12.99,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Milk & bread","currency":"USD"},
-                                  {"amount":5.49,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Fruits","currency":"USD"}
+                                  {{"amount":12.99,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Milk & bread","currency":"USD"}},
+                                  {{"amount":5.49,"date":"2025-01-21","merchant":"Store","category":"Groceries","description":"Fruits","currency":"USD"}}
                                 ]
 
                                 Rules:
-                                - Use these categories ONLY: Groceries, Utilities, Transport, Dining, Entertainment, Healthcare, Other
+                                - Use these categories ONLY: {self._get_categories_for_prompt()}
+                                - Use these user category preferences: {await self._get_user_category_preferences_for_prompt(user_id)}
                                 - Keep descriptions under 50 characters
                                 - No spaces after colons/commas in JSON
                                 - Extract EVERY transaction/item as separate expense
@@ -100,7 +145,7 @@ class AIService:
             return None
 
     async def _process_document_chunked(
-        self, file_content: bytes, file_type: str
+        self, file_content: bytes, file_type: str, user_id: int | None = None
     ) -> list[Expense] | None:
         """Process document in chunks for very large documents."""
         try:
@@ -124,12 +169,13 @@ class AIService:
                             },
                             {
                                 "type": "text",
-                                "text": """This document is too large for full processing. Extract the FIRST 20 expenses/transactions ONLY.
+                                "text": f"""This document is too large for full processing. Extract the FIRST 20 expenses/transactions ONLY.
 
                                 Return JSON array (compact format):
-                                [{"amount":123.45,"date":"2025-01-21","merchant":"Name","category":"Other","description":"Brief desc","currency":"EUR"}]
+                                [{{"amount":123.45,"date":"2025-01-21","merchant":"Name","category":"Other","description":"Brief desc","currency":"EUR"}}]
 
-                                Categories: Groceries, Utilities, Transport, Dining, Entertainment, Healthcare, Other
+                                Categories: {self._get_categories_for_prompt()}
+                                User category preferences: {await self._get_user_category_preferences_for_prompt(user_id)}
                                 Stop after 20 items maximum.""",
                             },
                         ],
@@ -285,7 +331,7 @@ class AIService:
         json_text = json_text.strip()
 
         # Remove any trailing incomplete text after the last complete object
-        if json_text.startswith('['):
+        if json_text.startswith("["):
             # Find the last complete object in the array
             last_complete_end = -1
             brace_count = 0
@@ -297,7 +343,7 @@ class AIService:
                     escape_next = False
                     continue
 
-                if char == '\\':
+                if char == "\\":
                     escape_next = True
                     continue
 
@@ -306,9 +352,9 @@ class AIService:
                     continue
 
                 if not in_string:
-                    if char == '{':
+                    if char == "{":
                         brace_count += 1
-                    elif char == '}':
+                    elif char == "}":
                         brace_count -= 1
                         if brace_count == 0:
                             last_complete_end = i
@@ -318,36 +364,47 @@ class AIService:
                 json_text = json_text[: last_complete_end + 1]
 
                 # Add closing bracket if needed
-                if not json_text.endswith(']'):
-                    json_text += ']'
+                if not json_text.endswith("]"):
+                    json_text += "]"
 
         # If it's a truncated array, try to fix it
-        elif json_text.startswith('[') and not json_text.endswith(']'):
+        elif json_text.startswith("[") and not json_text.endswith("]"):
             # Count open and close braces to see if we need to close objects
-            open_braces = json_text.count('{')
-            close_braces = json_text.count('}')
+            open_braces = json_text.count("{")
+            close_braces = json_text.count("}")
 
             # Add missing closing braces for objects
             missing_braces = open_braces - close_braces
             for _ in range(missing_braces):
-                json_text += '}'
+                json_text += "}"
 
             # Add missing closing bracket for array
-            if not json_text.endswith(']'):
-                json_text += ']'
+            if not json_text.endswith("]"):
+                json_text += "]"
 
         # If it's a truncated object, try to fix it
-        elif json_text.startswith('{') and not json_text.endswith('}'):
-            json_text += '}'
+        elif json_text.startswith("{") and not json_text.endswith("}"):
+            json_text += "}"
 
         # Remove trailing commas before closing brackets/braces
-        json_text = json_text.replace(',]', ']').replace(',}', '}')
+        json_text = json_text.replace(",]", "]").replace(",}", "}")
 
         # Fix common quote and encoding issues
-        json_text = json_text.replace('""', '"').replace(',,', ',')
+        json_text = json_text.replace('""', '"').replace(",,", ",")
 
         return json_text
 
+    async def generate_insights(self, expenses, budgets_dict) -> list:
+        """Generate AI insights based on expenses and budgets.
 
-# Global instance
-ai_service = AIService()
+        Note: This is a placeholder method. Full implementation would analyze
+        expenses and budgets to generate meaningful financial insights.
+        """
+        logger.info(
+            "generate_insights called - returning empty list (method not implemented)"
+        )
+        return []
+
+
+# Note: AIService instances should be created with category_service dependency
+# No global instance to ensure proper dependency injection

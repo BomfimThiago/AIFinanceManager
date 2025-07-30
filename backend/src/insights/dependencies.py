@@ -7,6 +7,8 @@ This module contains the FastAPI dependencies for insight operations.
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.categories.dependencies import get_category_service
+from src.categories.service import CategoryService
 from src.database import get_database_session
 from src.insights.repository import InsightRepository
 from src.insights.service import InsightService
@@ -21,6 +23,7 @@ async def get_insight_repository(
 
 async def get_insight_service(
     repository: InsightRepository = Depends(get_insight_repository),
+    category_service: CategoryService = Depends(get_category_service),
 ) -> InsightService:
     """Get insight service dependency."""
-    return InsightService(repository)
+    return InsightService(repository, category_service)

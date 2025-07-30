@@ -12,7 +12,7 @@ interface ExpensesProps {
   expenses: Expense[];
   categories: Category[];
   hideAmounts: boolean;
-  onFiltersChange?: (filters: { month?: number; year?: number; category?: string }) => void;
+  onFiltersChange?: (filters: { month?: number; year?: number; category?: string; type?: string }) => void;
 }
 
 const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, onFiltersChange }) => {
@@ -20,7 +20,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [filters, setFilters] = useState<{ month?: number; year?: number; category?: string }>({});
+  const [filters, setFilters] = useState<{ month?: number; year?: number; category?: string; type?: string }>({});
   
   const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency } = useCurrency();
   
@@ -123,11 +123,23 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
     onFiltersChange?.(newFilters);
   }, [filters, onFiltersChange]);
 
+  const handleTypeChange = useCallback((type: string) => {
+    const typeValue = type === 'All Types' ? undefined : type;
+    const newFilters = { ...filters, type: typeValue };
+    setFilters(newFilters);
+    onFiltersChange?.(newFilters);
+  }, [filters, onFiltersChange]);
+
   // Filter expenses based on current filters
   const filteredExpenses = useMemo(() => {
     return expenses.filter(expense => {
       // Category filter
       if (filters.category && expense.category !== filters.category) {
+        return false;
+      }
+      
+      // Type filter
+      if (filters.type && expense.type !== filters.type) {
         return false;
       }
       
@@ -212,6 +224,15 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts, 
             <span>Add Expense</span>
           </button>
           <div className="flex space-x-2">
+          <select 
+            value={filters.type || 'All Types'}
+            onChange={(e) => handleTypeChange(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="All Types">All Types</option>
+            <option value="expense">Expenses</option>
+            <option value="income">Income</option>
+          </select>
           <select 
             value={filters.category || 'All Categories'}
             onChange={(e) => handleCategoryChange(e.target.value)}

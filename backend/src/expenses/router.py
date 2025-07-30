@@ -10,6 +10,8 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from src.auth.dependencies import get_current_user
 from src.auth.schemas import User
+from src.categories.dependencies import get_category_service
+from src.categories.service import CategoryService
 from src.expenses.constants import EXPENSE_CATEGORIES, SUPPORTED_FILE_TYPES
 from src.expenses.dependencies import get_expense_service
 from src.expenses.schemas import (
@@ -21,10 +23,12 @@ from src.expenses.schemas import (
     MonthlyData,
 )
 from src.expenses.service import ExpenseService
-from src.services.ai_service import ai_service
+from src.services.ai_service import AIService
 from src.upload_history.dependencies import get_upload_history_service
 from src.upload_history.schemas import UploadStatus
 from src.upload_history.service import UploadHistoryService
+from src.user_preferences.dependencies import get_user_category_preference_service
+from src.user_preferences.service import UserCategoryPreferenceService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/expenses", tags=["expenses"])
@@ -34,10 +38,11 @@ router = APIRouter(prefix="/api/expenses", tags=["expenses"])
 async def get_expenses(
     month: int | None = None,
     year: int | None = None,
+    type: str | None = None,
     expense_service: ExpenseService = Depends(get_expense_service),
 ):
-    """Get expenses with optional month and year filtering."""
-    return await expense_service.get_all(month=month, year=year)
+    """Get expenses with optional month, year, and type filtering."""
+    return await expense_service.get_all(month=month, year=year, expense_type=type)
 
 
 @router.post("", response_model=Expense)
@@ -48,7 +53,9 @@ async def create_expense(
 ):
     """Create a new expense."""
     try:
-        logger.info(f"Creating expense for user {current_user.id}: {expense.model_dump()}")
+        logger.info(
+            f"Creating expense for user {current_user.id}: {expense.model_dump()}"
+        )
         return await expense_service.create(expense)
     except Exception as e:
         logger.error(f"Error creating expense: {e}")
@@ -91,6 +98,10 @@ async def upload_expenses_from_file(
     file: UploadFile = File(...),
     expense_service: ExpenseService = Depends(get_expense_service),
     upload_service: UploadHistoryService = Depends(get_upload_history_service),
+    category_service: CategoryService = Depends(get_category_service),
+    user_prefs_service: UserCategoryPreferenceService = Depends(
+        get_user_category_preference_service
+    ),
     current_user: User = Depends(get_current_user),
 ):
     """Upload and process file with AI to extract expense data."""
@@ -120,9 +131,12 @@ async def upload_expenses_from_file(
     )
 
     try:
-        # Process file with AI
+        # Create AI service instance with both services
+        ai_service = AIService(category_service, user_prefs_service)
+
+        # Process file with AI (including user preferences)
         ai_expenses = await ai_service.process_file_with_ai(
-            file_content, file.content_type
+            file_content, file.content_type, current_user.id
         )
 
         if not ai_expenses or len(ai_expenses) == 0:
@@ -156,7 +170,9 @@ async def upload_expenses_from_file(
         created_expenses = await expense_service.create_bulk(expense_creates)
 
         # Update upload history to success
-        await upload_service.update_upload_status(upload_record.id, UploadStatus.SUCCESS)
+        await upload_service.update_upload_status(
+            upload_record.id, UploadStatus.SUCCESS
+        )
 
         return created_expenses
 
@@ -224,14 +240,24 @@ async def update_expense(
     expense_id: int,
     expense: ExpenseCreate,
     expense_service: ExpenseService = Depends(get_expense_service),
+    user_prefs_service: UserCategoryPreferenceService = Depends(get_user_category_preference_service),
     current_user: User = Depends(get_current_user),
 ):
     """Update an expense."""
     try:
         logger.info(f"Updating expense {expense_id} for user {current_user.id}")
 
+        # Get the original expense to compare category changes
+        original_expense = await expense_service.get_by_id(expense_id)
+        if not original_expense:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Expense not found",
+            )
+
         # Convert ExpenseCreate to ExpenseUpdate (all fields optional in update)
         from src.expenses.schemas import ExpenseUpdate
+
         expense_update = ExpenseUpdate(
             date=expense.date,
             amount=expense.amount,
@@ -248,9 +274,32 @@ async def update_expense(
 
         if not updated_expense:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Expense not found",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update expense",
             )
+
+        # Learn from category change if the category was updated
+        if (
+            original_expense.category != expense.category
+            and expense.merchant
+            and expense.merchant.strip()
+        ):
+            try:
+                logger.info(
+                    f"Category changed from '{original_expense.category}' to '{expense.category}' for merchant '{expense.merchant}'"
+                )
+                logger.info(
+                    f"Learning category preference: {expense.merchant} -> {expense.category}"
+                )
+
+                result = await user_prefs_service.add_or_update_preference(
+                    current_user.id, expense.merchant.strip(), expense.category
+                )
+                logger.info(f"Successfully saved preference: {result}")
+
+            except Exception as e:
+                # Don't fail the expense update if preference learning fails
+                logger.error(f"Failed to update user category preference: {e}", exc_info=True)
 
         return updated_expense
     except HTTPException:

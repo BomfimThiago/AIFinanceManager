@@ -4,7 +4,6 @@ Insight repository for database operations.
 This module contains the repository class for AI insights-related database operations.
 """
 
-
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,7 +32,9 @@ class InsightRepository(BaseRepository[InsightModel, InsightCreate, InsightUpdat
         await self.db.refresh(db_insight)
         return db_insight
 
-    async def create_multiple_from_ai_insights(self, insights: list[AIInsight]) -> list[InsightModel]:
+    async def create_multiple_from_ai_insights(
+        self, insights: list[AIInsight]
+    ) -> list[InsightModel]:
         """Create multiple insights from AI insight data."""
         db_insights = []
         for insight_data in insights:

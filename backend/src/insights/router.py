@@ -54,7 +54,9 @@ async def generate_insights(
         raise
     except Exception as e:
         logger.error(f"Error generating insights: {e}")
-        raise ExternalServiceError("AI service", "insights generation", details={"error": str(e)})
+        raise ExternalServiceError(
+            "AI service", "insights generation", details={"error": str(e)}
+        )
 
 
 @router.get("", response_model=list[AIInsight])

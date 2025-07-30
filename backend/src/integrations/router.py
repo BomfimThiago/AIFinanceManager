@@ -750,13 +750,13 @@ async def handle_historical_update_webhook(
 
             logger.info("Historical update details:")
             logger.info(f"  Total transactions: {total_transactions}")
-            logger.info(f"  Date range: {first_transaction_date} to {last_transaction_date}")
+            logger.info(
+                f"  Date range: {first_transaction_date} to {last_transaction_date}"
+            )
 
             # Fetch all transactions for the link with optional date range filtering
             transactions = await belvo_service.get_all_transactions_paginated(
-                link_id,
-                date_from=first_transaction_date,
-                date_to=last_transaction_date
+                link_id, date_from=first_transaction_date, date_to=last_transaction_date
             )
             logger.info(f"Fetched {len(transactions)} transactions from Belvo API")
             webhook_logger.log_transaction_summary(
@@ -778,9 +778,16 @@ async def handle_historical_update_webhook(
             for expense_data in expenses:
                 try:
                     # Check if transaction already exists to avoid duplicates
-                    if expense_data.transaction_id and await expense_repo.transaction_id_exists(expense_data.transaction_id):
+                    if (
+                        expense_data.transaction_id
+                        and await expense_repo.transaction_id_exists(
+                            expense_data.transaction_id
+                        )
+                    ):
                         skipped_count += 1
-                        logger.debug(f"Skipping duplicate transaction {expense_data.transaction_id}")
+                        logger.debug(
+                            f"Skipping duplicate transaction {expense_data.transaction_id}"
+                        )
                         continue
 
                     await expense_repo.create(expense_data)
@@ -855,8 +862,12 @@ async def handle_new_transactions_webhook(
 
         if new_count > 0 and new_transaction_ids:
             # Fetch only the specific new transactions by their IDs
-            transactions = await belvo_service.get_transactions_by_ids(new_transaction_ids)
-            logger.info(f"Fetched {len(transactions)} specific new transactions from Belvo API")
+            transactions = await belvo_service.get_transactions_by_ids(
+                new_transaction_ids
+            )
+            logger.info(
+                f"Fetched {len(transactions)} specific new transactions from Belvo API"
+            )
 
             # Convert to expenses
             expenses = await belvo_service.convert_to_expenses(transactions)
@@ -873,9 +884,16 @@ async def handle_new_transactions_webhook(
             for expense_data in expenses:
                 try:
                     # Check if transaction already exists to avoid duplicates
-                    if expense_data.transaction_id and await expense_repo.transaction_id_exists(expense_data.transaction_id):
+                    if (
+                        expense_data.transaction_id
+                        and await expense_repo.transaction_id_exists(
+                            expense_data.transaction_id
+                        )
+                    ):
                         skipped_count += 1
-                        logger.debug(f"Skipping duplicate transaction {expense_data.transaction_id}")
+                        logger.debug(
+                            f"Skipping duplicate transaction {expense_data.transaction_id}"
+                        )
                         continue
 
                     await expense_repo.create(expense_data)
@@ -934,7 +952,11 @@ async def handle_new_transactions_webhook(
 
 
 async def handle_transactions_updated_webhook(
-    webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession  # noqa: ARG001
+    webhook_type: str,
+    link_id: str,
+    integration,
+    webhook_data: dict,
+    db: AsyncSession,
 ):
     """Handle transactions_updated webhook."""
     # Using belvo_service and webhook_logger imported at module level
@@ -951,9 +973,7 @@ async def handle_transactions_updated_webhook(
         if count > 0 and updated_ids:
             # Fetch specific updated transactions by their IDs
             transactions = await belvo_service.get_transactions_by_ids(updated_ids)
-            logger.info(
-                f"Fetched {len(transactions)} specific updated transactions"
-            )
+            logger.info(f"Fetched {len(transactions)} specific updated transactions")
 
             # Convert to expenses
             expenses = await belvo_service.convert_to_expenses(transactions)
@@ -971,7 +991,9 @@ async def handle_transactions_updated_webhook(
                 try:
                     if expense_data.transaction_id:
                         # Try to update existing expense
-                        existing_expense = await expense_repo.get_by_transaction_id(expense_data.transaction_id)
+                        existing_expense = await expense_repo.get_by_transaction_id(
+                            expense_data.transaction_id
+                        )
                         if existing_expense:
                             # Update existing expense
                             # Using ExpenseUpdate imported at module level
@@ -989,12 +1011,16 @@ async def handle_transactions_updated_webhook(
                             )
                             await expense_repo.update(existing_expense.id, update_data)
                             updated_count += 1
-                            logger.debug(f"Updated expense for transaction {expense_data.transaction_id}")
+                            logger.debug(
+                                f"Updated expense for transaction {expense_data.transaction_id}"
+                            )
                         else:
                             # Create new expense if it doesn't exist
                             await expense_repo.create(expense_data)
                             created_count += 1
-                            logger.debug(f"Created new expense for transaction {expense_data.transaction_id}")
+                            logger.debug(
+                                f"Created new expense for transaction {expense_data.transaction_id}"
+                            )
                     else:
                         # No transaction ID, just create new expense
                         await expense_repo.create(expense_data)
@@ -1046,7 +1072,11 @@ async def handle_transactions_updated_webhook(
 
 
 async def handle_transactions_deleted_webhook(
-    webhook_type: str, link_id: str, integration, webhook_data: dict, db: AsyncSession  # noqa: ARG001
+    webhook_type: str,
+    link_id: str,
+    integration,
+    webhook_data: dict,
+    db: AsyncSession,  # noqa: ARG001
 ):
     """Handle transactions_deleted webhook."""
     # Using webhook_logger imported at module level

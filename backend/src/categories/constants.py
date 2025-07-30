@@ -10,6 +10,7 @@ from typing import TypedDict
 
 class DefaultCategory(TypedDict):
     """Type definition for default category data."""
+
     name: str
     description: str
     color: str
@@ -19,97 +20,96 @@ class DefaultCategory(TypedDict):
 # Default categories that are created on system startup
 DEFAULT_CATEGORIES: list[DefaultCategory] = [
     {
-        "name": "food",
+        "name": "Food",
         "description": "Food and dining expenses",
         "color": "#FF6B6B",
-        "icon": "utensils"
+        "icon": "utensils",
     },
     {
-        "name": "transport",
+        "name": "Transport",
         "description": "Transportation and travel costs",
         "color": "#4ECDC4",
-        "icon": "car"
+        "icon": "car",
     },
     {
-        "name": "shopping",
+        "name": "Shopping",
         "description": "Shopping and retail purchases",
         "color": "#45B7D1",
-        "icon": "shopping-bag"
+        "icon": "shopping-bag",
     },
     {
-        "name": "entertainment",
+        "name": "Entertainment",
         "description": "Entertainment and leisure activities",
         "color": "#96CEB4",
-        "icon": "film"
+        "icon": "film",
     },
     {
-        "name": "utilities",
+        "name": "Utilities",
         "description": "Utilities and bills (electricity, water, internet)",
         "color": "#FFEAA7",
-        "icon": "zap"
+        "icon": "zap",
     },
     {
-        "name": "healthcare",
+        "name": "Healthcare",
         "description": "Healthcare and medical expenses",
         "color": "#FD79A8",
-        "icon": "heart"
+        "icon": "heart",
     },
     {
-        "name": "education",
+        "name": "Education",
         "description": "Education and learning expenses",
         "color": "#6C5CE7",
-        "icon": "book"
+        "icon": "book",
     },
     {
-        "name": "home",
+        "name": "Home",
         "description": "Home and household expenses",
         "color": "#A29BFE",
-        "icon": "home"
+        "icon": "home",
     },
     {
-        "name": "clothing",
+        "name": "Clothing",
         "description": "Clothing and fashion expenses",
         "color": "#FD79A8",
-        "icon": "shirt"
+        "icon": "shirt",
     },
     {
-        "name": "technology",
+        "name": "Technology",
         "description": "Technology and gadgets",
         "color": "#74B9FF",
-        "icon": "laptop"
+        "icon": "laptop",
     },
     {
-        "name": "fitness",
+        "name": "Fitness",
         "description": "Fitness and sports activities",
         "color": "#00B894",
-        "icon": "dumbbell"
+        "icon": "dumbbell",
     },
     {
-        "name": "travel",
+        "name": "Travel",
         "description": "Travel and vacation expenses",
         "color": "#FDCB6E",
-        "icon": "plane"
+        "icon": "plane",
     },
     {
-        "name": "gifts",
+        "name": "Gifts",
         "description": "Gifts and donations",
         "color": "#E17055",
-        "icon": "gift"
+        "icon": "gift",
     },
     {
-        "name": "pets",
+        "name": "Pets",
         "description": "Pet care and expenses",
         "color": "#81ECEC",
-        "icon": "heart"
+        "icon": "heart",
     },
     {
-        "name": "other",
+        "name": "Other",
         "description": "Other miscellaneous expenses",
         "color": "#636E72",
-        "icon": "more-horizontal"
-    }
+        "icon": "more-horizontal",
+    },
 ]
 
 # File paths for LLM integration
 CATEGORIES_FILE_PATH = "data/categories.txt"
-USER_CATEGORY_PREFERENCES_FILE_PATH = "data/user_category_preferences.txt"

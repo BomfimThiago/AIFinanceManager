@@ -22,6 +22,7 @@ class InsightBase(BaseModel):
 
 class InsightCreate(InsightBase):
     """Schema for creating a new insight."""
+
     pass
 
 

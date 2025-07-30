@@ -32,7 +32,7 @@ class ExpenseService:
     def _model_to_schema(self, expense_model: ExpenseModel) -> Expense:
         """Convert SQLAlchemy model to Pydantic schema."""
         return Expense(
-            id=getattr(expense_model, 'id', 0),
+            id=getattr(expense_model, "id", 0),
             date=expense_model.date,
             amount=expense_model.amount,
             category=expense_model.category,
@@ -48,12 +48,15 @@ class ExpenseService:
         )
 
     async def get_all(
-        self, month: int | None = None, year: int | None = None
+        self,
+        month: int | None = None,
+        year: int | None = None,
+        expense_type: str | None = None,
     ) -> list[Expense]:
         """Get all expenses with optional filtering."""
-        if month is not None or year is not None:
-            expense_models = await self.repository.get_by_date_filter(
-                month=month, year=year
+        if month is not None or year is not None or expense_type is not None:
+            expense_models = await self.repository.get_by_filters(
+                month=month, year=year, expense_type=expense_type
             )
         else:
             expense_models = await self.repository.get_all()
@@ -85,15 +88,22 @@ class ExpenseService:
                 expense = await self.create(expense_data)
                 created_expenses.append(expense)
             except Exception as e:
-                logger.error(f"Failed to create expense: {expense_data.description} - {e}")
+                logger.error(
+                    f"Failed to create expense: {expense_data.description} - {e}"
+                )
                 continue
 
         return created_expenses
 
-    async def update(self, expense_id: int, expense_data: ExpenseUpdate) -> Expense | None:
+    async def update(
+        self, expense_id: int, expense_data: ExpenseUpdate
+    ) -> Expense | None:
         """Update an expense."""
         # If we're updating amount or currency, reprocess currencies
-        if expense_data.amount is not None or expense_data.original_currency is not None:
+        if (
+            expense_data.amount is not None
+            or expense_data.original_currency is not None
+        ):
             # Get existing expense to merge data
             existing = await self.repository.get_by_id(expense_id)
             if not existing:
@@ -109,11 +119,14 @@ class ExpenseService:
                 type=expense_data.type or existing.type.value,
                 source=expense_data.source or existing.source.value,
                 items=expense_data.items or existing.items,
-                original_currency=expense_data.original_currency or existing.original_currency,
+                original_currency=expense_data.original_currency
+                or existing.original_currency,
             )
 
             # Process currencies
-            expense_with_currencies = await self._process_expense_currencies(expense_create)
+            expense_with_currencies = await self._process_expense_currencies(
+                expense_create
+            )
 
             # Convert back to update schema
             update_data = ExpenseUpdate(
@@ -198,7 +211,10 @@ class ExpenseService:
                     original_currency = Currency(expense.original_currency or "EUR")
                     current_rates = await currency_service.get_current_rates()
                     amount = await currency_service.convert_amount(
-                        expense.amount, original_currency, target_currency, current_rates
+                        expense.amount,
+                        original_currency,
+                        target_currency,
+                        current_rates,
                     )
 
                 if expense.category not in category_spending:

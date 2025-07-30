@@ -23,8 +23,10 @@ router = APIRouter(prefix="/api/categories", tags=["categories"])
 
 @router.get("/", response_model=CategoryListResponse)
 async def get_categories(
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)],
-    include_default: bool = True
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
+    include_default: bool = True,
 ) -> CategoryListResponse:
     """Get all categories available to the current user."""
     user_id, service = user_service
@@ -33,14 +35,16 @@ async def get_categories(
 
     return CategoryListResponse(
         categories=[Category.model_validate(cat) for cat in categories],
-        total=len(categories)
+        total=len(categories),
     )
 
 
 @router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
 async def create_category(
     category_data: CategoryCreate,
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)]
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
 ) -> Category:
     """Create a new custom category for the current user."""
     user_id, service = user_service
@@ -50,8 +54,7 @@ async def create_category(
         return Category.model_validate(category)
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from e
 
 
@@ -59,7 +62,9 @@ async def create_category(
 async def update_category(
     category_id: int,
     update_data: CategoryUpdate,
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)]
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
 ) -> Category:
     """Update a custom category owned by the current user."""
     user_id, service = user_service
@@ -69,20 +74,21 @@ async def update_category(
         if not category:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Category not found or cannot be updated"
+                detail="Category not found or cannot be updated",
             )
         return Category.model_validate(category)
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from e
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
     category_id: int,
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)]
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
 ) -> None:
     """Delete (deactivate) a custom category owned by the current user."""
     user_id, service = user_service
@@ -91,28 +97,29 @@ async def delete_category(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found or cannot be deleted"
+            detail="Category not found or cannot be deleted",
         )
 
 
 @router.get("/stats", response_model=CategoryStatsResponse)
 async def get_category_stats(
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)]
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
 ) -> CategoryStatsResponse:
     """Get category usage statistics for the current user."""
     user_id, service = user_service
 
     stats = await service.get_category_stats(user_id)
 
-    return CategoryStatsResponse(
-        stats=stats,
-        total_categories=len(stats)
-    )
+    return CategoryStatsResponse(stats=stats, total_categories=len(stats))
 
 
 @router.get("/names", response_model=list[str])
 async def get_category_names(
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)]
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
 ) -> list[str]:
     """Get category names for the current user (for LLM processing)."""
     user_id, service = user_service
@@ -120,11 +127,15 @@ async def get_category_names(
     return await service.get_category_names_for_llm(user_id)
 
 
-@router.post("/preferences/{account_name}/{category_name}", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/preferences/{account_name}/{category_name}", status_code=status.HTTP_201_CREATED
+)
 async def add_category_preference(
     account_name: str,
     category_name: str,
-    user_service: Annotated[tuple[int, CategoryService], Depends(get_current_user_category_service)]
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
 ) -> dict[str, str]:
     """Add a category preference for a specific account/merchant."""
     user_id, service = user_service
@@ -134,5 +145,5 @@ async def add_category_preference(
     return {
         "message": f"Category preference added: {account_name} -> {category_name}",
         "account_name": account_name,
-        "category_name": category_name
+        "category_name": category_name,
     }

@@ -15,13 +15,11 @@ from src.config import settings
 from src.database import Base
 
 # Import all models to ensure they are registered with Base.metadata
-from src.auth.preferences_models import UserPreferencesModel
-from src.categories.models import CategoryModel  
+from src.auth.models import UserModel
+from src.categories.models import CategoryModel
 from src.expenses.models import ExpenseModel
 from src.integrations.models import Integration, ConnectedAccount, SyncLog
-
-# TODO: Import other module models when created
-# from src.auth.models import User
+from src.user_preferences.models import UserCategoryPreference, UserPreferences
 # from src.budgets.models import Budget
 # from src.insights.models import Insight
 

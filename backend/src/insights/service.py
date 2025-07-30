@@ -6,10 +6,11 @@ This module contains the service class for AI insights-related business operatio
 
 import logging
 
+from src.categories.service import CategoryService
 from src.insights.models import InsightModel
 from src.insights.repository import InsightRepository
 from src.insights.schemas import AIInsight, Insight, InsightCreate, InsightSummary
-from src.services.ai_service import ai_service
+from src.services.ai_service import AIService
 from src.shared.constants import InsightType
 
 logger = logging.getLogger(__name__)
@@ -18,13 +19,18 @@ logger = logging.getLogger(__name__)
 class InsightService:
     """Service for AI insights business logic."""
 
-    def __init__(self, repository: InsightRepository):
+    def __init__(
+        self,
+        repository: InsightRepository,
+        category_service: CategoryService | None = None,
+    ):
         self.repository = repository
+        self.category_service = category_service
 
     def _model_to_schema(self, insight_model: InsightModel) -> Insight:
         """Convert SQLAlchemy model to Pydantic schema."""
         return Insight(
-            id=getattr(insight_model, 'id', 0),
+            id=getattr(insight_model, "id", 0),
             title=insight_model.title,
             message=insight_model.message,
             type=insight_model.type,
@@ -62,6 +68,9 @@ class InsightService:
         try:
             logger.info("Generating AI insights based on current data")
 
+            # Create AI service instance with category service
+            ai_service = AIService(self.category_service)
+
             # Generate insights using AI service
             insights = await ai_service.generate_insights(expenses, budgets_dict)
 
@@ -83,8 +92,12 @@ class InsightService:
         """Get insight summary with counts by type."""
         insights = await self.get_all()
 
-        warning_count = sum(1 for insight in insights if insight.type == InsightType.WARNING)
-        success_count = sum(1 for insight in insights if insight.type == InsightType.SUCCESS)
+        warning_count = sum(
+            1 for insight in insights if insight.type == InsightType.WARNING
+        )
+        success_count = sum(
+            1 for insight in insights if insight.type == InsightType.SUCCESS
+        )
         info_count = sum(1 for insight in insights if insight.type == InsightType.INFO)
 
         return InsightSummary(
@@ -92,5 +105,5 @@ class InsightService:
             warning_count=warning_count,
             success_count=success_count,
             info_count=info_count,
-            insights=insights
+            insights=insights,
         )

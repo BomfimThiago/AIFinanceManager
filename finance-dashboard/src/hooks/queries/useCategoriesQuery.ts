@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryApi, Category, CategoryCreate, CategoryUpdate } from '../../services/apiService';
+import { categoryApi, CategoryCreate, CategoryUpdate } from '../../services/apiService';
 
 // Query keys
 export const categoryKeys = {

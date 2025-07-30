@@ -48,12 +48,11 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
 
     async def get_default_categories(self) -> list[CategoryModel]:
         """Get all default categories."""
-        query = select(self.model).where(
-            and_(
-                self.model.is_default == True,
-                self.model.is_active == True
-            )
-        ).order_by(self.model.name)
+        query = (
+            select(self.model)
+            .where(and_(self.model.is_default == True, self.model.is_active == True))
+            .order_by(self.model.name)
+        )
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
@@ -65,7 +64,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
             **category_data.model_dump(),
             user_id=user_id,
             is_default=False,
-            is_active=True
+            is_active=True,
         )
         self.db.add(db_obj)
         await self.db.commit()
@@ -75,10 +74,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
     async def create_default_category(self, category_data: dict) -> CategoryModel:
         """Create a default system category."""
         db_obj = self.model(
-            **category_data,
-            user_id=None,
-            is_default=True,
-            is_active=True
+            **category_data, user_id=None, is_default=True, is_active=True
         )
         self.db.add(db_obj)
         await self.db.commit()
@@ -112,13 +108,14 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
                 CategoryModel.id,
                 CategoryModel.name,
                 func.count(ExpenseModel.id).label("expense_count"),
-                func.coalesce(func.sum(ExpenseModel.amount), 0).label("total_amount")
+                func.coalesce(func.sum(ExpenseModel.amount), 0).label("total_amount"),
             )
             .outerjoin(ExpenseModel, CategoryModel.name == ExpenseModel.category)
             .where(
                 and_(
                     CategoryModel.is_active == True,
-                    (CategoryModel.user_id == user_id) | (CategoryModel.is_default == True)
+                    (CategoryModel.user_id == user_id)
+                    | (CategoryModel.is_default == True),
                 )
             )
             .group_by(CategoryModel.id, CategoryModel.name)
@@ -131,7 +128,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
                 "category_id": row.id,
                 "category_name": row.name,
                 "expense_count": row.expense_count,
-                "total_amount": float(row.total_amount)
+                "total_amount": float(row.total_amount),
             }
             for row in result.all()
         ]

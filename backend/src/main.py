@@ -14,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.auth.router import router as auth_router
-from src.auth.preferences_router import router as preferences_router
 from src.budgets.router import router as budgets_router
 from src.categories.router import router as categories_router
 from src.config import settings
@@ -26,6 +25,7 @@ from src.integrations.router import router as integrations_router
 from src.shared.exceptions import AppException
 from src.shared.models import HealthResponse
 from src.upload_history.router import router as upload_history_router
+from src.user_preferences.router import router as preferences_router
 
 # Configure logging
 logging.basicConfig(
@@ -36,28 +36,32 @@ logger = logging.getLogger(__name__)
 
 async def seed_default_categories():
     """Seed default categories on startup.
-    
+
     This function creates the default categories if they don't exist.
     """
     try:
         logger.info("📂 Starting default categories seeding...")
 
-        # Get database session
+        # Get database session directly
         from src.categories.service import CategoryService
-        from src.shared.dependencies import get_db
+        from src.database import get_database_session
 
-        async for db in get_db():
-            service = CategoryService(db)
+        async for db in get_database_session():
+            try:
+                service = CategoryService(db)
 
-            # Seed default categories
-            created_count = await service.seed_default_categories()
+                # Seed default categories
+                created_count = await service.seed_default_categories()
 
-            if created_count > 0:
-                logger.info(f"✅ Created {created_count} default categories")
-            else:
-                logger.info("ℹ️  Default categories already exist")
+                if created_count > 0:
+                    logger.info(f"✅ Created {created_count} default categories")
+                else:
+                    logger.info("ℹ️  Default categories already exist")
 
-            break  # Exit the async generator
+                break  # Exit the async generator
+
+            finally:
+                await db.close()
 
     except Exception as e:
         logger.error(f"❌ Failed to seed default categories: {e}")
