@@ -99,7 +99,15 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 // Expense API calls
 export const expenseApi = {
-  getAll: (filters?: { month?: number; year?: number; type?: string }): Promise<Expense[]> => {
+  getAll: (filters?: { 
+    month?: number; 
+    year?: number; 
+    type?: string;
+    category?: string;
+    start_date?: string;
+    end_date?: string;
+    search?: string;
+  }): Promise<Expense[]> => {
     const params = new URLSearchParams();
     if (filters?.month && filters.month > 0) {
       params.append('month', filters.month.toString());
@@ -109,6 +117,18 @@ export const expenseApi = {
     }
     if (filters?.type) {
       params.append('type', filters.type);
+    }
+    if (filters?.category) {
+      params.append('category', filters.category);
+    }
+    if (filters?.start_date) {
+      params.append('start_date', filters.start_date);
+    }
+    if (filters?.end_date) {
+      params.append('end_date', filters.end_date);
+    }
+    if (filters?.search) {
+      params.append('search', filters.search);
     }
     
     const queryString = params.toString();

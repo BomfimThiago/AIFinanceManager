@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import Header from './layout/Header';
 import Navigation from './layout/Navigation';
+import GlobalFiltersSidebar from './layout/GlobalFiltersSidebar';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Expenses from './pages/Expenses';
@@ -15,6 +16,7 @@ import { useFileUpload } from '../hooks/useFileUpload';
 import { usePrivacyMode } from '../hooks/usePrivacyMode';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useNotificationContext } from '../contexts/NotificationContext';
+import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
 import { getUserFriendlyError } from '../utils/errorMessages';
 import { convertAPICategoriesList } from '../utils/categoryMapper';
 import type { TabId, AIInsight } from '../types';
@@ -23,15 +25,21 @@ import CategoryManagement from './pages/CategoryManagement';
 const FinanceManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
-  const [expenseFilters, setExpenseFilters] = useState<{ month?: number; year?: number; category?: string; type?: string }>({});
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   
   const { convertAmount, selectedCurrency } = useCurrency();
   const { showError, showSuccess } = useNotificationContext();
+  const { filters: globalFilters } = useGlobalFilters();
 
-  // TanStack Query hooks
-  // Note: Backend supports month/year/type filtering, category filtering is done on frontend
-  const backendFilters = { month: expenseFilters.month, year: expenseFilters.year, type: expenseFilters.type };
-  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses(backendFilters);
+  // TanStack Query hooks - use global filters
+  const expenseQueryFilters = {
+    type: globalFilters.type,
+    category: globalFilters.category,
+    startDate: globalFilters.startDate,
+    endDate: globalFilters.endDate,
+    search: globalFilters.search,
+  };
+  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses(expenseQueryFilters);
   const { data: budgets = {}, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
   const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategories(true);
   
@@ -123,9 +131,7 @@ const FinanceManager: React.FC = () => {
     }
   };
 
-  const handleFiltersChange = useCallback((filters: { month?: number; year?: number; category?: string; type?: string }) => {
-    setExpenseFilters(filters);
-  }, []); 
+ 
 
   // Show loading state
   if (expensesLoading || budgetsLoading || categoriesLoading) {
@@ -183,7 +189,6 @@ const FinanceManager: React.FC = () => {
             expenses={expenses}
             categories={categories}
             hideAmounts={hideAmounts}
-            onFiltersChange={handleFiltersChange}
           />
         );
       case 'budgets':
@@ -225,10 +230,19 @@ const FinanceManager: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {renderContent()}
-      </main>
+      
+      <div className="flex h-[calc(100vh-120px)]">
+        <GlobalFiltersSidebar 
+          isVisible={sidebarVisible}
+          onToggle={() => setSidebarVisible(!sidebarVisible)}
+        />
+        
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -40,10 +40,22 @@ async def get_expenses(
     month: int | None = None,
     year: int | None = None,
     type: str | None = None,
+    category: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    search: str | None = None,
     expense_service: ExpenseService = Depends(get_expense_service),
 ):
-    """Get expenses with optional month, year, and type filtering."""
-    return await expense_service.get_all(month=month, year=year, expense_type=type)
+    """Get expenses with optional filtering."""
+    return await expense_service.get_all(
+        month=month, 
+        year=year, 
+        expense_type=type,
+        category=category,
+        start_date=start_date,
+        end_date=end_date,
+        search=search
+    )
 
 
 @router.post("", response_model=Expense)

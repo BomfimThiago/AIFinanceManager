@@ -52,14 +52,22 @@ class ExpenseService:
         month: int | None = None,
         year: int | None = None,
         expense_type: str | None = None,
+        category: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        search: str | None = None,
     ) -> list[Expense]:
         """Get all expenses with optional filtering."""
-        if month is not None or year is not None or expense_type is not None:
-            expense_models = await self.repository.get_by_filters(
-                month=month, year=year, expense_type=expense_type
-            )
-        else:
-            expense_models = await self.repository.get_all()
+        # Use the repository filter method with all parameters
+        expense_models = await self.repository.get_by_filters(
+            month=month,
+            year=year,
+            expense_type=expense_type,
+            category=category,
+            start_date=start_date,
+            end_date=end_date,
+            search=search
+        )
 
         return [self._model_to_schema(expense) for expense in expense_models]
 

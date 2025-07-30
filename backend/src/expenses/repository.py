@@ -4,7 +4,7 @@ Expense repository for database operations.
 This module contains the repository class for expense-related database operations.
 """
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.expenses.models import ExpenseModel, ExpenseType
@@ -51,8 +51,12 @@ class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdat
         month: int | None = None,
         year: int | None = None,
         expense_type: str | None = None,
+        category: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        search: str | None = None,
     ) -> list[ExpenseModel]:
-        """Get expenses filtered by month, year, and/or type."""
+        """Get expenses filtered by various criteria."""
         query = select(self.model)
 
         conditions = []
@@ -77,6 +81,24 @@ class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdat
             except ValueError:
                 # Invalid expense type, return empty result
                 return []
+
+        if category is not None:
+            conditions.append(self.model.category == category)
+
+        if start_date is not None:
+            conditions.append(self.model.date >= start_date)
+
+        if end_date is not None:
+            conditions.append(self.model.date <= end_date)
+
+        if search is not None:
+            # Search in description and merchant fields
+            search_term = f"%{search}%"
+            search_conditions = or_(
+                self.model.description.ilike(search_term),
+                self.model.merchant.ilike(search_term)
+            )
+            conditions.append(search_conditions)
 
         if conditions:
             query = query.where(and_(*conditions))
