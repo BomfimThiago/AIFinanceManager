@@ -30,7 +30,7 @@ async def get_budgets(
         raise
     except Exception as e:
         logger.error(f"Error fetching budgets: {e}")
-        raise DatabaseError("get budgets", details={"error": str(e)})
+        raise DatabaseError("get budgets", details={"error": str(e)}) from e
 
 
 @router.post("", response_model=Budget)
@@ -49,7 +49,7 @@ async def create_budget(
         raise
     except Exception as e:
         logger.error(f"Error creating budget: {e}")
-        raise DatabaseError("create budget", details={"error": str(e)})
+        raise DatabaseError("create budget", details={"error": str(e)}) from e
 
 
 @router.put("/{category}/spent", response_model=Budget)
@@ -57,7 +57,7 @@ async def update_budget_spent(
     category: str,
     amount: float = Body(...),
     budget_service: BudgetService = Depends(get_budget_service),
-    current_user: User = Depends(get_current_user),
+    _current_user: User = Depends(get_current_user),
 ):
     """Update the spent amount for a budget category."""
     try:
@@ -82,14 +82,14 @@ async def update_budget_spent(
         raise
     except Exception as e:
         logger.error(f"Error updating budget spent amount: {e}")
-        raise DatabaseError("update budget spent", details={"error": str(e)})
+        raise DatabaseError("update budget spent", details={"error": str(e)}) from e
 
 
 @router.delete("/{category}")
 async def delete_budget(
     category: str,
     budget_service: BudgetService = Depends(get_budget_service),
-    current_user: User = Depends(get_current_user),
+    _current_user: User = Depends(get_current_user),
 ):
     """Delete a budget category."""
     try:
@@ -104,7 +104,7 @@ async def delete_budget(
         raise
     except Exception as e:
         logger.error(f"Error deleting budget: {e}")
-        raise DatabaseError("delete budget", details={"error": str(e)})
+        raise DatabaseError("delete budget", details={"error": str(e)}) from e
 
 
 @router.get("/summary", response_model=BudgetSummary)
@@ -118,4 +118,4 @@ async def get_budget_summary(
         raise
     except Exception as e:
         logger.error(f"Error fetching budget summary: {e}")
-        raise DatabaseError("get budget summary", details={"error": str(e)})
+        raise DatabaseError("get budget summary", details={"error": str(e)}) from e

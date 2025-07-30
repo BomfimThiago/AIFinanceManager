@@ -33,7 +33,7 @@ async def get_upload_history(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve upload history",
-        )
+        ) from e
 
 
 @router.delete("/{upload_id}")
@@ -71,4 +71,4 @@ async def delete_upload_history(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete upload history",
-        )
+        ) from e

@@ -144,13 +144,13 @@ class TokenService:
                 token_type=token_type.value,
             )
 
-        except jwt.ExpiredSignatureError:
-            raise InvalidTokenError("Token has expired")
-        except jwt.InvalidTokenError:
-            raise InvalidTokenError("Invalid token")
+        except jwt.ExpiredSignatureError as e:
+            raise InvalidTokenError("Token has expired") from e
+        except jwt.InvalidTokenError as e:
+            raise InvalidTokenError("Invalid token") from e
         except Exception as e:
             logger.error(f"Token verification error: {e}")
-            raise InvalidTokenError("Token verification failed")
+            raise InvalidTokenError("Token verification failed") from e
 
 
 class AuthService:
@@ -207,7 +207,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Registration failed: {e}")
-            raise AuthenticationError("Registration failed")
+            raise AuthenticationError("Registration failed") from e
 
     async def authenticate_user(self, login_data: UserLogin) -> LoginResponse:
         """Authenticate a user and return tokens."""
@@ -258,7 +258,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Authentication failed: {e}")
-            raise AuthenticationError("Authentication failed")
+            raise AuthenticationError("Authentication failed") from e
 
     async def get_current_user(self, token: str) -> User:
         """Get current user from access token."""
@@ -278,7 +278,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Get current user failed: {e}")
-            raise AuthenticationError("Failed to get current user")
+            raise AuthenticationError("Failed to get current user") from e
 
     async def get_user_profile(self, user_id: int) -> UserProfile:
         """Get detailed user profile."""
@@ -293,7 +293,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Get user profile failed: {e}")
-            raise AuthenticationError("Failed to get user profile")
+            raise AuthenticationError("Failed to get user profile") from e
 
     async def update_user(self, user_id: int, update_data: UserUpdate) -> User:
         """Update user information."""
@@ -321,7 +321,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Update user failed: {e}")
-            raise AuthenticationError("Failed to update user")
+            raise AuthenticationError("Failed to update user") from e
 
     async def change_password(
         self, user_id: int, password_data: PasswordChange
@@ -356,7 +356,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Change password failed: {e}")
-            raise AuthenticationError("Failed to change password")
+            raise AuthenticationError("Failed to change password") from e
 
     async def refresh_token(self, refresh_token: str) -> Token:
         """Refresh access token using refresh token."""
@@ -387,7 +387,7 @@ class AuthService:
             raise
         except Exception as e:
             logger.error(f"Token refresh failed: {e}")
-            raise AuthenticationError("Failed to refresh token")
+            raise AuthenticationError("Failed to refresh token") from e
 
     async def get_user_stats(self) -> UserStats:
         """Get user statistics."""
@@ -412,7 +412,7 @@ class AuthService:
 
         except Exception as e:
             logger.error(f"Get user stats failed: {e}")
-            raise AuthenticationError("Failed to get user statistics")
+            raise AuthenticationError("Failed to get user statistics") from e
 
     def check_permission(
         self, user_role: UserRole, required_permission: Permission

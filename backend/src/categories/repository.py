@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.categories.models import CategoryModel
 from src.categories.schemas import CategoryCreate, CategoryUpdate
+from src.expenses.models import ExpenseModel
 from src.shared.repository import BaseRepository
 
 
@@ -33,14 +34,14 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
         if include_default:
             # Get user's custom categories OR default categories
             conditions.append(
-                (self.model.user_id == user_id) | (self.model.is_default == True)
+                (self.model.user_id == user_id) | (self.model.is_default)
             )
         else:
             # Get only user's custom categories
             conditions.append(self.model.user_id == user_id)
 
         # Only active categories
-        conditions.append(self.model.is_active == True)
+        conditions.append(self.model.is_active)
 
         query = select(self.model).where(and_(*conditions)).order_by(self.model.name)
         result = await self.db.execute(query)
@@ -50,7 +51,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
         """Get all default categories."""
         query = (
             select(self.model)
-            .where(and_(self.model.is_default == True, self.model.is_active == True))
+            .where(and_(self.model.is_default, self.model.is_active))
             .order_by(self.model.name)
         )
         result = await self.db.execute(query)
@@ -88,11 +89,11 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
         if user_id:
             # Check if category exists for this user OR as default
             conditions.append(
-                (self.model.user_id == user_id) | (self.model.is_default == True)
+                (self.model.user_id == user_id) | (self.model.is_default)
             )
         else:
             # Check only default categories
-            conditions.append(self.model.is_default == True)
+            conditions.append(self.model.is_default)
 
         query = select(self.model).where(and_(*conditions))
         result = await self.db.execute(query)
@@ -100,7 +101,6 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
 
     async def get_category_stats(self, user_id: int) -> list[dict]:
         """Get category usage statistics for a user."""
-        from src.expenses.models import ExpenseModel
 
         # Query to get category stats with expense counts and totals
         query = (
@@ -113,9 +113,9 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
             .outerjoin(ExpenseModel, CategoryModel.name == ExpenseModel.category)
             .where(
                 and_(
-                    CategoryModel.is_active == True,
+                    CategoryModel.is_active,
                     (CategoryModel.user_id == user_id)
-                    | (CategoryModel.is_default == True),
+                    | (CategoryModel.is_default),
                 )
             )
             .group_by(CategoryModel.id, CategoryModel.name)

@@ -40,7 +40,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="get_by_id",
                 table=self.model.__tablename__,
                 details={"id": id, "error": str(e)},
-            )
+            ) from e
 
     async def get_by_ids(self, ids: list[Any]) -> list[ModelType]:
         """Get multiple records by IDs."""
@@ -54,7 +54,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="get_by_ids",
                 table=self.model.__tablename__,
                 details={"ids": ids, "error": str(e)},
-            )
+            ) from e
 
     async def get_by_field(self, field_name: str, field_value: Any) -> ModelType | None:
         """Get a single record by any field."""
@@ -64,18 +64,18 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 select(self.model).where(field == field_value)
             )
             return result.scalar_one_or_none()
-        except AttributeError:
+        except AttributeError as e:
             raise DatabaseError(
                 operation="get_by_field",
                 table=self.model.__tablename__,
                 details={"field": field_name, "error": f"Field {field_name} not found"},
-            )
+            ) from e
         except Exception as e:
             raise DatabaseError(
                 operation="get_by_field",
                 table=self.model.__tablename__,
                 details={"field": field_name, "value": field_value, "error": str(e)},
-            )
+            ) from e
 
     async def get_all(self) -> list[ModelType]:
         """Get all records without pagination."""
@@ -87,7 +87,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="get_all",
                 table=self.model.__tablename__,
                 details={"error": str(e)},
-            )
+            ) from e
 
     async def get_multi(
         self,
@@ -143,7 +143,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="get_multi",
                 table=self.model.__tablename__,
                 details={"skip": skip, "limit": limit, "error": str(e)},
-            )
+            ) from e
 
     async def create(self, obj_in: CreateSchemaType | dict[str, Any]) -> ModelType:
         """Create a new record."""
@@ -167,14 +167,14 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
             await self.db.rollback()
             raise DuplicateError(
                 resource=self.model.__name__, details={"error": str(e)}
-            )
+            ) from e
         except Exception as e:
             await self.db.rollback()
             raise DatabaseError(
                 operation="create",
                 table=self.model.__tablename__,
                 details={"error": str(e)},
-            )
+            ) from e
 
     async def create_multi(
         self, objects_in: list[CreateSchemaType | dict[str, Any]]
@@ -208,14 +208,14 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
             await self.db.rollback()
             raise DuplicateError(
                 resource=self.model.__name__, details={"error": str(e)}
-            )
+            ) from e
         except Exception as e:
             await self.db.rollback()
             raise DatabaseError(
                 operation="create_multi",
                 table=self.model.__tablename__,
                 details={"count": len(objects_in), "error": str(e)},
-            )
+            ) from e
 
     async def update(
         self, id: Any, obj_in: UpdateSchemaType | dict[str, Any]
@@ -252,7 +252,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="update",
                 table=self.model.__tablename__,
                 details={"id": id, "error": str(e)},
-            )
+            ) from e
 
     async def update_multi(
         self, filters: dict[str, Any], update_data: dict[str, Any]
@@ -289,7 +289,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="update_multi",
                 table=self.model.__tablename__,
                 details={"filters": filters, "error": str(e)},
-            )
+            ) from e
 
     async def delete(self, id: Any) -> bool:
         """Delete a record by ID."""
@@ -306,7 +306,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="delete",
                 table=self.model.__tablename__,
                 details={"id": id, "error": str(e)},
-            )
+            ) from e
 
     async def delete_multi(self, ids: list[Any]) -> int:
         """Delete multiple records by IDs."""
@@ -323,7 +323,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="delete_multi",
                 table=self.model.__tablename__,
                 details={"ids": ids, "error": str(e)},
-            )
+            ) from e
 
     async def exists(self, id: Any) -> bool:
         """Check if a record exists by ID."""
@@ -339,7 +339,7 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="exists",
                 table=self.model.__tablename__,
                 details={"id": id, "error": str(e)},
-            )
+            ) from e
 
     async def count(self, filters: dict[str, Any] | None = None) -> int:
         """Count records with optional filters."""
@@ -368,4 +368,4 @@ class BaseRepository[ModelType: DeclarativeBase, CreateSchemaType, UpdateSchemaT
                 operation="count",
                 table=self.model.__tablename__,
                 details={"filters": filters, "error": str(e)},
-            )
+            ) from e

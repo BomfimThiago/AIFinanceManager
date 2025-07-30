@@ -134,9 +134,8 @@ class PasswordChange(CustomModel):
     @classmethod
     def passwords_match(cls, v: str, info) -> str:
         """Validate password confirmation matches."""
-        if hasattr(info, "data") and "new_password" in info.data:
-            if v != info.data["new_password"]:
-                raise ValueError("Passwords do not match")
+        if hasattr(info, "data") and "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
         return v
 
 
@@ -157,9 +156,8 @@ class PasswordResetConfirm(CustomModel):
     @classmethod
     def passwords_match(cls, v: str, info) -> str:
         """Validate password confirmation matches."""
-        if hasattr(info, "data") and "new_password" in info.data:
-            if v != info.data["new_password"]:
-                raise ValueError("Passwords do not match")
+        if hasattr(info, "data") and "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
         return v
 
 
