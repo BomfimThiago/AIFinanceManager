@@ -5,6 +5,8 @@ import { getCurrencies, getExchangeRates } from '../services/apiService';
 interface CurrencyContextType {
   selectedCurrency: string;
   setSelectedCurrency: (currency: string) => void;
+  sessionCurrency: string;
+  setSessionCurrency: (currency: string) => void;
   currencies: Record<string, Currency>;
   exchangeRates: Record<string, number>;
   isLoading: boolean;
@@ -19,9 +21,20 @@ interface CurrencyProviderProps {
 }
 
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
-  const [selectedCurrency, setSelectedCurrency] = useState<string>(() => {
-    return localStorage.getItem('selectedCurrency') || 'EUR';
+  // User's saved preference (from database/preferences)
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('EUR');
+  
+  // Session-only currency for temporary viewing (not saved to database)
+  const [sessionCurrency, setSessionCurrency] = useState<string>(() => {
+    // First try sessionStorage (if user changed it during this session)
+    const sessionStorageCurrency = sessionStorage.getItem('sessionCurrency');
+    if (sessionStorageCurrency) {
+      return sessionStorageCurrency;
+    }
+    // Otherwise use the selectedCurrency (user's preference)
+    return 'EUR'; // Will be updated when selectedCurrency loads
   });
+  
   const [currencies, setCurrencies] = useState<Record<string, Currency>>({});
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -56,13 +69,21 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     loadCurrencyData();
   }, []);
 
-  // Save selected currency to localStorage
+  // Initialize sessionCurrency with selectedCurrency if no session override exists
   useEffect(() => {
-    localStorage.setItem('selectedCurrency', selectedCurrency);
+    const sessionStorageCurrency = sessionStorage.getItem('sessionCurrency');
+    if (!sessionStorageCurrency && selectedCurrency) {
+      setSessionCurrency(selectedCurrency);
+    }
   }, [selectedCurrency]);
 
+  // Save session currency to sessionStorage (temporary)
+  useEffect(() => {
+    sessionStorage.setItem('sessionCurrency', sessionCurrency);
+  }, [sessionCurrency]);
+
   const formatAmount = (amount: number, currency?: string): string => {
-    const currencyCode = currency || selectedCurrency;
+    const currencyCode = currency || sessionCurrency;
     const currencyInfo = currencies[currencyCode];
     
     if (!currencyInfo) {
@@ -85,7 +106,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     fromCurrency: string, 
     toCurrency?: string
   ): number => {
-    const targetCurrency = toCurrency || selectedCurrency;
+    const targetCurrency = toCurrency || sessionCurrency;
     
     if (fromCurrency === targetCurrency) {
       return amount;
@@ -111,6 +132,8 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   const value: CurrencyContextType = {
     selectedCurrency,
     setSelectedCurrency,
+    sessionCurrency,
+    setSessionCurrency,
     currencies,
     exchangeRates,
     isLoading,

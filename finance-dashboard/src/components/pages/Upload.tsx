@@ -3,6 +3,7 @@ import { Upload as UploadIcon, FileText, Trash2, Clock, CheckCircle, XCircle } f
 import { UploadedFile, UploadHistory } from '../../types';
 import { useUploadHistoryQuery, useDeleteUploadHistoryMutation } from '../../hooks/queries';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
@@ -29,7 +30,8 @@ const Upload: React.FC<UploadProps> = ({
   triggerFileInput,
   hideAmounts 
 }) => {
-  const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency } = useCurrency();
+  const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency } = useCurrency();
+  const { t } = useTranslation();
   const { data: uploadHistory = [] } = useUploadHistoryQuery();
   const deleteUploadMutation = useDeleteUploadHistoryMutation();
   const [uploadToDelete, setUploadToDelete] = useState<UploadHistory | null>(null);
@@ -89,8 +91,8 @@ const Upload: React.FC<UploadProps> = ({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Receipts & Documents</h2>
-        <p className="text-gray-600">AI will automatically extract expense data from your files</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('upload.title')}</h2>
+        <p className="text-gray-600">{t('upload.subtitle')}</p>
       </div>
 
       <div
@@ -119,19 +121,19 @@ const Upload: React.FC<UploadProps> = ({
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Drop files here</h3>
-            <p className="text-gray-500">or click to select files</p>
+            <h3 className="text-lg font-semibold text-gray-900">{t('upload.dropFilesHere')}</h3>
+            <p className="text-gray-500">{t('upload.orClickToSelect')}</p>
           </div>
           
           <button
             onClick={triggerFileInput}
             className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
           >
-            Choose Files
+            {t('upload.chooseFiles')}
           </button>
           
           <p className="text-sm text-gray-500">
-            Supports PDF receipts and images (JPG, PNG)
+            {t('upload.supportedFormats')}
           </p>
         </div>
       </div>
@@ -140,14 +142,14 @@ const Upload: React.FC<UploadProps> = ({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center space-x-3">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <span className="text-blue-700 font-medium">Processing files with AI...</span>
+            <span className="text-blue-700 font-medium">{t('upload.processingFiles')}</span>
           </div>
         </div>
       )}
 
       {uploadedFiles.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Processed Files</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('upload.processedFiles')}</h3>
           <div className="space-y-3">
             {uploadedFiles.map((item, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -165,7 +167,7 @@ const Upload: React.FC<UploadProps> = ({
                         if (hideAmounts) return '*** - ' + item.expense.category;
                         
                         // Convert amount to selected currency
-                        const convertedAmount = getExpenseAmountInCurrency(item.expense, selectedCurrency, convertAmount);
+                        const convertedAmount = getExpenseAmountInCurrency(item.expense, sessionCurrency, convertAmount);
                         
                         return `${formatCurrencyAmount(convertedAmount)} - ${item.expense.category}`;
                       })()} 
@@ -176,7 +178,7 @@ const Upload: React.FC<UploadProps> = ({
                     item.status === 'error' ? 'bg-red-100 text-red-800' :
                     'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {item.status}
+                    {t(`upload.${item.status}`)}
                   </div>
                 </div>
               </div>
@@ -188,7 +190,7 @@ const Upload: React.FC<UploadProps> = ({
       {/* Upload History Section */}
       {uploadHistory.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload History</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('upload.uploadHistory')}</h3>
           <div className="space-y-3">
             {uploadHistory.map((upload) => (
               <div key={upload.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -212,14 +214,14 @@ const Upload: React.FC<UploadProps> = ({
                       upload.status === 'failed' ? 'text-red-600' :
                       'text-yellow-600'
                     }`}>
-                      {upload.status}
+                      {t(`upload.${upload.status}`)}
                     </span>
                   </div>
                   <button
                     onClick={() => handleDeleteClick(upload)}
                     disabled={deleteUploadMutation.isPending}
                     className="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                    title="Delete upload history"
+                    title={t('upload.deleteUploadHistory')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -235,10 +237,10 @@ const Upload: React.FC<UploadProps> = ({
         isOpen={isConfirmModalOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
-        title="Delete Upload History"
-        message={`Are you sure you want to delete the upload history for "${uploadToDelete?.filename}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('upload.deleteUploadTitle')}
+        message={t('upload.deleteUploadMessage', uploadToDelete?.filename || '').replace('{filename}', uploadToDelete?.filename || '')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={deleteUploadMutation.isPending}
       />

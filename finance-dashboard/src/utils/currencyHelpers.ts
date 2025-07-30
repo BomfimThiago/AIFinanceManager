@@ -8,7 +8,7 @@ import { Expense } from '../types';
  * Get the converted amount for an expense in the specified currency.
  * 
  * @param expense - The expense object
- * @param targetCurrency - The currency to convert to
+ * @param targetCurrency - The currency to convert to (usually sessionCurrency for display)
  * @param convertAmount - The conversion function from CurrencyContext
  * @returns The amount in the target currency
  */

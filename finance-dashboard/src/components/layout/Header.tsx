@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Wallet, Eye, EyeOff, User, LogOut, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { useTranslation } from '../../contexts/LanguageContext';
+import CurrencySelector from '../ui/CurrencySelector';
+import LanguageSelector from '../ui/LanguageSelector';
 import PreferencesModal from '../ui/PreferencesModal';
 
 interface HeaderProps {
@@ -10,6 +14,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,17 +46,22 @@ const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
               <Wallet className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">AI Finance Manager</h1>
+            <h1 className="text-xl font-bold text-gray-900">{t('header.title')}</h1>
           </div>
           
           <div className="flex items-center space-x-4">
             <button
               onClick={onTogglePrivacy}
               className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-              title={hideAmounts ? "Show amounts" : "Hide amounts"}
+              title={hideAmounts ? t('header.showAmounts') : t('header.hideAmounts')}
             >
               {hideAmounts ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </button>
+            
+            {/* Temporary Currency & Language Selectors */}
+            <CurrencySelector />
+            
+            <LanguageSelector />
 
             {/* User dropdown */}
             <div className="relative" ref={dropdownRef}>
@@ -84,7 +94,7 @@ const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   >
                     <Settings className="h-4 w-4" />
-                    <span>Preferences</span>
+                    <span>{t('header.preferences')}</span>
                   </button>
                   
                   <button
@@ -92,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span>Sign out</span>
+                    <span>{t('header.signOut')}</span>
                   </button>
                 </div>
               )}

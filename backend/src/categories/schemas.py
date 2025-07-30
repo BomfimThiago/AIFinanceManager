@@ -50,6 +50,9 @@ class Category(CategoryBase):
     user_id: int | None = Field(
         None, description="User ID (null for default categories)"
     )
+    translations: dict[str, dict[str, str]] | None = Field(
+        None, description="Category translations (name and description) by language code"
+    )
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, ExternalLink, Settings } from 'lucide-react';
+import { useTranslation } from '../../contexts/LanguageContext';
 import type { ConnectedIntegration } from '../../hooks/useIntegrations';
 
 interface ConnectedBanksProps {
@@ -13,13 +14,15 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
   onGetTransactions,
   onShowSettings
 }) => {
+  const { t } = useTranslation();
+  
   if (integrations.length === 0) {
     return null;
   }
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Connected Banks</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('integrations.yourConnectedBanks')}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {integrations.map((integration) => {
           const bankName = integration.metadata?.display_name || 
@@ -68,8 +71,8 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
                     <span className="text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-500">
                       {integration.last_sync 
-                        ? `Synced ${new Date(integration.last_sync).toLocaleDateString()}`
-                        : 'Never synced'
+                        ? `${t('integrations.synced')} ${new Date(integration.last_sync).toLocaleDateString()}`
+                        : t('integrations.neverSynced')
                       }
                     </span>
                   </div>
@@ -82,7 +85,7 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
                   className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-xs font-medium flex items-center justify-center space-x-1"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  <span>Sync</span>
+                  <span>{t('integrations.sync')}</span>
                 </button>
                 <button
                   onClick={onShowSettings}

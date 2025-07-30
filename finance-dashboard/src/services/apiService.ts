@@ -42,13 +42,18 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
     // Handle 401 unauthorized - token might be expired
     if (response.status === 401) {
-      // Only clear token and redirect if NOT on auth endpoints
-      if (!endpoint.includes('/api/auth/')) {
+      // For auth endpoints like /api/auth/me, just clear token and continue
+      if (endpoint.includes('/api/auth/me')) {
+        setAuthToken(null);
+        throw new Error('Token expired');
+      }
+      // For other endpoints, clear token and redirect
+      else if (!endpoint.includes('/api/auth/')) {
         setAuthToken(null);
         window.location.href = '/login';
         throw new Error('Unauthorized - please login again');
       }
-      // For auth endpoints, let the normal error handling process the response
+      // For login/signup endpoints, let the normal error handling process the response
     }
 
     if (!response.ok) {
@@ -348,6 +353,10 @@ export interface Category {
   is_default: boolean;
   is_active: boolean;
   user_id?: number;
+  translations?: {
+    name?: Record<string, string>;
+    description?: Record<string, string>;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -457,4 +466,21 @@ export const userPreferencesApi = {
       method: 'PUT',
       body: JSON.stringify(uiPreferences),
     }),
+};
+
+// Generic API service for other modules
+export const apiService = {
+  get: <T>(endpoint: string): Promise<T> => apiRequest<T>(endpoint),
+  post: <T>(endpoint: string, data?: any): Promise<T> => 
+    apiRequest<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+  put: <T>(endpoint: string, data?: any): Promise<T> => 
+    apiRequest<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+  delete: <T>(endpoint: string): Promise<T> => 
+    apiRequest<T>(endpoint, { method: 'DELETE' }),
 };

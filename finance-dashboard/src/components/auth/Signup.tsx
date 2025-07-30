@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { SignupCredentials } from '../../types';
 import { getUserFriendlyError, formatValidationErrors } from '../../utils/errorMessages';
 
@@ -12,6 +13,7 @@ interface SignupProps {
 const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
   const { signup, isLoading } = useAuth();
   const { showSuccess, showError } = useNotificationContext();
+  const { t } = useTranslation();
   const [credentials, setCredentials] = useState<SignupCredentials>({
     email: '',
     username: '',
@@ -29,35 +31,35 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
 
     // Validation
     if (!credentials.email || !credentials.username || !credentials.full_name || !credentials.password) {
-      setError('Please fill in all fields');
+      setError(t('auth.pleaseFieldsAll'));
       return;
     }
 
     if (credentials.password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('auth.passwordsNotMatch'));
       return;
     }
 
     if (credentials.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError(t('auth.passwordMinLength'));
       return;
     }
 
     if (credentials.username.length < 3) {
-      setError('Username must be at least 3 characters long');
+      setError(t('auth.usernameMinLength'));
       return;
     }
 
     // Validate username format (letters, numbers, hyphens, underscores only)
     const usernamePattern = /^[a-zA-Z0-9_-]+$/;
     if (!usernamePattern.test(credentials.username)) {
-      setError('Username can only contain letters, numbers, hyphens, and underscores');
+      setError(t('auth.usernameInvalidFormat'));
       return;
     }
 
     try {
       await signup(credentials);
-      showSuccess('Account Created', 'Account created successfully! Welcome to AI Finance Manager.');
+      showSuccess(t('auth.accountCreatedTitle'), t('auth.accountCreatedMessage'));
       // Navigation will be handled by the app component
     } catch (error) {
       console.error('Signup error:', error);
@@ -85,10 +87,10 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            {t('auth.signUpTitle')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Join AI Finance Manager today
+            {t('auth.signUpSubtitle')}
           </p>
         </div>
         
@@ -111,7 +113,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
           <div className="space-y-4">
             <div>
               <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
-                Full Name
+                {t('auth.fullNameLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -126,14 +128,14 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   value={credentials.full_name}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your full name"
+                  placeholder={t('auth.fullNamePlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
+                {t('auth.usernameLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -148,17 +150,17 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   value={credentials.username}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., johndoe or john_doe"
+                  placeholder={t('auth.usernamePlaceholder')}
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Only letters, numbers, hyphens (-), and underscores (_) are allowed
+                {t('auth.usernameHelp')}
               </p>
             </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('auth.emailLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -173,14 +175,14 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   value={credentials.email}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t('auth.passwordLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -195,7 +197,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   value={credentials.password}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Create a password"
+                  placeholder={t('auth.createPasswordPlaceholder')}
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
@@ -212,13 +214,13 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                 </div>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Must be at least 6 characters long
+                {t('auth.passwordLengthHelp')}
               </p>
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+                {t('auth.confirmPasswordLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -233,7 +235,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Confirm your password"
+                  placeholder={t('auth.confirmPasswordPlaceholder')}
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
@@ -250,7 +252,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                 </div>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Must match the password above
+                {t('auth.confirmPasswordHelp')}
               </p>
             </div>
           </div>
@@ -264,23 +266,23 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating account...
+                  {t('auth.creatingAccount')}
                 </div>
               ) : (
-                'Create account'
+                t('auth.createAccount')
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
+              {t('auth.alreadyHaveAccount')}{' '}
               <button
                 type="button"
                 onClick={onToggleMode}
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                Sign in here
+                {t('auth.signInLink')}
               </button>
             </p>
           </div>

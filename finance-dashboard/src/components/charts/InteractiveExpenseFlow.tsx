@@ -14,7 +14,7 @@ const InteractiveExpenseFlow: React.FC<InteractiveExpenseFlowProps> = ({
   expenses, 
   onCategoryClick 
 }) => {
-  const { formatAmount, convertAmount, selectedCurrency } = useCurrency();
+  const { formatAmount, convertAmount, sessionCurrency } = useCurrency();
   const { updateFilter } = useGlobalFilters();
 
   const chartData = useMemo(() => {
@@ -22,7 +22,7 @@ const InteractiveExpenseFlow: React.FC<InteractiveExpenseFlowProps> = ({
     const categoryData = expenses
       .filter(expense => expense.type === 'expense')
       .reduce((acc, expense) => {
-        const convertedAmount = getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
+        const convertedAmount = getExpenseAmountInCurrency(expense, sessionCurrency, convertAmount);
         
         if (!acc[expense.category]) {
           acc[expense.category] = 0;
@@ -44,7 +44,7 @@ const InteractiveExpenseFlow: React.FC<InteractiveExpenseFlowProps> = ({
         '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43'
       ]
     };
-  }, [expenses, selectedCurrency, convertAmount]);
+  }, [expenses, sessionCurrency, convertAmount]);
 
   const options = {
     chart: {

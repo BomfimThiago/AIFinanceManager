@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Expense, Category } from '../../types';
+import { useCategoryTranslation } from '../../contexts/LanguageContext';
 
 interface EditExpenseModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
   categories,
   isLoading = false
 }) => {
+  const { tCategory } = useCategoryTranslation(categories);
   const [formData, setFormData] = useState({
     date: '',
     amount: '',
@@ -145,7 +147,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               <option value="">Select category</option>
               {categories.map(cat => (
                 <option key={cat.name} value={cat.name}>
-                  {cat.name}
+                  {tCategory(cat.name)}
                 </option>
               ))}
             </select>

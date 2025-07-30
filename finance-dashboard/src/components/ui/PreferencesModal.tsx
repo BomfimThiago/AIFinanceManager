@@ -128,10 +128,13 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
             <>
               {/* Currency Selection */}
               <div>
-                <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <DollarSign className="h-4 w-4 mr-2" />
                   Default Currency
                 </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Your base currency preference. You can temporarily view in other currencies using the header selector.
+                </p>
                 <div className="space-y-2">
                   {availableCurrencies.map((currency) => (
                     <button
@@ -160,10 +163,13 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
 
               {/* Language Selection */}
               <div>
-                <label className="flex items-center text-sm font-medium text-gray-700 mb-3">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Globe className="h-4 w-4 mr-2" />
-                  Language
+                  Default Language
                 </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Your base language preference. You can temporarily view in other languages using the header selector.
+                </p>
                 <div className="space-y-2">
                   {availableLanguages.map((language) => (
                     <button

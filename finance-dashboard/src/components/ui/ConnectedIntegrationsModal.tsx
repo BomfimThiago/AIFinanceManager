@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Settings, CheckCircle, XCircle, Plus, Trash2, RefreshCw, Download } from 'lucide-react';
+import { useTranslation } from '../../contexts/LanguageContext';
 
 // Helper function to get country flag emoji
 const getCountryFlag = (countryCode?: string): string => {
@@ -141,6 +142,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
   onDelete,
   onGetTransactions
 }) => {
+  const { t } = useTranslation();
   const [syncingId, setSyncingId] = React.useState<number | null>(null);
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
   const [fetchingTransactionsId, setFetchingTransactionsId] = React.useState<number | null>(null);
@@ -193,9 +195,9 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Connected Integrations</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('integrations.connectedIntegrations')}</h2>
             <p className="text-sm text-gray-600 mt-1">
-              {integrations.length} {integrations.length === 1 ? 'bank connected' : 'banks connected'}
+              {integrations.length} {integrations.length === 1 ? t('integrations.bankConnected') : t('integrations.banksConnected')}
             </p>
           </div>
           <button
@@ -367,14 +369,14 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
           <div className="border-t p-6 bg-gray-50">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                Total: {integrations.length} {integrations.length === 1 ? 'integration' : 'integrations'}
+                {integrations.length === 1 ? t('integrations.totalIntegration').replace('{count}', integrations.length.toString()) : t('integrations.totalIntegrations').replace('{count}', integrations.length.toString())}
               </div>
               <button
                 onClick={onAddNew}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Plus className="h-4 w-4" />
-                <span>Add Bank</span>
+                <span>{t('integrations.addBank')}</span>
               </button>
             </div>
           </div>

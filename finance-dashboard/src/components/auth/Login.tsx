@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { LoginCredentials } from '../../types';
 import { getUserFriendlyError } from '../../utils/errorMessages';
 
@@ -12,6 +13,7 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
   const { login, isLoading } = useAuth();
   const { showSuccess, showError } = useNotificationContext();
+  const { t } = useTranslation();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
@@ -24,13 +26,13 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
     setError(null);
 
     if (!credentials.email || !credentials.password) {
-      setError('Please fill in all fields');
+      setError(t('auth.pleaseFieldsAll'));
       return;
     }
 
     try {
       await login(credentials);
-      showSuccess('Login Successful', 'Welcome back! Login successful.');
+      showSuccess(t('auth.loginSuccessTitle'), t('auth.loginSuccessMessage'));
       // Navigation will be handled by the app component
     } catch (error) {
       console.error('Login error:', error);
@@ -54,10 +56,10 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            {t('auth.signInTitle')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Welcome back to AI Finance Manager
+            {t('auth.signInSubtitle')}
           </p>
         </div>
         
@@ -80,7 +82,7 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('auth.emailLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -95,14 +97,14 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
                   value={credentials.email} 
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your email"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t('auth.passwordLabel')}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -117,7 +119,7 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
                   value={credentials.password}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your password"
+                  placeholder={t('auth.passwordPlaceholder')}
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
@@ -145,23 +147,23 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing in...
+                  {t('auth.signingIn')}
                 </div>
               ) : (
-                'Sign in'
+                t('auth.signIn')
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              {t('auth.noAccount')}{' '}
               <button
                 type="button"
                 onClick={onToggleMode}
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                Sign up here
+                {t('auth.signUpLink')}
               </button>
             </p>
           </div>

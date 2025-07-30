@@ -1,6 +1,7 @@
 import React from 'react';
 import { Brain, AlertCircle, TrendingUp } from 'lucide-react';
 import { calculateNetAmount } from '../../utils/calculations';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { AIInsight, Expense } from '../../types';
 
 interface InsightsProps {
@@ -11,12 +12,13 @@ interface InsightsProps {
 }
 
 const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, expenses, isGeneratingInsights }) => {
+  const { t } = useTranslation();
   const netAmount = calculateNetAmount(expenses);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">AI Financial Insights</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('insights.title')}</h2>
         <button
           onClick={onGenerateInsights}
           disabled={isGeneratingInsights}
@@ -27,7 +29,7 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
           ) : (
             <Brain className="h-4 w-4" />
           )}
-          <span>{isGeneratingInsights ? 'Generating...' : 'Generate Insights'}</span>
+          <span>{isGeneratingInsights ? t('insights.generating') : t('insights.generateInsights')}</span>
         </button>
       </div>
 
@@ -36,9 +38,9 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Brain className="h-8 w-8 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">AI-Powered Financial Analysis</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('insights.aiPoweredAnalysis')}</h3>
           <p className="text-gray-600 mb-4">
-            Get personalized insights about your spending patterns, budget performance, and financial recommendations.
+            {t('insights.personalizedInsights')}
           </p>
           <button
             onClick={onGenerateInsights}
@@ -48,12 +50,12 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
             {isGeneratingInsights ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Analyzing Your Finances...</span>
+                <span>{t('insights.analyzingFinances')}</span>
               </>
             ) : (
               <>
                 <Brain className="h-5 w-5" />
-                <span>Analyze My Finances</span>
+                <span>{t('insights.analyzeMyFinances')}</span>
               </>
             )}
           </button>
@@ -65,7 +67,7 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
             <div className="bg-white p-6 rounded-xl shadow-sm border">
               <div className="flex items-center justify-center space-x-3">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                <span className="text-gray-700 font-medium">Generating fresh insights...</span>
+                <span className="text-gray-700 font-medium">{t('insights.generatingFreshInsights')}</span>
               </div>
             </div>
           )}
@@ -95,7 +97,7 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
                   <p className="text-gray-700 mb-3">{insight.message}</p>
                   {insight.actionable && (
                     <div className="bg-white p-3 rounded-lg border">
-                      <p className="text-sm font-medium text-gray-900 mb-1">Recommended Action:</p>
+                      <p className="text-sm font-medium text-gray-900 mb-1">{t('insights.recommendedAction')}</p>
                       <p className="text-sm text-gray-700">{insight.actionable}</p>
                     </div>
                   )}
@@ -108,13 +110,13 @@ const Insights: React.FC<InsightsProps> = ({ aiInsights, onGenerateInsights, exp
 
       {/* Financial Health Score */}
       <div className="bg-white p-6 rounded-xl shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Health Score</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('insights.financialHealthScore')}</h3>
         <div className="flex items-center space-x-4">
           <div className="flex-1">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-500">Overall Score</span>
+              <span className="text-gray-500">{t('insights.overallScore')}</span>
               <span className="font-medium text-gray-900">
-                {netAmount >= 0 ? '85/100' : '65/100'} - {netAmount >= 0 ? 'Good' : 'Needs Attention'}
+                {netAmount >= 0 ? '85/100' : '65/100'} - {netAmount >= 0 ? t('insights.good') : t('insights.needsAttention')}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">

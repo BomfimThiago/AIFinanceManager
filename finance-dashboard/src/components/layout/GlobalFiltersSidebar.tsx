@@ -3,6 +3,7 @@ import { Search, X, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
 import { useCategories } from '../../hooks/queries';
 import { convertAPICategoriesList } from '../../utils/categoryMapper';
+import { useTranslation } from '../../contexts/LanguageContext';
 
 interface GlobalFiltersSidebarProps {
   isVisible: boolean;
@@ -10,6 +11,7 @@ interface GlobalFiltersSidebarProps {
 }
 
 const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, onToggle }) => {
+  const { t } = useTranslation();
   const { filters, updateFilter, clearFilter, clearFilters, hasActiveFilters } = useGlobalFilters();
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,7 +56,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         className={`fixed top-1/2 transform -translate-y-1/2 z-50 bg-white border border-gray-300 shadow-lg hover:bg-gray-50 transition-all duration-300 rounded-r-lg px-2 py-3 flex flex-col items-center gap-1 ${
           isVisible ? 'left-80' : 'left-0'
         }`}
-        title={isVisible ? 'Hide filters' : 'Show filters'}
+        title={isVisible ? t('filters.hideFilters') : t('filters.showFilters')}
       >
         {isVisible ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         <Filter className="h-4 w-4 text-gray-600" />
@@ -72,20 +74,20 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         <div className={`p-6 ${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('filters.title')}</h2>
             <div className="flex items-center space-x-2">
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
                   className="px-3 py-1 text-xs text-red-600 bg-red-50 rounded-full hover:bg-red-100 transition-colors"
                 >
-                  Clear All
+                  {t('filters.clearAll')}
                 </button>
               )}
               <button
                 onClick={onToggle}
                 className="text-gray-500 hover:text-gray-700 p-1 rounded"
-                title="Hide filters"
+                title={t('filters.hideFilters')}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -95,7 +97,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         {/* Search */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Search Transactions
+            {t('filters.searchTransactions')}
           </label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -103,7 +105,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
               type="text"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder="Description or merchant..."
+              placeholder={t('filters.searchPlaceholder')}
               className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {localSearch && (
@@ -118,7 +120,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
           {filters.search && (
             <div className="mt-2">
               <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                Searching: "{filters.search}"
+                {t('filters.searching').replace('{query}', filters.search)}
                 <button
                   onClick={() => clearFilter('search')}
                   className="ml-1 text-blue-600 hover:text-blue-800"
@@ -133,14 +135,14 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         {/* Category Filter */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category
+            {t('filters.category')}
           </label>
           <select
             value={filters.category || ''}
             onChange={(e) => updateFilter('category', e.target.value || undefined)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">All Categories</option>
+            <option value="">{t('filters.allCategories')}</option>
             {categories.map((category) => (
               <option key={category.name} value={category.name}>
                 {category.name}
@@ -165,23 +167,23 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         {/* Type Filter */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Transaction Type
+            {t('filters.transactionType')}
           </label>
           <select
             value={filters.type || ''}
             onChange={(e) => updateFilter('type', e.target.value as 'income' | 'expense' | undefined)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">All Types</option>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
+            <option value="">{t('filters.allTypes')}</option>
+            <option value="income">{t('filters.income')}</option>
+            <option value="expense">{t('filters.expense')}</option>
           </select>
           {filters.type && (
             <div className="mt-2">
               <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
                 filters.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               }`}>
-                {filters.type === 'income' ? 'Income' : 'Expense'}
+                {filters.type === 'income' ? t('filters.income') : t('filters.expense')}
                 <button
                   onClick={() => clearFilter('type')}
                   className={`ml-1 hover:opacity-80 ${
@@ -198,11 +200,11 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         {/* Date Range */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Date Range
+            {t('filters.dateRange')}
           </label>
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-gray-600 mb-1">From</label>
+              <label className="block text-xs text-gray-600 mb-1">{t('filters.from')}</label>
               <input
                 type="date"
                 value={filters.startDate || ''}
@@ -211,7 +213,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">To</label>
+              <label className="block text-xs text-gray-600 mb-1">{t('filters.to')}</label>
               <input
                 type="date"
                 value={filters.endDate || ''}
@@ -224,7 +226,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
             <div className="mt-2 space-y-1">
               {filters.startDate && (
                 <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full mr-1">
-                  From: {filters.startDate}
+                  {t('filters.fromDate').replace('{date}', filters.startDate)}
                   <button
                     onClick={() => clearFilter('startDate')}
                     className="ml-1 text-blue-600 hover:text-blue-800"
@@ -235,7 +237,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
               )}
               {filters.endDate && (
                 <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                  To: {filters.endDate}
+                  {t('filters.toDate').replace('{date}', filters.endDate)}
                   <button
                     onClick={() => clearFilter('endDate')}
                     className="ml-1 text-blue-600 hover:text-blue-800"
@@ -252,12 +254,12 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
         {hasActiveFilters && (
           <div className="pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>{activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} active</span>
+              <span>{activeFiltersCount} {activeFiltersCount === 1 ? t('filters.filterActive') : t('filters.filtersActive')}</span>
               <button
                 onClick={clearFilters}
                 className="text-red-600 hover:text-red-800 font-medium text-xs"
               >
-                Clear All
+                {t('filters.clearAll')}
               </button>
             </div>
           </div>

@@ -11,6 +11,7 @@ from src.categories.constants import DEFAULT_CATEGORIES
 from src.categories.models import CategoryModel
 from src.categories.repository import CategoryRepository
 from src.categories.schemas import CategoryCreate, CategoryStats, CategoryUpdate
+from src.categories.translation_service import CategoryTranslationService
 
 
 class CategoryService:
@@ -19,6 +20,7 @@ class CategoryService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repository = CategoryRepository(db)
+        self.translation_service = CategoryTranslationService()
 
     async def get_user_categories(
         self, user_id: int, include_default: bool = True
@@ -37,8 +39,21 @@ class CategoryService:
         if await self.repository.category_exists(category_data.name, user_id):
             raise ValueError(f"Category '{category_data.name}' already exists")
 
-        # Create the category
-        category = await self.repository.create_user_category(user_id, category_data)
+        # Generate translations for the category name and description
+        try:
+            translations = await self.translation_service.translate_category_content(
+                category_data.name, 
+                category_data.description
+            )
+        except Exception as e:
+            # Log the error but don't fail category creation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to generate translations for category '{category_data.name}': {e}")
+            translations = None
+
+        # Create the category with translations
+        category = await self.repository.create_user_category(user_id, category_data, translations)
         return category
 
     async def update_category(

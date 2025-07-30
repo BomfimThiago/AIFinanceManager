@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink, CheckCircle, XCircle, AlertCircle, Settings } from 'lucide-react';
+import { useTranslation } from '../../contexts/LanguageContext';
 import type { ConnectedIntegration } from '../../hooks/useIntegrations';
 
 // Bank provider icon components
@@ -43,7 +44,7 @@ const getIntegrations = (connectedIntegrations: ConnectedIntegration[]): Integra
     {
       id: 'plaid',
       name: 'Plaid',
-      description: 'Connect banks across North America and Europe with instant, secure access',
+      description: 'connectBanksDescription',
       icon: PlaidIcon,
       status: 'disconnected', // TODO: Update when Plaid is implemented
       supportedCountries: ['🇺🇸 United States', '🇨🇦 Canada', '🇬🇧 United Kingdom', '🇪🇸 Spain', '🇫🇷 France', '🇳🇱 Netherlands', '🇮🇪 Ireland'],
@@ -77,7 +78,7 @@ const getIntegrations = (connectedIntegrations: ConnectedIntegration[]): Integra
         } else if (totalBanks > 2) {
           return `${bankNames[0]}, ${bankNames[1]} +${totalBanks - 2} more`;
         }
-        return `${totalBanks} bank${totalBanks !== 1 ? 's' : ''} connected`;
+        return `${totalBanks} ${totalBanks === 1 ? 'bank connected' : 'banks connected'}`;
       })() : undefined
     }
   ];
@@ -94,14 +95,14 @@ const getStatusIcon = (status: Integration['status']) => {
   }
 };
 
-const getStatusText = (status: Integration['status']) => {
+const getStatusText = (status: Integration['status'], t: any) => {
   switch (status) {
     case 'connected':
-      return 'Connected';
+      return t('integrations.connected');
     case 'error':
-      return 'Connection Error';
+      return t('integrations.connectionError');
     default:
-      return 'Not Connected';
+      return t('integrations.notConnected');
   }
 };
 
@@ -116,12 +117,12 @@ const getStatusColor = (status: Integration['status']) => {
   }
 };
 
-const getButtonText = (integrationId: string, connectedIntegrations: ConnectedIntegration[]) => {
+const getButtonText = (integrationId: string, connectedIntegrations: ConnectedIntegration[], t: any) => {
   if (integrationId === 'belvo') {
     const belvoIntegrations = connectedIntegrations.filter(int => int.status === 'connected');
-    return belvoIntegrations.length > 0 ? 'View Integrations' : 'Connect Account';
+    return belvoIntegrations.length > 0 ? t('integrations.viewIntegrations') : t('integrations.connectAccount');
   }
-  return 'Connect Account';
+  return t('integrations.connectAccount');
 };
 
 const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
@@ -132,12 +133,13 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
   onConnect,
   onShowSettings
 }) => {
+  const { t } = useTranslation();
   const integrations = getIntegrations(connectedIntegrations);
 
   return (
     <div>
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        {connectedIntegrations.length > 0 ? 'Add More Banks' : 'Available Integrations'}
+        {connectedIntegrations.length > 0 ? t('integrations.addMoreBanks') : t('integrations.availableIntegrations')}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {integrations.map((integration) => {
@@ -158,7 +160,7 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
                     <div className="flex items-center space-x-2 mt-1">
                       {getStatusIcon(integration.status)}
                       <span className={`text-sm font-medium ${getStatusColor(integration.status)}`}>
-                        {getStatusText(integration.status)}
+                        {getStatusText(integration.status, t)}
                       </span>
                     </div>
                   </div>
@@ -176,12 +178,12 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
 
               <div className="flex-1">
                 <p className="text-gray-600 text-sm mb-4">
-                  {integration.description}
+                  {integration.description === 'connectBanksDescription' ? t('integrations.connectBanksDescription') : integration.description}
                 </p>
 
                 {/* Supported Countries */}
                 <div className="mb-4">
-                  <p className="text-xs font-medium text-gray-700 mb-2">Supported Countries:</p>
+                  <p className="text-xs font-medium text-gray-700 mb-2">{t('integrations.supportedCountries')}</p>
                   <div className="flex flex-wrap gap-1">
                     {integration.supportedCountries.map((country, index) => (
                       <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
@@ -193,13 +195,13 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
 
                 {integration.status === 'connected' && integration.lastSync && (
                   <div className="text-xs text-gray-500 mb-4">
-                    Last sync: {new Date(integration.lastSync).toLocaleString()}
+                    {t('integrations.lastSync')}: {new Date(integration.lastSync).toLocaleString()}
                   </div>
                 )}
 
                 {integration.status === 'connected' && integration.accountInfo && (
                   <div className="text-xs text-gray-500 mb-4">
-                    Connected banks: {integration.accountInfo}
+                    {t('integrations.connectedBanks')}: {integration.accountInfo}
                   </div>
                 )}
               </div>
@@ -211,7 +213,7 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium flex items-center justify-center space-x-2"
                   >
                     <Settings className="h-4 w-4" />
-                    <span>Manage Banks ({connectedIntegrations.length})</span>
+                    <span>{t('integrations.manageBanks')} ({connectedIntegrations.length})</span>
                   </button>
                 ) : (
                   <button
@@ -222,17 +224,17 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
                     {isConnecting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Connecting...</span>
+                        <span>{t('integrations.connecting')}</span>
                       </>
                     ) : isBelvoLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Loading SDK...</span>
+                        <span>{t('integrations.loadingSDK')}</span>
                       </>
                     ) : (
                       <>
                         <ExternalLink className="h-4 w-4" />
-                        <span>{getButtonText(integration.id, connectedIntegrations)}</span>
+                        <span>{getButtonText(integration.id, connectedIntegrations, t)}</span>
                       </>
                     )}
                   </button>

@@ -14,7 +14,7 @@ const SpendingHeatmap: React.FC<SpendingHeatmapProps> = ({
   expenses,
   onDateClick 
 }) => {
-  const { formatAmount, convertAmount, selectedCurrency } = useCurrency();
+  const { formatAmount, convertAmount, sessionCurrency } = useCurrency();
   const { updateFilter } = useGlobalFilters();
 
   const heatmapData = useMemo(() => {
@@ -33,7 +33,7 @@ const SpendingHeatmap: React.FC<SpendingHeatmapProps> = ({
       })
       .reduce((acc, expense) => {
         const dateKey = expense.date.split('T')[0]; // Get YYYY-MM-DD format
-        const convertedAmount = getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
+        const convertedAmount = getExpenseAmountInCurrency(expense, sessionCurrency, convertAmount);
         
         if (!acc[dateKey]) {
           acc[dateKey] = 0;
@@ -82,7 +82,7 @@ const SpendingHeatmap: React.FC<SpendingHeatmapProps> = ({
     const maxSpending = Math.max(...Object.values(dailySpending));
     
     return { series, maxSpending };
-  }, [expenses, selectedCurrency, convertAmount]);
+  }, [expenses, sessionCurrency, convertAmount]);
 
   const options = {
     chart: {

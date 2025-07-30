@@ -5,6 +5,7 @@ import { Expense, Category } from '../../types';
 import { useCreateExpense, useUpdateExpense, useDeleteExpense } from '../../hooks/queries';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
 import { getUserFriendlyError } from '../../utils/errorMessages';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 import EditExpenseModal from '../ui/EditExpenseModal';
@@ -22,7 +23,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   
-  const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency } = useCurrency();
+  const { t } = useTranslation();
+  const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency } = useCurrency();
+  const { tCategory } = useCategoryTranslation(categories);
   
   const createExpenseMutation = useCreateExpense();
   const updateExpenseMutation = useUpdateExpense();
@@ -49,7 +52,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
 
     deleteExpenseMutation.mutate(expenseToDelete.id, {
       onSuccess: () => {
-        showSuccess('Expense Deleted', 'Expense deleted successfully');
+        showSuccess(t('expenses.expenseDeleted'), t('expenses.expenseDeletedMessage'));
         setIsConfirmModalOpen(false);
         setExpenseToDelete(null);
       },
@@ -75,7 +78,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
         { expenseId: editingExpense.id, expense: expenseData },
         {
           onSuccess: () => {
-            showSuccess('Expense Updated', 'Expense updated successfully');
+            showSuccess(t('expenses.expenseUpdated'), t('expenses.expenseUpdatedMessage'));
             setIsEditModalOpen(false);
             setEditingExpense(null);
           },
@@ -90,7 +93,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
       // Create new expense
       createExpenseMutation.mutate(expenseData, {
         onSuccess: () => {
-          showSuccess('Expense Created', 'Expense created successfully');
+          showSuccess(t('expenses.expenseCreated'), t('expenses.expenseCreatedMessage'));
           setIsEditModalOpen(false);
           setEditingExpense(null);
         },
@@ -111,7 +114,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
   // Calculate totals for visible expenses with currency conversion
   const expenseTotals = useMemo(() => {
     const getConvertedAmount = (expense: Expense) => {
-      return getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
+      return getExpenseAmountInCurrency(expense, sessionCurrency, convertAmount);
     };
     
     const totalExpenses = expenses
@@ -130,19 +133,19 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
       netAmount,
       totalTransactions: expenses.length
     };
-  }, [expenses, selectedCurrency, convertAmount]);
+  }, [expenses, sessionCurrency, convertAmount]);
 
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Recent Transactions</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('expenses.recentTransactions')}</h2>
         <button
           onClick={handleAddClick}
           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center space-x-2 font-medium"
         >
           <Plus className="h-4 w-4" />
-          <span>Add Expense</span>
+          <span>{t('expenses.addExpense')}</span>
         </button>
       </div>
 
@@ -151,7 +154,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+              <p className="text-sm font-medium text-gray-600">{t('expenses.totalExpenses')}</p>
               <p className="text-2xl font-bold text-red-600">
                 {hideAmounts ? '***' : formatCurrencyAmount(expenseTotals.totalExpenses)}
               </p>
@@ -165,7 +168,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Income</p>
+              <p className="text-sm font-medium text-gray-600">{t('expenses.totalIncome')}</p>
               <p className="text-2xl font-bold text-green-600">
                 {hideAmounts ? '***' : formatCurrencyAmount(expenseTotals.totalIncome)}
               </p>
@@ -179,7 +182,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Net Amount</p>
+              <p className="text-sm font-medium text-gray-600">{t('expenses.netAmount')}</p>
               <p className={`text-2xl font-bold ${
                 expenseTotals.netAmount >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
@@ -201,7 +204,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
         <div className="bg-white rounded-xl shadow-sm border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Transactions</p>
+              <p className="text-sm font-medium text-gray-600">{t('expenses.transactions')}</p>
               <p className="text-2xl font-bold text-gray-900">
                 {expenseTotals.totalTransactions}
               </p>
@@ -218,12 +221,12 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('expenses.date')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('expenses.description')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('expenses.category')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('expenses.merchant')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('expenses.amount')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('expenses.actions')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -249,7 +252,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
                         className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                         style={{ backgroundColor: `${categoryColor}20`, color: categoryColor }}
                       >
-                        {expense.category}
+                        {tCategory(expense.category)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -262,7 +265,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
                         if (hideAmounts) return '***';
                         
                         // Get converted amount
-                        const convertedAmount = getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
+                        const convertedAmount = getExpenseAmountInCurrency(expense, sessionCurrency, convertAmount);
                         
                         return `${expense.type === 'income' ? '+' : '-'}${formatCurrencyAmount(convertedAmount)}`;
                       })()} 
@@ -272,7 +275,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
                         <button
                           onClick={() => handleEditClick(expense)}
                           className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
-                          title="Edit expense"
+                          title={t('expenses.editExpenseTitle')}
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -280,7 +283,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
                           onClick={() => handleDeleteClick(expense)}
                           disabled={deleteExpenseMutation.isPending}
                           className="p-1 text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
-                          title="Delete expense"
+                          title={t('expenses.deleteExpenseTitle')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -309,10 +312,10 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
         isOpen={isConfirmModalOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
-        title="Delete Expense"
-        message={`Are you sure you want to delete "${expenseToDelete?.description}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('expenses.confirmDeleteTitle')}
+        message={t('expenses.deleteConfirmMessage').replace('{description}', expenseToDelete?.description || '')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={deleteExpenseMutation.isPending}
       />

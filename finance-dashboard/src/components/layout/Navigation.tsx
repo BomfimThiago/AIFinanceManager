@@ -1,21 +1,22 @@
 import React from 'react';
 import { BarChart3, Upload, CreditCard, Target, Tag, Brain, Link2 } from 'lucide-react';
+import { useTranslation } from '../../contexts/LanguageContext';
 import type { TabId } from '../../types';
 
 interface Tab {
   id: TabId;
-  name: string;
+  nameKey: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const tabs: Tab[] = [
-  { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
-  { id: 'upload', name: 'Upload', icon: Upload },
-  { id: 'expenses', name: 'Expenses', icon: CreditCard },
-  { id: 'budgets', name: 'Budgets', icon: Target },
-  { id: 'categories', name: 'Categories', icon: Tag },
-  { id: 'insights', name: 'AI Insights', icon: Brain },
-  { id: 'integrations', name: 'Integrations', icon: Link2 }
+  { id: 'dashboard', nameKey: 'navigation.dashboard', icon: BarChart3 },
+  { id: 'upload', nameKey: 'navigation.upload', icon: Upload },
+  { id: 'expenses', nameKey: 'navigation.expenses', icon: CreditCard },
+  { id: 'budgets', nameKey: 'navigation.budgets', icon: Target },
+  { id: 'categories', nameKey: 'navigation.categories', icon: Tag },
+  { id: 'insights', nameKey: 'navigation.insights', icon: Brain },
+  { id: 'integrations', nameKey: 'navigation.integrations', icon: Link2 }
 ];
 
 interface NavigationProps {
@@ -24,6 +25,7 @@ interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
+  const { t } = useTranslation();
   return (
     <nav className="bg-white border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -39,7 +41,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
               }`}
             >
               <tab.icon className="h-5 w-5" />
-              <span>{tab.name}</span>
+              <span>{t(tab.nameKey)}</span>
             </button>
           ))}
         </div>

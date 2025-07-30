@@ -6,7 +6,7 @@ This module defines the SQLAlchemy models for expense categories.
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -31,6 +31,9 @@ class CategoryModel(Base):
     user_id: Mapped[int | None] = mapped_column(
         Integer, nullable=True, index=True
     )  # NULL for default categories
+    translations: Mapped[dict | None] = mapped_column(
+        JSON, nullable=True
+    )  # {"name": {"en": "Food", "es": "Alimentación"}, "description": {"en": "Food expenses", "es": "Gastos de alimentación"}}
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )

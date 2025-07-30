@@ -25,6 +25,7 @@ from src.expenses.router import router as expenses_router
 from src.insights.router import router as insights_router
 from src.integrations.institution_repository import BelvoInstitutionRepository
 from src.integrations.router import router as integrations_router
+from src.translations.router import router as translations_router
 from src.services.belvo_service import belvo_service
 from src.shared.dependencies import get_db
 from src.shared.exceptions import AppException
@@ -324,6 +325,7 @@ app.include_router(categories_router)
 app.include_router(currency_router)
 app.include_router(expenses_router)
 app.include_router(insights_router)
+app.include_router(translations_router)
 app.include_router(upload_history_router)
 app.include_router(
     integrations_router,

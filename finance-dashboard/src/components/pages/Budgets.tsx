@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, X, Target, AlertCircle } from 'lucide-react';
 import { Budgets as BudgetsType, Category } from '../../types';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { useCategoryTranslation } from '../../contexts/LanguageContext';
 import { useCategorySpending } from '../../hooks/queries';
 
 interface BudgetsProps {
@@ -17,12 +18,13 @@ interface NewBudgetState {
 }
 
 const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hideAmounts }) => {
-  const { formatAmount: formatCurrencyAmount, convertAmount, selectedCurrency, exchangeRates, currencies } = useCurrency();
+  const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency, exchangeRates, currencies } = useCurrency();
+  const { t, tCategory } = useCategoryTranslation(categories);
   const [showBudgetForm, setShowBudgetForm] = useState<boolean>(false);
   const [newBudget, setNewBudget] = useState<NewBudgetState>({ category: '', limit: '' });
   
   // Get category spending from backend with currency conversion
-  const { data: categorySpendingData } = useCategorySpending({ currency: selectedCurrency });
+  const { data: categorySpendingData } = useCategorySpending({ currency: sessionCurrency });
   const categorySpending = categorySpendingData?.category_spending || {};
 
   // Helper function to get actual spending for a category
@@ -33,18 +35,18 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
   // Helper function to convert budget amounts (assuming they're stored in EUR)
   const convertBudgetAmount = (amount: number) => {
     // Budget amounts are stored in EUR (base currency), convert to selected currency
-    return convertAmount(amount, 'EUR', selectedCurrency);
+    return convertAmount(amount, 'EUR', sessionCurrency);
   };
 
   // Get conversion rates for display
   const getConversionRateDisplay = () => {
-    if (selectedCurrency === 'EUR') return null; // No conversion needed for base currency
+    if (sessionCurrency === 'EUR') return null; // No conversion needed for base currency
     
-    const rate = exchangeRates[selectedCurrency];
+    const rate = exchangeRates[sessionCurrency];
     if (!rate) return null;
     
-    const currencyInfo = currencies[selectedCurrency];
-    return `1 EUR = ${rate.toFixed(4)} ${currencyInfo?.symbol || selectedCurrency}`;
+    const currencyInfo = currencies[sessionCurrency];
+    return `1 EUR = ${rate.toFixed(4)} ${currencyInfo?.symbol || sessionCurrency}`;
   };
 
   const handleAddBudget = (): void => {
@@ -58,20 +60,20 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Budget Overview</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('budgets.title')}</h2>
         <button
           onClick={() => setShowBudgetForm(true)}
           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all flex items-center space-x-2"
         >
           <Plus className="h-4 w-4" />
-          <span>Add Budget</span>
+          <span>{t('budgets.addBudget')}</span>
         </button>
       </div>
 
       {showBudgetForm && (
         <div className="bg-white p-6 rounded-xl shadow-sm border">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Add New Budget</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('budgets.addBudget')}</h3>
             <button
               onClick={() => setShowBudgetForm(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -85,14 +87,14 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
               onChange={(e) => setNewBudget(prev => ({ ...prev, category: e.target.value }))}
               className="border border-gray-300 rounded-lg px-3 py-2"
             >
-              <option value="">Select Category</option>
+              <option value="">{t('budgets.selectCategory')}</option>
               {categories.map(cat => (
-                <option key={cat.name} value={cat.name}>{cat.name}</option>
+                <option key={cat.name} value={cat.name}>{tCategory(cat.name)}</option>
               ))}
             </select>
             <input
               type="number"
-              placeholder="Budget Limit"
+              placeholder={t('budgets.budgetLimit')}
               value={newBudget.limit}
               onChange={(e) => setNewBudget(prev => ({ ...prev, limit: e.target.value }))}
               className="border border-gray-300 rounded-lg px-3 py-2"
@@ -101,18 +103,18 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
               onClick={handleAddBudget}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
-              Add Budget
+              {t('budgets.addBudget')}
             </button>
           </div>
         </div>
       )}
 
       {/* Currency Conversion Notice */}
-      {selectedCurrency !== 'EUR' && getConversionRateDisplay() && (
+      {sessionCurrency !== 'EUR' && getConversionRateDisplay() && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <div className="flex items-center">
             <div className="text-xs text-blue-700">
-              <span className="font-medium">Currency Conversion:</span> Using current rates - {getConversionRateDisplay()}
+              <span className="font-medium">{t('dashboard.currencyConversion')}:</span> {t('dashboard.usingCurrentRates')} - {getConversionRateDisplay()}
             </div>
           </div>
         </div>
@@ -122,9 +124,9 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
         // Empty state when no budgets are set
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Budgets Set</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('budgets.noBudgets')}</h3>
           <p className="text-gray-500">
-            Create your first budget to start tracking your spending goals.
+            {t('budgets.createFirstBudget')}
           </p>
         </div>
       ) : (
@@ -148,21 +150,21 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
                     <div className="p-2 rounded-lg" style={{ backgroundColor: `${categoryColor}20` }}>
                       <CategoryIcon className="h-5 w-5" style={{ color: categoryColor }} />
                     </div>
-                    <h3 className="font-semibold text-gray-900">{category}</h3>
+                    <h3 className="font-semibold text-gray-900">{tCategory(category)}</h3>
                   </div>
                   {isOverBudget && <AlertCircle className="h-5 w-5 text-red-500" />}
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Spent</span>
+                    <span className="text-gray-500">{t('common.spent')}</span>
                     <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
                       {hideAmounts ? '***' : formatCurrencyAmount(actualSpent)}
                     </span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Budget</span>
+                    <span className="text-gray-500">{t('common.budget')}</span>
                     <span className="font-medium text-gray-900">{hideAmounts ? '***' : formatCurrencyAmount(convertedLimit)}</span>
                   </div>
                   
@@ -177,12 +179,12 @@ const Budgets: React.FC<BudgetsProps> = ({ budgets, categories, onAddBudget, hid
                   
                   <div className="flex justify-between text-sm">
                     <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-gray-900'}`}>
-                      {percentage.toFixed(1)}% used
+                      {percentage.toFixed(1)}% {t('budgets.used')}
                     </span>
                     <span className={`font-medium ${
                       convertedLimit - actualSpent >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {hideAmounts ? '***' : formatCurrencyAmount(Math.abs(convertedLimit - actualSpent))} {convertedLimit - actualSpent >= 0 ? 'left' : 'over'}
+                      {hideAmounts ? '***' : formatCurrencyAmount(Math.abs(convertedLimit - actualSpent))} {convertedLimit - actualSpent >= 0 ? t('budgets.left') : t('budgets.over')}
                     </span>
                   </div>
                 </div>

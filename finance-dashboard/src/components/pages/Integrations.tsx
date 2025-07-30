@@ -5,11 +5,13 @@ import AvailableIntegrations from '../integrations/AvailableIntegrations';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { ConsentManagementModal } from '../ui/ConsentManagementModal';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { useBelvoSDK } from '../../hooks/useBelvoSDK';
 import { useIntegrations } from '../../hooks/useIntegrations';
 
 
 const Integrations: React.FC = () => {
+  const { t } = useTranslation();
   const [connectingIntegration, setConnectingIntegration] = useState<string | null>(null);
   const [showConnectedIntegrationsModal, setShowConnectedIntegrationsModal] = useState(false);
   const [showConsentManagementModal, setShowConsentManagementModal] = useState(false);
@@ -64,8 +66,8 @@ const Integrations: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         showSuccess(
-          'Bank Connected!', 
-          `Successfully connected to ${data.institution_name}. You can now sync transactions.`
+          t('integrations.bankConnected'), 
+          t('integrations.bankConnectedMessage').replace('{bank}', data.institution_name)
         );
         // Refresh integrations list
         await fetchConnectedIntegrations();
@@ -73,15 +75,15 @@ const Integrations: React.FC = () => {
         const errorData = await response.text();
         console.error('Failed to save integration:', errorData);
         showError(
-          'Connection Failed', 
-          'Failed to save bank integration. Please try connecting again.'
+          t('integrations.connectionFailed'), 
+          t('integrations.connectionFailedMessage')
         );
       }
     } catch (error) {
       console.error('Error processing Belvo callback:', error);
       showError(
-        'Connection Error', 
-        'Failed to process bank connection. Please check your internet connection and try again.'
+        t('integrations.connectionError'), 
+        t('integrations.connectionErrorMessage')
       );
     }
   };
@@ -92,8 +94,8 @@ const Integrations: React.FC = () => {
     if (data?.last_encountered_error) {
       const error = data.last_encountered_error;
       showWarning(
-        'Connection Issue',
-        `Bank connection failed: ${error.message || 'Please try again.'}`
+        t('integrations.connectionIssue'),
+        t('integrations.connectionIssueMessage').replace('{error}', error.message || 'Please try again.')
       );
     }
   };
@@ -104,8 +106,8 @@ const Integrations: React.FC = () => {
     if (data?.eventName === 'ERROR') {
       const error = data.meta_data;
       showError(
-        'Connection Error',
-        error?.error_message || 'An error occurred during connection.'
+        t('integrations.connectionError'),
+        error?.error_message || t('integrations.connectionErrorMessage')
       );
     }
   };
@@ -131,16 +133,16 @@ const Integrations: React.FC = () => {
     // TODO: Implement Plaid Link
     console.log('Starting Plaid Link flow...');
     showInfo(
-      'Coming Soon', 
-      'Plaid integration will be available once API credentials are configured.'
+      t('integrations.comingSoon'), 
+      t('integrations.plaidComingSoon')
     );
   };
 
   const handleBelvoConnect = async () => {
     if (!isSDKLoaded) {
       showError(
-        'SDK Not Ready',
-        'Belvo SDK is still loading. Please try again in a moment.'
+        t('integrations.sdkNotReady'),
+        t('integrations.sdkNotReadyMessage')
       );
       return;
     }
@@ -159,8 +161,8 @@ const Integrations: React.FC = () => {
       console.error('Failed to start Belvo connection:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       showError(
-        'Connection Failed', 
-        `Failed to connect bank account: ${errorMessage}`
+        t('integrations.connectionFailed'), 
+        `${t('integrations.connectionFailedMessage')}: ${errorMessage}`
       );
     } finally {
       setConnectingIntegration(null);
@@ -175,22 +177,22 @@ const Integrations: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Bank Integrations</h2>
-          <p className="text-gray-600 mt-1">Connect your bank accounts to automatically sync transactions</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('integrations.title')}</h2>
+          <p className="text-gray-600 mt-1">{t('integrations.subtitle')}</p>
         </div>
         <div className="flex space-x-2">
           <button
             onClick={() => {
               // Public MBP - direct link as per documentation
               window.open('https://meuportal.belvo.com/?mode=landing', '_blank', 'noopener,noreferrer');
-              showInfo('Consent Portal Opened', 'You can now manage your bank consents in the new window.');
+              showInfo(t('integrations.consentPortalOpened'), t('integrations.manageConsentMessage'));
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            <span>Manage Consents</span>
+            <span>{t('integrations.manageConsents')}</span>
           </button>
           
           <button
@@ -201,7 +203,7 @@ const Integrations: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>Custom Portal</span>
+            <span>{t('integrations.customPortal')}</span>
           </button>
         </div>
       </div>
@@ -243,15 +245,15 @@ const Integrations: React.FC = () => {
 
       {/* Comparison Table */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Provider Comparison</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('integrations.providerComparison')}</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Best For</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connection Method</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.provider')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.coverage')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.bestFor')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.connectionMethod')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -264,9 +266,9 @@ const Integrations: React.FC = () => {
                     <span className="font-medium">Plaid</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">12,000+ institutions in US, Canada & Europe</td>
-                <td className="px-6 py-4 text-sm text-gray-600">North American & European banks</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Instant OAuth connection</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.plaidCoverage')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.plaidBestFor')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.plaidMethod')}</td>
               </tr>
               <tr>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -277,9 +279,9 @@ const Integrations: React.FC = () => {
                     <span className="font-medium">Belvo</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">200+ institutions in Latin America</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Mexican, Brazilian banks</td>
-                <td className="px-6 py-4 text-sm text-gray-600">Secure credential connection</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.belvoCoverage')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.belvoBestFor')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.belvoMethod')}</td>
               </tr>
             </tbody>
           </table>
@@ -288,30 +290,30 @@ const Integrations: React.FC = () => {
 
       {/* Help Section */}
       <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">How Bank Integration Works</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-2">{t('integrations.howItWorks')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-blue-700">
           <div>
-            <h4 className="font-medium mb-2">🔒 Security First</h4>
-            <p className="text-sm">Your banking credentials are never stored on our servers. All connections use bank-grade encryption.</p>
+            <h4 className="font-medium mb-2">🔒 {t('integrations.securityFirst')}</h4>
+            <p className="text-sm">{t('integrations.securityDescription')}</p>
           </div>
           <div>
-            <h4 className="font-medium mb-2">🔄 Automatic Sync</h4>
-            <p className="text-sm">Once connected, your transactions sync automatically. Manual sync available anytime.</p>
+            <h4 className="font-medium mb-2">🔄 {t('integrations.automaticSync')}</h4>
+            <p className="text-sm">{t('integrations.automaticSyncDescription')}</p>
           </div>
           <div>
-            <h4 className="font-medium mb-2">📊 Smart Categorization</h4>
-            <p className="text-sm">AI automatically categorizes your transactions and converts currencies.</p>
+            <h4 className="font-medium mb-2">📊 {t('integrations.smartCategorization')}</h4>
+            <p className="text-sm">{t('integrations.smartCategorizationDescription')}</p>
           </div>
           <div>
-            <h4 className="font-medium mb-2">🌍 Multi-Currency</h4>
-            <p className="text-sm">All transactions are converted to your preferred currency with historical rates.</p>
+            <h4 className="font-medium mb-2">🌍 {t('integrations.multiCurrency')}</h4>
+            <p className="text-sm">{t('integrations.multiCurrencyDescription')}</p>
           </div>
         </div>
       </div>
 
       {/* Consent Management Section */}
       <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-        <h3 className="text-lg font-semibold text-green-900 mb-4">Consent Management Options</h3>
+        <h3 className="text-lg font-semibold text-green-900 mb-4">{t('integrations.consentManagement')}</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           {/* Public Portal Option */}
@@ -322,16 +324,16 @@ const Integrations: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h4 className="font-semibold text-green-900">Public Portal</h4>
+              <h4 className="font-semibold text-green-900">{t('integrations.publicPortal')}</h4>
             </div>
             <p className="text-sm text-green-700 mb-3">
-              Quick access to all your Belvo consents across all applications. Just authenticate with your bank and manage everything in one place.
+              {t('integrations.publicPortalDescription')}
             </p>
             <ul className="text-xs text-green-600 space-y-1">
-              <li>• No setup required</li>
-              <li>• View all Belvo consents</li>
-              <li>• Standard authentication</li>
-              <li>• Recommended option</li>
+              <li>• {t('integrations.noSetupRequired')}</li>
+              <li>• {t('integrations.viewAllConsents')}</li>
+              <li>• {t('integrations.standardAuth')}</li>
+              <li>• {t('integrations.recommendedOption')}</li>
             </ul>
           </div>
 
@@ -344,45 +346,44 @@ const Integrations: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <h4 className="font-semibold text-green-900">Custom Portal</h4>
+              <h4 className="font-semibold text-green-900">{t('integrations.customPortal')}</h4>
             </div>
             <p className="text-sm text-green-700 mb-3">
-              Personalized portal showing only consents for this application. Requires your CPF/CNPJ for secure access.
+              {t('integrations.customPortalDescription')}
             </p>
             <ul className="text-xs text-green-600 space-y-1">
-              <li>• Application-specific view</li>
-              <li>• Requires CPF/CNPJ input</li>
-              <li>• More focused experience</li>
-              <li>• Enhanced privacy</li>
+              <li>• {t('integrations.applicationSpecific')}</li>
+              <li>• {t('integrations.requiresCpf')}</li>
+              <li>• {t('integrations.focusedExperience')}</li>
+              <li>• {t('integrations.enhancedPrivacy')}</li>
             </ul>
           </div>
         </div>
 
         <div className="text-green-700">
-          <h4 className="font-medium mb-2">What you can do in the portal:</h4>
+          <h4 className="font-medium mb-2">{t('integrations.whatYouCanDo')}</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h5 className="font-medium mb-1">✅ View Active Consents</h5>
-              <p className="text-sm">See all bank connections you've authorized.</p>
+              <h5 className="font-medium mb-1">✅ {t('integrations.viewActiveConsents')}</h5>
+              <p className="text-sm">{t('integrations.viewActiveConsentsDescription')}</p>
             </div>
             <div>
-              <h5 className="font-medium mb-1">⏰ Check Expiry Dates</h5>
-              <p className="text-sm">Monitor when consents will expire.</p>
+              <h5 className="font-medium mb-1">⏰ {t('integrations.checkExpiryDates')}</h5>
+              <p className="text-sm">{t('integrations.checkExpiryDatesDescription')}</p>
             </div>
             <div>
-              <h5 className="font-medium mb-1">🔄 Renew Expired Consents</h5>
-              <p className="text-sm">Easily renew when they expire.</p>
+              <h5 className="font-medium mb-1">🔄 {t('integrations.renewExpiredConsents')}</h5>
+              <p className="text-sm">{t('integrations.renewExpiredConsentsDescription')}</p>
             </div>
             <div>
-              <h5 className="font-medium mb-1">🗑️ Revoke Access</h5>
-              <p className="text-sm">Remove consent anytime you want.</p>
+              <h5 className="font-medium mb-1">🗑️ {t('integrations.revokeAccess')}</h5>
+              <p className="text-sm">{t('integrations.revokeAccessDescription')}</p>
             </div>
           </div>
           
           <div className="mt-4 p-3 bg-green-100 rounded-lg">
             <p className="text-sm text-green-800">
-              <strong>Regulatory Compliance:</strong> These consent management features meet Brazilian Open Finance regulations, 
-              giving you full control over your financial data sharing permissions.
+              <strong>{t('integrations.regulatoryCompliance')}</strong> {t('integrations.regulatoryComplianceDescription')}
             </p>
           </div>
         </div>

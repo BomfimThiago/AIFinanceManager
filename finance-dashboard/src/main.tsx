@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import { CurrencyProvider } from './contexts/CurrencyContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { GlobalFiltersProvider } from './contexts/GlobalFiltersContext'
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext'
@@ -30,11 +31,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <NotificationProvider>
           <CurrencyProvider>
-            <UserPreferencesProvider>
-              <GlobalFiltersProvider>
-                <App />
-              </GlobalFiltersProvider>
-            </UserPreferencesProvider>
+            <LanguageProvider>
+              <UserPreferencesProvider>
+                <GlobalFiltersProvider>
+                  <App />
+                </GlobalFiltersProvider>
+              </UserPreferencesProvider>
+            </LanguageProvider>
           </CurrencyProvider>
         </NotificationProvider>
       </AuthProvider>

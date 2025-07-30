@@ -14,7 +14,7 @@ const InteractiveSpendingTimeline: React.FC<InteractiveSpendingTimelineProps> = 
   expenses,
   onTimeRangeSelect 
 }) => {
-  const { formatAmount, convertAmount, selectedCurrency } = useCurrency();
+  const { formatAmount, convertAmount, sessionCurrency } = useCurrency();
   const { updateFilter } = useGlobalFilters();
 
   const chartData = useMemo(() => {
@@ -23,7 +23,7 @@ const InteractiveSpendingTimeline: React.FC<InteractiveSpendingTimelineProps> = 
       const date = new Date(expense.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
-      const convertedAmount = getExpenseAmountInCurrency(expense, selectedCurrency, convertAmount);
+      const convertedAmount = getExpenseAmountInCurrency(expense, sessionCurrency, convertAmount);
 
       if (!acc[monthKey]) {
         acc[monthKey] = { income: 0, expenses: 0, date: monthKey };
@@ -68,7 +68,7 @@ const InteractiveSpendingTimeline: React.FC<InteractiveSpendingTimelineProps> = 
       ],
       rawData: sortedData
     };
-  }, [expenses, selectedCurrency, convertAmount]);
+  }, [expenses, sessionCurrency, convertAmount]);
 
   const options = {
     chart: {
@@ -149,7 +149,7 @@ const InteractiveSpendingTimeline: React.FC<InteractiveSpendingTimelineProps> = 
     },
     yaxis: {
       title: {
-        text: `Amount (${selectedCurrency})`,
+        text: `Amount (${sessionCurrency})`,
         style: {
           fontSize: '12px',
           fontWeight: 600,

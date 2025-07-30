@@ -24,10 +24,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setTokenState(storedToken);
         } catch (error) {
           console.error('Failed to get current user:', error);
-          // Token might be expired, clear it
+          // Token might be expired, clear it silently
           setAuthToken(null);
           setTokenState(null);
           setUser(null);
+          // Don't show error for expired tokens during initialization
         }
       }
       setIsLoading(false);
