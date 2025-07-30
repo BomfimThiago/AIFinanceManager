@@ -13,8 +13,6 @@ os.chdir(backend_dir)
 
 import uvicorn  # noqa: E402
 
-from app.main import app  # noqa: E402
-
 if __name__ == "__main__":
     print("Starting Finance Dashboard Backend in Debug Mode...")
     print(f"Working directory: {os.getcwd()}")

@@ -9,11 +9,6 @@ import logging
 from src.budgets.models import BudgetModel
 from src.budgets.repository import BudgetRepository
 from src.budgets.schemas import Budget, BudgetCreate, BudgetSummary
-from src.utils.calculations import (
-    calculate_budget_remaining,
-    calculate_budget_utilization,
-    is_budget_exceeded,
-)
 
 logger = logging.getLogger(__name__)
 

@@ -83,5 +83,5 @@ class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdat
         expense = await self.get_by_transaction_id(transaction_id)
         if not expense:
             return None
-        
+
         return await self.update(expense.id, update_data)

@@ -14,7 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.auth.router import router as auth_router
+from src.auth.preferences_router import router as preferences_router
 from src.budgets.router import router as budgets_router
+from src.categories.router import router as categories_router
 from src.config import settings
 from src.currency.router import router as currency_router
 from src.database import close_database, init_database
@@ -30,6 +32,36 @@ logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL), format=settings.LOG_FORMAT
 )
 logger = logging.getLogger(__name__)
+
+
+async def seed_default_categories():
+    """Seed default categories on startup.
+    
+    This function creates the default categories if they don't exist.
+    """
+    try:
+        logger.info("📂 Starting default categories seeding...")
+
+        # Get database session
+        from src.categories.service import CategoryService
+        from src.shared.dependencies import get_db
+
+        async for db in get_db():
+            service = CategoryService(db)
+
+            # Seed default categories
+            created_count = await service.seed_default_categories()
+
+            if created_count > 0:
+                logger.info(f"✅ Created {created_count} default categories")
+            else:
+                logger.info("ℹ️  Default categories already exist")
+
+            break  # Exit the async generator
+
+    except Exception as e:
+        logger.error(f"❌ Failed to seed default categories: {e}")
+        # Don't raise exception - app should still start even if this fails
 
 
 async def populate_belvo_institutions():
@@ -136,9 +168,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.error(f"Failed to initialize database: {e}")
         raise
 
-    # Populate Belvo institutions in background (don't block startup)
+    # Seed default categories and populate Belvo institutions in background (don't block startup)
     import asyncio
 
+    asyncio.create_task(seed_default_categories())
     asyncio.create_task(populate_belvo_institutions())
 
     yield
@@ -287,7 +320,9 @@ async def root():
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(preferences_router)
 app.include_router(budgets_router)
+app.include_router(categories_router)
 app.include_router(currency_router)
 app.include_router(expenses_router)
 app.include_router(insights_router)

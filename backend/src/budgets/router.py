@@ -6,7 +6,7 @@ This module contains the FastAPI router for budget-related endpoints.
 
 import logging
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends
 
 from src.auth.dependencies import get_current_user
 from src.auth.schemas import User

@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Expenses from './pages/Expenses';
 import Budgets from './pages/Budgets';
+import CategoryManagement from './pages/CategoryManagement';
 import Insights from './pages/Insights';
 import Integrations from './pages/Integrations';
 import { useExpenses, useCreateBulkExpenses } from '../hooks/queries';
@@ -176,6 +177,8 @@ const FinanceManager: React.FC = () => {
             hideAmounts={hideAmounts}
           />
         );
+      case 'categories':
+        return <CategoryManagement hideAmounts={hideAmounts} />;
       case 'insights':
         return (
           <Insights

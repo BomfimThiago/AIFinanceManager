@@ -1,0 +1,38 @@
+"""
+Category database models.
+
+This module defines the SQLAlchemy models for expense categories.
+"""
+
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.database import Base
+
+if TYPE_CHECKING:
+    from src.expenses.models import ExpenseModel
+
+
+class CategoryModel(Base):
+    """Category model for expense categorization."""
+
+    __tablename__ = "categories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # Hex color code
+    icon: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Icon name
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)  # NULL for default categories
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+
+    # Note: No direct relationship with ExpenseModel since expenses use category name strings
+
+    def __repr__(self) -> str:
+        return f"<CategoryModel(id={self.id}, name='{self.name}', is_default={self.is_default})>"

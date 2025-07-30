@@ -182,3 +182,15 @@ def validate_content_type(allowed_types: list[str]):
 # Common content type validators
 json_content_type = validate_content_type(["application/json"])
 multipart_content_type = validate_content_type(["multipart/form-data"])
+
+
+def get_current_user_id():
+    """Create a dependency to get current user ID from authentication."""
+    # Import here to avoid circular imports
+    from src.auth.dependencies import get_current_user
+    from src.auth.schemas import User
+
+    def _dependency(user: User = Depends(get_current_user)) -> int:
+        return user.id
+
+    return _dependency

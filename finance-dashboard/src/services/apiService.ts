@@ -298,3 +298,70 @@ export const uploadHistoryApi = {
       method: 'DELETE',
     }),
 };
+
+// Category API
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_default: boolean;
+  is_active: boolean;
+  user_id?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CategoryListResponse {
+  categories: Category[];
+  total: number;
+}
+
+export interface CategoryCreate {
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+}
+
+export interface CategoryUpdate {
+  name?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_active?: boolean;
+}
+
+export const categoryApi = {
+  getAll: (include_default: boolean = true): Promise<CategoryListResponse> =>
+    apiRequest<CategoryListResponse>(`/api/categories/?include_default=${include_default}`),
+
+  create: (category: CategoryCreate): Promise<Category> =>
+    apiRequest<Category>('/api/categories/', {
+      method: 'POST',
+      body: JSON.stringify(category),
+    }),
+
+  update: (id: number, category: CategoryUpdate): Promise<Category> =>
+    apiRequest<Category>(`/api/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(category),
+    }),
+
+  delete: (id: number): Promise<void> =>
+    apiRequest<void>(`/api/categories/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getStats: (): Promise<any> =>
+    apiRequest<any>('/api/categories/stats'),
+
+  getNames: (): Promise<string[]> =>
+    apiRequest<string[]>('/api/categories/names'),
+
+  addPreference: (accountName: string, categoryName: string): Promise<any> =>
+    apiRequest<any>(`/api/categories/preferences/${accountName}/${categoryName}`, {
+      method: 'POST',
+    }),
+};

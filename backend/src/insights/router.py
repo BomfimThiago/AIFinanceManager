@@ -6,7 +6,7 @@ This module contains the FastAPI router for AI insights-related endpoints.
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from src.auth.dependencies import get_current_user
 from src.auth.schemas import User

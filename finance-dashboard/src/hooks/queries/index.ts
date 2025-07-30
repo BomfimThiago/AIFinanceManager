@@ -34,3 +34,14 @@ export {
   useDeleteUploadHistoryMutation,
   uploadHistoryKeys,
 } from './useUploadHistoryQuery';
+
+// Categories
+export {
+  useCategories,
+  useCategoryStats,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  useAddCategoryPreference,
+  categoryKeys,
+} from './useCategoriesQuery';

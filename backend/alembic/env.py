@@ -6,21 +6,24 @@ from logging.config import fileConfig
 # Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from alembic import context  # noqa: E402
-from sqlalchemy import pool  # noqa: E402
-from sqlalchemy.engine import Connection  # noqa: E402
-from sqlalchemy.ext.asyncio import async_engine_from_config  # noqa: E402
+from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from src.config import settings  # noqa: E402
-from src.database import Base  # noqa: E402
+from src.config import settings
+from src.database import Base
 
 # Import all models to ensure they are registered with Base.metadata
-from src.integrations.models import Integration, ConnectedAccount, SyncLog  # noqa: E402
+from src.auth.preferences_models import UserPreferencesModel
+from src.categories.models import CategoryModel  
+from src.expenses.models import ExpenseModel
+from src.integrations.models import Integration, ConnectedAccount, SyncLog
+
 # TODO: Import other module models when created
-# from src.auth.models import User  # noqa: E402
-# from src.expenses.models import Expense  # noqa: E402
-# from src.budgets.models import Budget  # noqa: E402
-# from src.insights.models import Insight  # noqa: E402
+# from src.auth.models import User
+# from src.budgets.models import Budget
+# from src.insights.models import Insight
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
