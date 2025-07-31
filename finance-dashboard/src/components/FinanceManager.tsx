@@ -6,6 +6,7 @@ import { useCreateBulkExpenses, useExpenses } from '../hooks/queries';
 import { useBudgets, useCreateBudget, useUpdateBudgetSpent } from '../hooks/queries';
 import { useCategories } from '../hooks/queries';
 import { useGenerateInsights } from '../hooks/queries';
+import { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from '../hooks/queries';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { usePrivacyMode } from '../hooks/usePrivacyMode';
 import type { AIInsight, TabId } from '../types';
@@ -14,7 +15,7 @@ import { getUserFriendlyError } from '../utils/errorMessages';
 import GlobalFiltersSidebar from './layout/GlobalFiltersSidebar';
 import Header from './layout/Header';
 import Navigation from './layout/Navigation';
-import Budgets from './pages/Budgets';
+import Goals from './pages/Goals';
 import CategoryManagement from './pages/CategoryManagement';
 import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
@@ -50,6 +51,9 @@ const FinanceManager: React.FC = () => {
     error: categoriesError,
   } = useCategories(true);
 
+  // Goals data
+  const { data: goals = [], isLoading: goalsLoading, error: goalsError } = useGoals();
+
   // Convert API categories to frontend categories
   const categories = categoriesData?.categories
     ? convertAPICategoriesList(categoriesData.categories)
@@ -61,6 +65,11 @@ const FinanceManager: React.FC = () => {
   const createBudgetMutation = useCreateBudget();
   const updateBudgetSpentMutation = useUpdateBudgetSpent();
   const generateInsightsMutation = useGenerateInsights();
+  
+  // Goals mutations
+  const createGoalMutation = useCreateGoal();
+  const updateGoalMutation = useUpdateGoal();
+  const deleteGoalMutation = useDeleteGoal();
 
   const { hideAmounts, togglePrivacyMode } = usePrivacyMode();
 
@@ -69,22 +78,57 @@ const FinanceManager: React.FC = () => {
     await createBulkExpensesMutation.mutateAsync(expenses);
   };
 
-  const addBudget = async (category: string, limit: string | number) => {
+  // Legacy budget function - can be removed once goals are fully implemented
+  // const addBudget = async (category: string, limit: string | number) => {
+  //   try {
+  //     await createBudgetMutation.mutateAsync({
+  //       category,
+  //       limit: parseFloat(limit.toString()),
+  //     });
+  //     showSuccess('Budget Created', 'Budget created successfully');
+  //   } catch (error: any) {
+  //     console.error('Create budget error:', error);
+  //     const friendlyError = getUserFriendlyError(error);
+  //     showError(friendlyError.title, friendlyError.message);
+  //   }
+  // };
+
+  const updateBudgetSpent = async (category: string, amount: number) => {
+    await updateBudgetSpentMutation.mutateAsync({ category, amount });
+  };
+
+  // Goals API functions
+  const handleCreateGoal = async (goalData: any) => {
     try {
-      await createBudgetMutation.mutateAsync({
-        category,
-        limit: parseFloat(limit.toString()),
-      });
-      showSuccess('Budget Created', 'Budget created successfully');
+      await createGoalMutation.mutateAsync(goalData);
+      showSuccess('Goal Created', 'Goal created successfully');
     } catch (error: any) {
-      console.error('Create budget error:', error);
+      console.error('Create goal error:', error);
       const friendlyError = getUserFriendlyError(error);
       showError(friendlyError.title, friendlyError.message);
     }
   };
 
-  const updateBudgetSpent = async (category: string, amount: number) => {
-    await updateBudgetSpentMutation.mutateAsync({ category, amount });
+  const handleUpdateGoal = async (goalId: number, goalData: any) => {
+    try {
+      await updateGoalMutation.mutateAsync({ id: goalId, goal: goalData });
+      showSuccess('Goal Updated', 'Goal updated successfully');
+    } catch (error: any) {
+      console.error('Update goal error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      showError(friendlyError.title, friendlyError.message);
+    }
+  };
+
+  const handleDeleteGoal = async (goalId: number) => {
+    try {
+      await deleteGoalMutation.mutateAsync(goalId);
+      showSuccess('Goal Deleted', 'Goal deleted successfully');
+    } catch (error: any) {
+      console.error('Delete goal error:', error);
+      const friendlyError = getUserFriendlyError(error);
+      showError(friendlyError.title, friendlyError.message);
+    }
   };
 
   const {
@@ -114,7 +158,7 @@ const FinanceManager: React.FC = () => {
   };
 
   // Show loading state
-  if (expensesLoading || budgetsLoading || categoriesLoading) {
+  if (expensesLoading || budgetsLoading || categoriesLoading || goalsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -126,14 +170,14 @@ const FinanceManager: React.FC = () => {
   }
 
   // Show error state
-  if (expensesError || budgetsError || categoriesError) {
+  if (expensesError || budgetsError || categoriesError || goalsError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600">
             <p className="text-lg font-semibold">Error loading data</p>
             <p className="mt-2">
-              {expensesError?.message || budgetsError?.message || categoriesError?.message}
+              {expensesError?.message || budgetsError?.message || categoriesError?.message || (goalsError as any)?.message}
             </p>
           </div>
         </div>
@@ -144,7 +188,7 @@ const FinanceManager: React.FC = () => {
   const renderContent = (): React.ReactNode => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard expenses={expenses} budgets={budgets} hideAmounts={hideAmounts} />;
+        return <Dashboard expenses={expenses} budgets={budgets as any} hideAmounts={hideAmounts} />;
       case 'upload':
         return (
           <Upload
@@ -161,12 +205,14 @@ const FinanceManager: React.FC = () => {
         );
       case 'expenses':
         return <Expenses expenses={expenses} categories={categories} hideAmounts={hideAmounts} />;
-      case 'budgets':
+      case 'goals':
         return (
-          <Budgets
-            budgets={budgets}
+          <Goals
+            goals={goals}
             categories={categories}
-            onAddBudget={addBudget}
+            onCreateGoal={handleCreateGoal}
+            onUpdateGoal={handleUpdateGoal}  
+            onDeleteGoal={handleDeleteGoal}
             hideAmounts={hideAmounts}
           />
         );

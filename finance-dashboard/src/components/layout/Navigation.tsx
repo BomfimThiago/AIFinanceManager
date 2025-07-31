@@ -15,7 +15,7 @@ const tabs: Tab[] = [
   { id: 'dashboard', nameKey: 'navigation.dashboard', icon: BarChart3 },
   { id: 'upload', nameKey: 'navigation.upload', icon: Upload },
   { id: 'expenses', nameKey: 'navigation.expenses', icon: CreditCard },
-  { id: 'budgets', nameKey: 'navigation.budgets', icon: Target },
+  { id: 'goals', nameKey: 'navigation.goals', icon: Target },
   { id: 'categories', nameKey: 'navigation.categories', icon: Tag },
   { id: 'insights', nameKey: 'navigation.insights', icon: Brain },
   { id: 'integrations', nameKey: 'navigation.integrations', icon: Link2 },

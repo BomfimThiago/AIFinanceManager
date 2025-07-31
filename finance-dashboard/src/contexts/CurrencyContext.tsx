@@ -84,6 +84,11 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   }, [sessionCurrency]);
 
   const formatAmount = (amount: number, currency?: string): string => {
+    // Handle undefined, null, or invalid amounts
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '0.00';
+    }
+
     const currencyCode = currency || sessionCurrency;
     const currencyInfo = currencies[currencyCode];
 

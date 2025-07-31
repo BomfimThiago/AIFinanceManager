@@ -34,6 +34,15 @@ help:
 	@echo "  make db-migrate      Run database migrations"
 	@echo "  make db-reset        Reset database (drop and recreate)"
 	@echo ""
+	@echo "Production Deployment:"
+	@echo "  make validate-config    Validate production configuration"
+	@echo "  make deploy-aws         Deploy to AWS with Terraform (full deployment)"
+	@echo "  make deploy-infra       Deploy AWS infrastructure with Terraform"
+	@echo "  make deploy-app         Deploy application only (Docker + ECS)"
+	@echo "  make deploy-frontend    Deploy frontend to Netlify"
+	@echo "  make terraform-plan     Plan Terraform changes"
+	@echo "  make terraform-outputs  Show Terraform outputs"
+	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean           Clean all build artifacts"
 	@echo "  make clean-deps      Clean all dependencies"
@@ -153,3 +162,81 @@ health:
 	@echo "Checking application health..."
 	@curl -s http://localhost:8001/health || echo "Backend not running"
 	@curl -s http://localhost:5173 > /dev/null && echo "Frontend is running" || echo "Frontend not running"
+
+# Production deployment commands
+validate-config:
+	@echo "Validating production configuration..."
+	cd backend && python3 scripts/validate-config.py
+
+deploy-aws:
+	@echo "Starting full AWS deployment with Terraform..."
+	@echo "This will deploy infrastructure and application to AWS"
+	@echo "Make sure you have configured your AWS credentials and environment variables"
+	./scripts/deploy-terraform.sh deploy
+
+deploy-infra:
+	@echo "Deploying AWS infrastructure with Terraform..."
+	./scripts/deploy-terraform.sh deploy
+
+deploy-app:
+	@echo "Deploying application only (assumes infrastructure exists)..."
+	@echo "Building and pushing Docker image..."
+	cd terraform && terraform output -raw ecr_repository_url | xargs -I {} docker build -t {}:latest ../backend -f ../backend/Dockerfile.prod
+	@echo "Updating ECS service..."
+	./scripts/deploy-terraform.sh update-secrets
+
+deploy-frontend:
+	@echo "Building and deploying frontend..."
+	cd finance-dashboard && npm run build
+	@echo "Frontend built successfully"
+	@echo "Deploy to Netlify manually or via CI/CD pipeline"
+	@echo "Built files are in: finance-dashboard/dist/"
+
+# Deployment utilities
+check-aws:
+	@echo "Checking AWS configuration..."
+	@aws sts get-caller-identity || (echo "AWS CLI not configured. Run 'aws configure'" && exit 1)
+	@echo "AWS configuration is valid"
+
+check-env:
+	@echo "Checking required environment variables..."
+	@test -n "$$DATABASE_URL" || (echo "DATABASE_URL is not set" && exit 1)
+	@test -n "$$SECRET_KEY" || (echo "SECRET_KEY is not set" && exit 1)
+	@test -n "$$ANTHROPIC_API_KEY" || (echo "ANTHROPIC_API_KEY is not set" && exit 1)
+	@echo "Required environment variables are set"
+
+pre-deploy: check-aws check-env validate-config
+	@echo "Pre-deployment checks completed successfully!"
+
+# Quick deployment verification
+verify-deployment:
+	@echo "Verifying deployment..."
+	@if [ -n "$$BACKEND_URL" ]; then \
+		echo "Checking backend health at $$BACKEND_URL/health..."; \
+		curl -f $$BACKEND_URL/health || (echo "Backend health check failed" && exit 1); \
+		echo "Backend is healthy"; \
+	else \
+		echo "BACKEND_URL not set, skipping backend verification"; \
+	fi
+	@if [ -n "$$FRONTEND_URL" ]; then \
+		echo "Checking frontend at $$FRONTEND_URL..."; \
+		curl -f $$FRONTEND_URL > /dev/null || (echo "Frontend check failed" && exit 1); \
+		echo "Frontend is accessible"; \
+	else \
+		echo "FRONTEND_URL not set, skipping frontend verification"; \
+	fi
+
+# Terraform-specific commands
+terraform-plan:
+	@echo "Planning Terraform changes..."
+	./scripts/deploy-terraform.sh plan
+
+terraform-outputs:
+	@echo "Showing Terraform outputs..."
+	./scripts/deploy-terraform.sh outputs
+
+terraform-destroy:
+	@echo "⚠️  WARNING: This will destroy all AWS infrastructure!"
+	@echo "This action cannot be undone."
+	@read -p "Are you sure? Type 'yes' to continue: " confirm && [ "$$confirm" = "yes" ] || exit 1
+	./scripts/deploy-terraform.sh destroy

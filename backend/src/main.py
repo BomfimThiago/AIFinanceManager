@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 
 from src.auth.router import router as auth_router
 from src.budgets.router import router as budgets_router
+from src.budgets.goals_router import router as goals_router
 from src.categories.router import router as categories_router
 from src.categories.service import CategoryService
 from src.config import settings
@@ -321,6 +322,7 @@ async def root():
 app.include_router(auth_router)
 app.include_router(preferences_router)
 app.include_router(budgets_router)
+app.include_router(goals_router)
 app.include_router(categories_router)
 app.include_router(currency_router)
 app.include_router(expenses_router)

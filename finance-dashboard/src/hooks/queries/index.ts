@@ -52,3 +52,18 @@ export {
   useUpdateUIPreferences,
   userPreferencesKeys,
 } from './useUserPreferencesQuery';
+
+// Goals
+export {
+  useGoals,
+  useGoal,
+  useActiveGoals,
+  useGoalsByType,
+  useGoalsSummary,
+  useCreateGoal,
+  useUpdateGoal,
+  useDeleteGoal,
+  useUpdateGoalProgress,
+  useSetGoalProgress,
+  goalKeys,
+} from './useGoalsQuery';

@@ -1,0 +1,124 @@
+# Netlify Configuration for AI Finance Manager Frontend
+
+[build]
+  # Directory containing the site to publish
+  publish = "dist"
+  
+  # Build command
+  command = "npm run build"
+  
+  # Directory to run the build command in
+  base = "finance-dashboard"
+
+[build.environment]
+  # Node.js version for builds
+  NODE_VERSION = "18"
+  
+  # NPM version
+  NPM_VERSION = "9"
+
+# Production context - specific settings for production branch
+[context.production]
+  # Production build command
+  command = "npm run build"
+  
+  # Production environment variables are set in Netlify UI
+  # VITE_API_BASE_URL = set in Netlify UI
+  # VITE_ANTHROPIC_API_KEY = set in Netlify UI
+
+# Deploy preview context - for pull requests
+[context.deploy-preview]
+  command = "npm run build"
+  
+  [context.deploy-preview.environment]
+    # Override API URL for preview deployments
+    VITE_API_BASE_URL = "https://api-staging.your-domain.com"
+
+# Branch deploy context - for non-production branches
+[context.branch-deploy]
+  command = "npm run build"
+
+# Headers configuration
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    
+    # Content Security Policy
+    Content-Security-Policy = '''
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://api.anthropic.com https://frankfurter.app https://*.belvo.io wss://*.belvo.io https://sandbox.belvo.com https://development.belvo.com https://api.belvo.com;
+      frame-src 'self' https://widget.belvo.io https://cdn.belvo.io;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    '''
+
+# Caching rules for static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, s-maxage=86400"
+
+# Redirects
+[[redirects]]
+  from = "/api/*"
+  to = ":VITE_API_BASE_URL/:splat"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"}
+
+# SPA fallback - must be last
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Custom 404 page
+[[redirects]]
+  from = "/404"
+  to = "/index.html"
+  status = 404
+
+# Functions configuration (if using Netlify Functions in the future)
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Plugins
+[[plugins]]
+  # Lighthouse CI for performance monitoring
+  package = "@netlify/plugin-lighthouse"
+  
+  [plugins.inputs]
+    # Run on deploy previews
+    audits.performance = 0.9
+    audits.accessibility = 0.9
+    audits.best-practices = 0.9
+    audits.seo = 0.9

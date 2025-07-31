@@ -5,6 +5,9 @@ import {
   CurrencyInfo,
   ExchangeRates,
   Expense,
+  Goal,
+  GoalCreate,
+  GoalUpdate,
   LoginCredentials,
   SignupCredentials,
   UploadHistory,
@@ -484,6 +487,57 @@ export const userPreferencesApi = {
     apiRequest<UserPreferences>('/api/user/preferences/ui', {
       method: 'PUT',
       body: JSON.stringify(uiPreferences),
+    }),
+};
+
+// Goals API
+export interface GoalsListResponse {
+  goals: Goal[];
+}
+
+export const goalsApi = {
+  getAll: (): Promise<Goal[]> =>
+    apiRequest<Goal[]>('/api/goals'),
+
+  getById: (id: number): Promise<Goal> =>
+    apiRequest<Goal>(`/api/goals/${id}`),
+
+  create: (goal: GoalCreate): Promise<Goal> =>
+    apiRequest<Goal>('/api/goals', {
+      method: 'POST',
+      body: JSON.stringify(goal),
+    }),
+
+  update: (id: number, goal: GoalUpdate): Promise<Goal> =>
+    apiRequest<Goal>(`/api/goals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(goal),
+    }),
+
+  delete: (id: number): Promise<void> =>
+    apiRequest<void>(`/api/goals/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getByType: (goalType: string): Promise<Goal[]> =>
+    apiRequest<Goal[]>(`/api/goals?goal_type=${goalType}`),
+
+  getActive: (): Promise<Goal[]> =>
+    apiRequest<Goal[]>('/api/goals?status=active'),
+
+  getSummary: (): Promise<any> =>
+    apiRequest<any>('/api/goals/summary'),
+
+  updateProgress: (id: number, progress: { amount: number; date?: string; notes?: string }): Promise<Goal> =>
+    apiRequest<Goal>(`/api/goals/${id}/progress`, {
+      method: 'POST',
+      body: JSON.stringify(progress),
+    }),
+
+  setProgress: (id: number, amount: number): Promise<Goal> =>
+    apiRequest<Goal>(`/api/goals/${id}/progress`, {
+      method: 'PUT',
+      body: JSON.stringify({ amount }),
     }),
 };
 
