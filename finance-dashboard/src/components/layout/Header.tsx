@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { ChevronDown, Eye, EyeOff, LogOut, Settings, User, Wallet } from 'lucide-react';
+import { ChevronDown, Eye, EyeOff, LogOut, Settings, User } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useTranslation } from '../../contexts/LanguageContext';
 import CurrencySelector from '../ui/CurrencySelector';
 import LanguageSelector from '../ui/LanguageSelector';
+import Logo from '../ui/Logo';
 import PreferencesModal from '../ui/PreferencesModal';
 
 interface HeaderProps {
@@ -44,12 +45,7 @@ const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-              <Wallet className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">{t('header.title')}</h1>
-          </div>
+          <Logo size="md" />
 
           <div className="flex items-center space-x-4">
             <button

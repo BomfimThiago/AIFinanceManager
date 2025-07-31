@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     """Global application settings."""
 
     # Application
-    APP_NAME: str = "AI Finance Manager"
+    APP_NAME: str = "Konta"
     APP_VERSION: str = "1.0.0"
     API_VERSION: str = "v1"
     ENVIRONMENT: Environment = Environment.DEVELOPMENT

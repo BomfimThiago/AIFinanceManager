@@ -163,7 +163,7 @@ async def populate_belvo_institutions():
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     # Startup
-    logger.info("Starting up AI Finance Manager API")
+    logger.info("Starting up Konta API")
     try:
         await init_database()
         logger.info("Database initialized successfully")
@@ -178,7 +178,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     # Shutdown
-    logger.info("Shutting down AI Finance Manager API")
+    logger.info("Shutting down Konta API")
     try:
         await close_database()
         logger.info("Database connections closed")

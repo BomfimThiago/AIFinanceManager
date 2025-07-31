@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "AI Finance Manager",
+    "title": "Konta",
     "hideAmounts": "Hide amounts",
     "showAmounts": "Show amounts",
     "preferences": "Preferences",
@@ -75,9 +75,9 @@
   },
   "auth": {
     "signInTitle": "Sign in to your account",
-    "signInSubtitle": "Welcome back to AI Finance Manager",
+    "signInSubtitle": "Welcome back to Konta",
     "signUpTitle": "Create your account",
-    "signUpSubtitle": "Join AI Finance Manager today",
+    "signUpSubtitle": "Join Konta today",
     "emailLabel": "Email address",
     "emailPlaceholder": "Enter your email",
     "passwordLabel": "Password",
@@ -109,7 +109,7 @@
     "loginSuccessTitle": "Login Successful",
     "loginSuccessMessage": "Welcome back! Login successful.",
     "accountCreatedTitle": "Account Created",
-    "accountCreatedMessage": "Account created successfully! Welcome to AI Finance Manager."
+    "accountCreatedMessage": "Account created successfully! Welcome to Konta."
   },
   "dashboard": {
     "loadingError": "Failed to load some dashboard data. Using local calculations where possible.",

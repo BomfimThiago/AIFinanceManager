@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "Gestor Financiero con IA",
+    "title": "Konta",
     "hideAmounts": "Ocultar importes",
     "showAmounts": "Mostrar importes",
     "preferences": "Preferencias",
@@ -75,9 +75,9 @@
   },
   "auth": {
     "signInTitle": "Iniciar sesión en tu cuenta",
-    "signInSubtitle": "Bienvenido de nuevo a AI Finance Manager",
+    "signInSubtitle": "Bienvenido de nuevo a Konta",
     "signUpTitle": "Crea tu cuenta",
-    "signUpSubtitle": "Únete a AI Finance Manager hoy",
+    "signUpSubtitle": "Únete a Konta hoy",
     "emailLabel": "Dirección de correo electrónico",
     "emailPlaceholder": "Introduce tu correo electrónico",
     "passwordLabel": "Contraseña",
@@ -109,7 +109,7 @@
     "loginSuccessTitle": "Inicio de sesión exitoso",
     "loginSuccessMessage": "¡Bienvenido de nuevo! Inicio de sesión exitoso.",
     "accountCreatedTitle": "Cuenta creada",
-    "accountCreatedMessage": "¡Cuenta creada con éxito! Bienvenido a AI Finance Manager."
+    "accountCreatedMessage": "¡Cuenta creada con éxito! Bienvenido a Konta."
   },
   "dashboard": {
     "loadingError": "No se pudieron cargar algunos datos del dashboard. Se utilizan cálculos locales cuando es posible.",

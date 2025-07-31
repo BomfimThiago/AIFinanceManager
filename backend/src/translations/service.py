@@ -53,7 +53,7 @@ class TranslationService:
         if not en_file.exists():
             initial_translations = {
                 "header": {
-                    "title": "AI Finance Manager",
+                    "title": "Konta",
                     "hideAmounts": "Hide amounts",
                     "showAmounts": "Show amounts",
                     "preferences": "Preferences",

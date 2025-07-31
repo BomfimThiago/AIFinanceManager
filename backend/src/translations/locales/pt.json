@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "Gerenciador Financeiro IA",
+    "title": "Konta",
     "hideAmounts": "Ocultar valores",
     "showAmounts": "Mostrar valores",
     "preferences": "Preferências",
@@ -75,9 +75,9 @@
   },
   "auth": {
     "signInTitle": "Entrar na sua conta",
-    "signInSubtitle": "Bem-vindo de volta ao AI Finance Manager",
+    "signInSubtitle": "Bem-vindo de volta ao Konta",
     "signUpTitle": "Crie sua conta",
-    "signUpSubtitle": "Junte-se ao AI Finance Manager hoje",
+    "signUpSubtitle": "Junte-se ao Konta hoje",
     "emailLabel": "Endereço de e-mail",
     "emailPlaceholder": "Digite seu e-mail",
     "passwordLabel": "Senha",
@@ -109,7 +109,7 @@
     "loginSuccessTitle": "Login realizado",
     "loginSuccessMessage": "Bem-vindo de volta! Login realizado com sucesso.",
     "accountCreatedTitle": "Conta criada",
-    "accountCreatedMessage": "Conta criada com sucesso! Bem-vindo ao AI Finance Manager."
+    "accountCreatedMessage": "Conta criada com sucesso! Bem-vindo ao Konta."
   },
   "dashboard": {
     "loadingError": "Falha ao carregar alguns dados do Dashboard. Usando cálculos locais quando possível.",
