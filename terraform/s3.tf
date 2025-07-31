@@ -1,4 +1,5 @@
-# S3 Bucket Configuration
+# Budget-Friendly S3 Configuration
+# Single bucket with basic settings
 
 # Data source for current AWS account ID
 data "aws_caller_identity" "current" {}
@@ -12,11 +13,11 @@ resource "aws_s3_bucket" "uploads" {
   })
 }
 
-# S3 Bucket Versioning
+# S3 Bucket Versioning (disabled to save costs)
 resource "aws_s3_bucket_versioning" "uploads" {
   bucket = aws_s3_bucket.uploads.id
   versioning_configuration {
-    status = "Enabled"
+    status = "Disabled"  # Enable later if needed
   }
 }
 
@@ -28,7 +29,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "uploads" {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
-    bucket_key_enabled = true
   }
 }
 
@@ -42,87 +42,22 @@ resource "aws_s3_bucket_public_access_block" "uploads" {
   restrict_public_buckets = true
 }
 
-# S3 Bucket Lifecycle Configuration
+# S3 Bucket Lifecycle Configuration (to manage costs)
 resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
   bucket = aws_s3_bucket.uploads.id
 
   rule {
-    id     = "delete_old_uploads"
+    id     = "delete_old_files"
     status = "Enabled"
 
+    # Delete files older than 90 days to save storage costs
     expiration {
-      days = var.s3_lifecycle_days
+      days = 90
     }
 
-    noncurrent_version_expiration {
-      noncurrent_days = 30
-    }
-
+    # Delete incomplete multipart uploads after 1 day
     abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+      days_after_initiation = 1
     }
   }
-}
-
-# S3 Bucket Notification (optional - for future webhook processing)
-resource "aws_s3_bucket_notification" "uploads" {
-  bucket = aws_s3_bucket.uploads.id
-
-  # This can be extended later to trigger Lambda functions
-  # when files are uploaded to process them asynchronously
-}
-
-# S3 Bucket CORS Configuration
-resource "aws_s3_bucket_cors_configuration" "uploads" {
-  bucket = aws_s3_bucket.uploads.id
-
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
-    allowed_origins = ["https://${var.domain_name}"]
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3000
-  }
-
-  # Allow localhost for development
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET", "PUT", "POST", "DELETE", "HEAD"]
-    allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3000
-  }
-}
-
-# S3 Bucket Policy (restrict access to ECS tasks only)
-resource "aws_s3_bucket_policy" "uploads" {
-  bucket = aws_s3_bucket.uploads.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowECSTaskAccess"
-        Effect = "Allow"
-        Principal = {
-          AWS = aws_iam_role.ecs_task.arn
-        }
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ]
-        Resource = "${aws_s3_bucket.uploads.arn}/*"
-      },
-      {
-        Sid    = "AllowECSTaskListBucket"
-        Effect = "Allow"
-        Principal = {
-          AWS = aws_iam_role.ecs_task.arn
-        }
-        Action   = "s3:ListBucket"
-        Resource = aws_s3_bucket.uploads.arn
-      }
-    ]
-  })
 }

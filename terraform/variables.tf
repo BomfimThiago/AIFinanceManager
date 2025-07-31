@@ -1,118 +1,66 @@
-# AI Finance Manager - Terraform Variables
+# AI Finance Manager - Budget-Friendly Variables
 
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
-  default     = "sa-east-1"
+  default     = "us-east-1"  # Cheapest region, has free tier
 }
 
 variable "environment" {
-  description = "Environment name (production, staging, development)"
+  description = "Environment name"
   type        = string
   default     = "production"
-  
-  validation {
-    condition     = contains(["production", "staging", "development"], var.environment)
-    error_message = "Environment must be one of: production, staging, development."
-  }
 }
 
 variable "domain_name" {
   description = "Domain name for the application"
   type        = string
-  default     = "api.your-domain.com"
+  default     = "api.getkonta.app"
 }
 
 variable "database_password" {
   description = "Password for the PostgreSQL database"
   type        = string
   sensitive   = true
-  
-  validation {
-    condition     = length(var.database_password) >= 8
-    error_message = "Database password must be at least 8 characters long."
-  }
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for VPC"
+# Budget-friendly settings
+variable "instance_type" {
+  description = "EC2 instance type"
   type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "availability_zones" {
-  description = "Availability zones to use"
-  type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
+  default     = "t3.micro"  # Free tier eligible, can upgrade to t3.small later
 }
 
 variable "database_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.t3.micro"
+  default     = "db.t3.micro"  # Free tier eligible
 }
 
 variable "database_allocated_storage" {
-  description = "RDS allocated storage in GB"
+  description = "Database storage in GB"
   type        = number
-  default     = 20
-}
-
-variable "ecs_cpu" {
-  description = "CPU units for ECS task (256, 512, 1024, 2048, 4096)"
-  type        = number
-  default     = 512
-  
-  validation {
-    condition     = contains([256, 512, 1024, 2048, 4096], var.ecs_cpu)
-    error_message = "ECS CPU must be one of: 256, 512, 1024, 2048, 4096."
-  }
-}
-
-variable "ecs_memory" {
-  description = "Memory for ECS task in MB"
-  type        = number
-  default     = 1024
-}
-
-variable "ecs_desired_count" {
-  description = "Desired number of ECS tasks"
-  type        = number
-  default     = 2
-}
-
-variable "enable_deletion_protection" {
-  description = "Enable deletion protection for RDS"
-  type        = bool
-  default     = true
+  default     = 20  # Free tier limit
 }
 
 variable "backup_retention_period" {
-  description = "RDS backup retention period in days"
+  description = "Database backup retention in days"
   type        = number
   default     = 7
 }
 
-variable "log_retention_days" {
-  description = "CloudWatch log retention in days"
-  type        = number
-  default     = 30
-}
-
-variable "s3_lifecycle_days" {
-  description = "Days before S3 objects are deleted"
-  type        = number
-  default     = 90
-}
-
-variable "alarm_email" {
-  description = "Email address for CloudWatch alarm notifications"
+variable "key_pair_name" {
+  description = "Name of the AWS key pair for EC2 access"
   type        = string
-  default     = ""
 }
 
-variable "monthly_budget_amount" {
-  description = "Monthly budget amount in USD for cost alerts"
-  type        = number
-  default     = 100
+# Common tags
+locals {
+  common_tags = {
+    Project     = "Konta"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
+  }
+  
+  name_prefix = "konta-${var.environment}"
 }
