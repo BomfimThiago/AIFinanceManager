@@ -1,27 +1,91 @@
 import React, { useState } from 'react';
-import { 
-  Plus, Edit2, Trash2, X, Palette, Tag, Loader2,
-  Utensils, Car, ShoppingBag, Film, Zap, Heart, Book, Home, 
-  Shirt, Laptop, Dumbbell, Plane, Gift, MoreHorizontal, DollarSign, CreditCard,
-  Coffee, Pizza, Gamepad2, Music, Camera, Brush, Scissors, Wrench, 
-  MapPin, Clock, Calendar, Mail, Phone, Shield, Key, Trophy,
-  Star, Sun, Moon, Cloud, Umbrella, Flower, TreePine, Mountain,
-  Bike, Bus, Train, Fuel, PiggyBank, Coins, Calculator, Receipt,
-  Stethoscope, Pill, Hospital, Cross, Baby, Dog, Cat, Fish,
-  Briefcase, GraduationCap, Library, Pencil, Ruler, Globe, Users, UserCheck
+
+import {
+  Baby,
+  Bike,
+  Book,
+  Briefcase,
+  Brush,
+  Bus,
+  Calculator,
+  Calendar,
+  Camera,
+  Car,
+  Cat,
+  Clock,
+  Cloud,
+  Coffee,
+  Coins,
+  CreditCard,
+  Cross,
+  Dog,
+  DollarSign,
+  Dumbbell,
+  Edit2,
+  Film,
+  Fish,
+  Flower,
+  Fuel,
+  Gamepad2,
+  Gift,
+  Globe,
+  GraduationCap,
+  Heart,
+  Home,
+  Hospital,
+  Key,
+  Laptop,
+  Library,
+  Loader2,
+  Mail,
+  MapPin,
+  Moon,
+  MoreHorizontal,
+  Mountain,
+  Music,
+  Palette,
+  Pencil,
+  Phone,
+  PiggyBank,
+  Pill,
+  Pizza,
+  Plane,
+  Plus,
+  Receipt,
+  Ruler,
+  Scissors,
+  Shield,
+  Shirt,
+  ShoppingBag,
+  Star,
+  Stethoscope,
+  Sun,
+  Tag,
+  Train,
+  Trash2,
+  TreePine,
+  Trophy,
+  Umbrella,
+  UserCheck,
+  Users,
+  Utensils,
+  Wrench,
+  X,
+  Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useNotificationContext } from '../../contexts/NotificationContext';
+
 import { useCategoryTranslation } from '../../contexts/LanguageContext';
-import { getUserFriendlyError } from '../../utils/errorMessages';
-import ConfirmationModal from '../ui/ConfirmationModal';
-import { 
-  useCategories, 
-  useCreateCategory, 
-  useUpdateCategory, 
-  useDeleteCategory 
+import { useNotificationContext } from '../../contexts/NotificationContext';
+import {
+  useCategories,
+  useCreateCategory,
+  useDeleteCategory,
+  useUpdateCategory,
 } from '../../hooks/queries';
 import type { Category } from '../../services/apiService';
+import { getUserFriendlyError } from '../../utils/errorMessages';
+import ConfirmationModal from '../ui/ConfirmationModal';
 
 interface CategoryFormData {
   name: string;
@@ -34,73 +98,239 @@ interface CategoryManagementProps {}
 
 const DEFAULT_COLORS = [
   // Reds & Pinks
-  '#FF6B6B', '#FF5722', '#F44336', '#E91E63', '#FD79A8', '#FF4081', '#C62828', '#AD1457',
-  '#FF8A80', '#FF6D00', '#D32F2F', '#880E4F', '#FFCDD2', '#FCE4EC',
-  
+  '#FF6B6B',
+  '#FF5722',
+  '#F44336',
+  '#E91E63',
+  '#FD79A8',
+  '#FF4081',
+  '#C62828',
+  '#AD1457',
+  '#FF8A80',
+  '#FF6D00',
+  '#D32F2F',
+  '#880E4F',
+  '#FFCDD2',
+  '#FCE4EC',
+
   // Oranges & Yellows
-  '#FF9800', '#FF6F00', '#FFA726', '#FFB74D', '#FFEAA7', '#FDCB6E', '#F39C12', '#E67E22',
-  '#FFF3E0', '#FFF8E1', '#FFCC02', '#FFC107', '#FFD54F', '#FFEB3B',
-  
+  '#FF9800',
+  '#FF6F00',
+  '#FFA726',
+  '#FFB74D',
+  '#FFEAA7',
+  '#FDCB6E',
+  '#F39C12',
+  '#E67E22',
+  '#FFF3E0',
+  '#FFF8E1',
+  '#FFCC02',
+  '#FFC107',
+  '#FFD54F',
+  '#FFEB3B',
+
   // Greens
-  '#4CAF50', '#00B894', '#96CEB4', '#8BC34A', '#009688', '#4DB6AC', '#66BB6A', '#81C784',
-  '#A5D6A7', '#C8E6C9', '#00E676', '#69F0AE', '#2E7D32', '#1B5E20', '#00C853', '#00BFA5',
-  
+  '#4CAF50',
+  '#00B894',
+  '#96CEB4',
+  '#8BC34A',
+  '#009688',
+  '#4DB6AC',
+  '#66BB6A',
+  '#81C784',
+  '#A5D6A7',
+  '#C8E6C9',
+  '#00E676',
+  '#69F0AE',
+  '#2E7D32',
+  '#1B5E20',
+  '#00C853',
+  '#00BFA5',
+
   // Blues
-  '#45B7D1', '#2196F3', '#03A9F4', '#00BCD4', '#74B9FF', '#3F51B5', '#1976D2', '#0277BD',
-  '#81ECEC', '#BBDEFB', '#E3F2FD', '#006064', '#0288D1', '#039BE5', '#29B6F6', '#4FC3F7',
-  
+  '#45B7D1',
+  '#2196F3',
+  '#03A9F4',
+  '#00BCD4',
+  '#74B9FF',
+  '#3F51B5',
+  '#1976D2',
+  '#0277BD',
+  '#81ECEC',
+  '#BBDEFB',
+  '#E3F2FD',
+  '#006064',
+  '#0288D1',
+  '#039BE5',
+  '#29B6F6',
+  '#4FC3F7',
+
   // Purples & Indigos
-  '#6C5CE7', '#9C27B0', '#673AB7', '#3F51B5', '#A29BFE', '#7C4DFF', '#651FFF', '#6200EA',
-  '#BA68C8', '#CE93D8', '#E1BEE7', '#F3E5F5', '#8E24AA', '#7B1FA2', '#4A148C', '#AA00FF',
-  
+  '#6C5CE7',
+  '#9C27B0',
+  '#673AB7',
+  '#3F51B5',
+  '#A29BFE',
+  '#7C4DFF',
+  '#651FFF',
+  '#6200EA',
+  '#BA68C8',
+  '#CE93D8',
+  '#E1BEE7',
+  '#F3E5F5',
+  '#8E24AA',
+  '#7B1FA2',
+  '#4A148C',
+  '#AA00FF',
+
   // Teals & Cyans
-  '#4ECDC4', '#26A69A', '#00ACC1', '#00BCD4', '#B2DFDB', '#E0F2F1', '#1DE9B6', '#64FFDA',
-  '#18FFFF', '#00E5FF', '#00B8D4', '#0097A7', '#006064', '#004D40',
-  
+  '#4ECDC4',
+  '#26A69A',
+  '#00ACC1',
+  '#00BCD4',
+  '#B2DFDB',
+  '#E0F2F1',
+  '#1DE9B6',
+  '#64FFDA',
+  '#18FFFF',
+  '#00E5FF',
+  '#00B8D4',
+  '#0097A7',
+  '#006064',
+  '#004D40',
+
   // Browns & Warm Tones
-  '#8D6E63', '#A1887F', '#BCAAA4', '#D7CCC8', '#EFEBE9', '#3E2723', '#5D4037', '#6D4C41',
-  '#795548', '#8BC34A', '#689F38', '#558B2F', '#33691E', '#827717',
-  
+  '#8D6E63',
+  '#A1887F',
+  '#BCAAA4',
+  '#D7CCC8',
+  '#EFEBE9',
+  '#3E2723',
+  '#5D4037',
+  '#6D4C41',
+  '#795548',
+  '#8BC34A',
+  '#689F38',
+  '#558B2F',
+  '#33691E',
+  '#827717',
+
   // Grays & Neutrals
-  '#636E72', '#2D3436', '#95A5A6', '#BDC3C7', '#ECF0F1', '#34495E', '#2C3E50', '#7F8C8D',
-  '#DADDE1', '#F8F9FA', '#E9ECEF', '#DEE2E6', '#CED4DA', '#ADB5BD', '#6C757D', '#495057',
-  
+  '#636E72',
+  '#2D3436',
+  '#95A5A6',
+  '#BDC3C7',
+  '#ECF0F1',
+  '#34495E',
+  '#2C3E50',
+  '#7F8C8D',
+  '#DADDE1',
+  '#F8F9FA',
+  '#E9ECEF',
+  '#DEE2E6',
+  '#CED4DA',
+  '#ADB5BD',
+  '#6C757D',
+  '#495057',
+
   // Special & Accent Colors
-  '#FF1744', '#FF3D00', '#FF6D00', '#FF9100', '#C6FF00', '#76FF03', '#00E676', '#1DE9B6',
-  '#00E5FF', '#2979FF', '#3D5AFE', '#651FFF', '#D500F9', '#C51162'
+  '#FF1744',
+  '#FF3D00',
+  '#FF6D00',
+  '#FF9100',
+  '#C6FF00',
+  '#76FF03',
+  '#00E676',
+  '#1DE9B6',
+  '#00E5FF',
+  '#2979FF',
+  '#3D5AFE',
+  '#651FFF',
+  '#D500F9',
+  '#C51162',
 ];
 
 const DEFAULT_ICONS = [
   // Food & Dining
-  'utensils', 'coffee', 'pizza',
+  'utensils',
+  'coffee',
+  'pizza',
   // Transportation
-  'car', 'bike', 'bus', 'train', 'plane', 'fuel',
+  'car',
+  'bike',
+  'bus',
+  'train',
+  'plane',
+  'fuel',
   // Shopping & Money
-  'shopping-bag', 'shirt', 'gift', 'dollar-sign', 'credit-card', 'piggy-bank', 'coins', 'calculator', 'receipt',
+  'shopping-bag',
+  'shirt',
+  'gift',
+  'dollar-sign',
+  'credit-card',
+  'piggy-bank',
+  'coins',
+  'calculator',
+  'receipt',
   // Entertainment & Media
-  'film', 'gamepad2', 'music', 'camera', 'book',
+  'film',
+  'gamepad2',
+  'music',
+  'camera',
+  'book',
   // Home & Living
-  'home', 'zap', 'wrench', 'scissors', 'brush',
+  'home',
+  'zap',
+  'wrench',
+  'scissors',
+  'brush',
   // Health & Medical
-  'heart', 'stethoscope', 'pill', 'hospital', 'cross',
+  'heart',
+  'stethoscope',
+  'pill',
+  'hospital',
+  'cross',
   // Technology
-  'laptop', 'phone', 'shield',
+  'laptop',
+  'phone',
+  'shield',
   // Work & Education
-  'briefcase', 'graduation-cap', 'library', 'pencil', 'ruler',
+  'briefcase',
+  'graduation-cap',
+  'library',
+  'pencil',
+  'ruler',
   // Sports & Fitness
-  'dumbbell', 'trophy',
+  'dumbbell',
+  'trophy',
   // Nature & Weather
-  'sun', 'moon', 'cloud', 'umbrella', 'flower', 'tree-pine', 'mountain',
+  'sun',
+  'moon',
+  'cloud',
+  'umbrella',
+  'flower',
+  'tree-pine',
+  'mountain',
   // Pets & Animals
-  'dog', 'cat', 'fish', 'baby',
+  'dog',
+  'cat',
+  'fish',
+  'baby',
   // Places & Navigation
-  'map-pin', 'globe',
+  'map-pin',
+  'globe',
   // Time & Communication
-  'clock', 'calendar', 'mail',
+  'clock',
+  'calendar',
+  'mail',
   // People & Social
-  'users', 'user-check',
+  'users',
+  'user-check',
   // Miscellaneous
-  'tag', 'key', 'star', 'more-horizontal'
+  'tag',
+  'key',
+  'star',
+  'more-horizontal',
 ];
 
 // Map icon strings to Lucide components
@@ -189,10 +419,10 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 // Component to render category icon
-const CategoryIcon: React.FC<{ iconName: string; className?: string; color?: string }> = ({ 
-  iconName, 
-  className = "w-5 h-5", 
-  color 
+const CategoryIcon: React.FC<{ iconName: string; className?: string; color?: string }> = ({
+  iconName,
+  className = 'w-5 h-5',
+  color,
 }) => {
   const IconComponent = iconMap[iconName] || Tag;
   return <IconComponent className={className} style={color ? { color } : undefined} />;
@@ -200,27 +430,27 @@ const CategoryIcon: React.FC<{ iconName: string; className?: string; color?: str
 
 const CategoryManagement: React.FC<CategoryManagementProps> = () => {
   const { addNotification } = useNotificationContext();
-  
+
   // React Query hooks
   const { data: categoriesData, isLoading, error } = useCategories(true);
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
   const deleteCategoryMutation = useDeleteCategory();
-  
+
   const categories = categoriesData?.categories || [];
   const { t, tCategory, tCategoryDescription } = useCategoryTranslation(categories);
-  
+
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
     description: '',
     color: DEFAULT_COLORS[0],
-    icon: DEFAULT_ICONS[0]
+    icon: DEFAULT_ICONS[0],
   });
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; category: Category | null }>({
     show: false,
-    category: null
+    category: null,
   });
 
   // Handle error state
@@ -232,12 +462,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (editingCategory) {
         await updateCategoryMutation.mutateAsync({
           id: editingCategory.id,
-          data: formData
+          data: formData,
         });
         addNotification('success', t('common.success'), t('categories.updateSuccess'));
       } else {
@@ -258,7 +488,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       name: category.name,
       description: category.description || '',
       color: category.color || DEFAULT_COLORS[0],
-      icon: category.icon || DEFAULT_ICONS[0]
+      icon: category.icon || DEFAULT_ICONS[0],
     });
     setShowForm(true);
   };
@@ -272,7 +502,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       const friendlyError = getUserFriendlyError(error);
       addNotification('error', friendlyError.title, friendlyError.message);
     }
-    
+
     setDeleteModal({ show: false, category: null });
   };
 
@@ -281,7 +511,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       name: '',
       description: '',
       color: DEFAULT_COLORS[0],
-      icon: DEFAULT_ICONS[0]
+      icon: DEFAULT_ICONS[0],
     });
     setEditingCategory(null);
     setShowForm(false);
@@ -330,7 +560,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
                 <div className="flex justify-between items-center">
                   <h4 className="text-xl font-semibold text-gray-900">
-                    {editingCategory ? t('categories.editCategory') : t('categories.addNewCategory')}
+                    {editingCategory
+                      ? t('categories.editCategory')
+                      : t('categories.addNewCategory')}
                   </h4>
                   <button
                     onClick={resetForm}
@@ -340,7 +572,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                   </button>
                 </div>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="p-6">
                 {/* Top Section - Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -352,12 +584,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
                       placeholder={t('categories.namePlaceholder')}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('common.description')}
@@ -365,7 +597,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     <input
                       type="text"
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={e =>
+                        setFormData(prev => ({ ...prev, description: e.target.value }))
+                      }
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder={t('categories.descriptionPlaceholder')}
                     />
@@ -381,13 +615,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         {t('categories.chooseColor')}
                       </label>
                       <div className="grid grid-cols-8 gap-3">
-                        {DEFAULT_COLORS.map((color) => (
+                        {DEFAULT_COLORS.map(color => (
                           <button
                             key={color}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, color }))}
                             className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
-                              formData.color === color ? 'border-gray-800 scale-110 shadow-lg ring-2 ring-gray-400' : 'border-gray-300'
+                              formData.color === color
+                                ? 'border-gray-800 scale-110 shadow-lg ring-2 ring-gray-400'
+                                : 'border-gray-300'
                             }`}
                             style={{ backgroundColor: color }}
                             title={color}
@@ -396,7 +632,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       </div>
                       <div className="flex items-center mt-3 space-x-2">
                         <span className="text-sm text-gray-500">{t('categories.selected')}:</span>
-                        <div 
+                        <div
                           className="w-5 h-5 rounded-lg border border-gray-300"
                           style={{ backgroundColor: formData.color }}
                         />
@@ -404,7 +640,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Icon Selection */}
                   <div className="space-y-4">
                     <div>
@@ -412,19 +648,19 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         {t('categories.chooseIcon')}
                       </label>
                       <div className="grid grid-cols-8 gap-3">
-                        {DEFAULT_ICONS.map((icon) => (
+                        {DEFAULT_ICONS.map(icon => (
                           <button
                             key={icon}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, icon }))}
                             className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-all hover:bg-gray-50 hover:shadow-md ${
-                              formData.icon === icon 
-                                ? 'border-green-500 bg-green-50 shadow-md' 
+                              formData.icon === icon
+                                ? 'border-green-500 bg-green-50 shadow-md'
                                 : 'border-gray-300 bg-white'
                             }`}
                             title={icon}
                           >
-                            <CategoryIcon 
+                            <CategoryIcon
                               iconName={icon}
                               className="w-6 h-6"
                               color={formData.icon === icon ? '#10b981' : '#6b7280'}
@@ -433,7 +669,8 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         ))}
                       </div>
                       <p className="text-sm text-gray-500 mt-3">
-                        {t('categories.selected')}: <span className="font-medium">{formData.icon}</span>
+                        {t('categories.selected')}:{' '}
+                        <span className="font-medium">{formData.icon}</span>
                       </p>
                     </div>
                   </div>
@@ -446,11 +683,14 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-xl border-2 border-dashed border-gray-300 sticky top-20">
                       <div className="text-center space-y-4">
                         <div className="flex justify-center">
-                          <div 
+                          <div
                             className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
-                            style={{ backgroundColor: `${formData.color}20`, border: `2px solid ${formData.color}40` }}
+                            style={{
+                              backgroundColor: `${formData.color}20`,
+                              border: `2px solid ${formData.color}40`,
+                            }}
                           >
-                            <CategoryIcon 
+                            <CategoryIcon
                               iconName={formData.icon}
                               className="w-10 h-10"
                               color={formData.color}
@@ -458,12 +698,16 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                           </div>
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900 text-xl">{formData.name || t('categories.categoryName')}</h3>
-                          <p className="text-gray-600 mt-1">{formData.description || t('categories.noDescription')}</p>
+                          <h3 className="font-bold text-gray-900 text-xl">
+                            {formData.name || t('categories.categoryName')}
+                          </h3>
+                          <p className="text-gray-600 mt-1">
+                            {formData.description || t('categories.noDescription')}
+                          </p>
                         </div>
                         <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 pt-4 border-t border-gray-200">
                           <div className="flex items-center space-x-1">
-                            <div 
+                            <div
                               className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: formData.color }}
                             />
@@ -495,7 +739,10 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     {(createCategoryMutation.isPending || updateCategoryMutation.isPending) && (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     )}
-                    <span>{editingCategory ? t('common.update') : t('common.create')} {t('common.category')}</span>
+                    <span>
+                      {editingCategory ? t('common.update') : t('common.create')}{' '}
+                      {t('common.category')}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -505,20 +752,22 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
         {userCategories.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('categories.noCustomCategories')}</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {t('categories.noCustomCategories')}
+            </h3>
             <p className="text-gray-500">{t('categories.createFirstCategory')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userCategories.map((category) => (
+            {userCategories.map(category => (
               <div key={category.id} className="bg-white p-4 rounded-lg border shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div 
+                    <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: `${category.color}20` }}
                     >
-                      <CategoryIcon 
+                      <CategoryIcon
                         iconName={category.icon || 'tag'}
                         className="w-5 h-5"
                         color={category.color}
@@ -527,7 +776,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     <div>
                       <h4 className="font-medium text-gray-900">{tCategory(category.name)}</h4>
                       {category.description && (
-                        <p className="text-sm text-gray-500">{tCategoryDescription(category.description, category.name)}</p>
+                        <p className="text-sm text-gray-500">
+                          {tCategoryDescription(category.description, category.name)}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -567,15 +818,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
           {t('categories.defaultCategories')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {defaultCategories.map((category) => (
+          {defaultCategories.map(category => (
             <div key={category.id} className="bg-gray-50 p-4 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: `${category.color}20` }}
                   >
-                    <CategoryIcon 
+                    <CategoryIcon
                       iconName={category.icon || 'tag'}
                       className="w-5 h-5"
                       color={category.color}
@@ -584,7 +835,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                   <div>
                     <h4 className="font-medium text-gray-900">{tCategory(category.name)}</h4>
                     {category.description && (
-                      <p className="text-sm text-gray-500">{tCategoryDescription(category.description, category.name)}</p>
+                      <p className="text-sm text-gray-500">
+                        {tCategoryDescription(category.description, category.name)}
+                      </p>
                     )}
                   </div>
                 </div>

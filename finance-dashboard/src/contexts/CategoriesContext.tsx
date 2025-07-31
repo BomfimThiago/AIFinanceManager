@@ -1,6 +1,8 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { ReactNode, createContext, useContext } from 'react';
+
 import { useQuery } from '@tanstack/react-query';
-import { categoryApi, Category } from '../services/apiService';
+
+import { Category, categoryApi } from '../services/apiService';
 
 interface CategoriesContextType {
   categories: Category[];
@@ -16,9 +18,13 @@ interface CategoriesProviderProps {
 }
 
 export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children }) => {
-  const { data: categoriesData, isLoading, error } = useQuery({
+  const {
+    data: categoriesData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryApi.getAll(true),  // Include default categories
+    queryFn: () => categoryApi.getAll(true), // Include default categories
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -29,11 +35,11 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
   const getCategoryTranslation = (categoryName: string, language: string): string => {
     // Find the category by name
     const category = categories.find(cat => cat.name === categoryName);
-    
+
     if (category?.translations && category.translations[language]) {
       return category.translations[language];
     }
-    
+
     // Fallback to original name
     return categoryName;
   };
@@ -45,11 +51,7 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
     getCategoryTranslation,
   };
 
-  return (
-    <CategoriesContext.Provider value={value}>
-      {children}
-    </CategoriesContext.Provider>
-  );
+  return <CategoriesContext.Provider value={value}>{children}</CategoriesContext.Provider>;
 };
 
 export const useCategories = (): CategoriesContextType => {

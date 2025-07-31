@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Globe, DollarSign, Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { Check, DollarSign, Globe, X } from 'lucide-react';
+
 import { useUserPreferencesContext } from '../../contexts/UserPreferencesContext';
 import { UserPreferencesUpdate } from '../../services/apiService';
 
@@ -9,13 +11,8 @@ interface PreferencesModalProps {
 }
 
 const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) => {
-  const {
-    preferences,
-    availableCurrencies,
-    availableLanguages,
-    isLoading,
-    updatePreferences,
-  } = useUserPreferencesContext();
+  const { preferences, availableCurrencies, availableLanguages, isLoading, updatePreferences } =
+    useUserPreferencesContext();
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
@@ -33,7 +30,7 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
   // Track if there are unsaved changes
   useEffect(() => {
     if (preferences) {
-      const changed = 
+      const changed =
         selectedCurrency !== preferences.default_currency ||
         selectedLanguage !== preferences.language;
       setHasChanges(changed);
@@ -49,11 +46,11 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
     setIsSaving(true);
     try {
       const updates: UserPreferencesUpdate = {};
-      
+
       if (selectedCurrency !== preferences?.default_currency) {
         updates.default_currency = selectedCurrency as 'USD' | 'EUR' | 'BRL';
       }
-      
+
       if (selectedLanguage !== preferences?.language) {
         updates.language = selectedLanguage as 'en' | 'es' | 'pt';
       }
@@ -133,10 +130,11 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
                   Default Currency
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  Your base currency preference. You can temporarily view in other currencies using the header selector.
+                  Your base currency preference. You can temporarily view in other currencies using
+                  the header selector.
                 </p>
                 <div className="space-y-2">
-                  {availableCurrencies.map((currency) => (
+                  {availableCurrencies.map(currency => (
                     <button
                       key={currency}
                       onClick={() => setSelectedCurrency(currency)}
@@ -153,9 +151,7 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
                           <div className="text-sm text-gray-500">{getCurrencyName(currency)}</div>
                         </div>
                       </div>
-                      {selectedCurrency === currency && (
-                        <Check className="h-5 w-5 text-blue-600" />
-                      )}
+                      {selectedCurrency === currency && <Check className="h-5 w-5 text-blue-600" />}
                     </button>
                   ))}
                 </div>
@@ -168,10 +164,11 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
                   Default Language
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  Your base language preference. You can temporarily view in other languages using the header selector.
+                  Your base language preference. You can temporarily view in other languages using
+                  the header selector.
                 </p>
                 <div className="space-y-2">
-                  {availableLanguages.map((language) => (
+                  {availableLanguages.map(language => (
                     <button
                       key={language.code}
                       onClick={() => setSelectedLanguage(language.code)}

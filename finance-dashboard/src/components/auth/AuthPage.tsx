@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import Login from './Login';
 import Signup from './Signup';
 
@@ -10,13 +11,7 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <>
-      {isLoginMode ? (
-        <Login onToggleMode={toggleMode} />
-      ) : (
-        <Signup onToggleMode={toggleMode} />
-      )}
-    </>
+    <>{isLoginMode ? <Login onToggleMode={toggleMode} /> : <Signup onToggleMode={toggleMode} />}</>
   );
 };
 

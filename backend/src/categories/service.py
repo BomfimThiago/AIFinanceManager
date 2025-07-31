@@ -42,7 +42,7 @@ class CategoryService:
         # Generate translations for the category name and description
         try:
             translations = await self.translation_service.translate_category_content(
-                category_data.name, 
+                category_data.name,
                 category_data.description
             )
         except Exception as e:

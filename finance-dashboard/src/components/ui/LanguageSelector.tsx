@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Globe } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { Check, ChevronDown, Globe } from 'lucide-react';
+
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface Language {
@@ -16,9 +18,9 @@ const LanguageSelector: React.FC = () => {
 
   // Map language codes to flags and native names
   const languageDetails: Record<string, { native_label: string; flag: string }> = {
-    'en': { native_label: 'English', flag: '🇺🇸' },
-    'es': { native_label: 'Español', flag: '🇪🇸' },
-    'pt': { native_label: 'Português', flag: '🇧🇷' }
+    en: { native_label: 'English', flag: '🇺🇸' },
+    es: { native_label: 'Español', flag: '🇪🇸' },
+    pt: { native_label: 'Português', flag: '🇧🇷' },
   };
 
   // Build languages array from available languages
@@ -26,7 +28,7 @@ const LanguageSelector: React.FC = () => {
     code,
     label: availableLanguages[code],
     native_label: languageDetails[code]?.native_label || availableLanguages[code],
-    flag: languageDetails[code]?.flag || '🌐'
+    flag: languageDetails[code]?.flag || '🌐',
   }));
 
   // Close dropdown when clicking outside
@@ -60,18 +62,18 @@ const LanguageSelector: React.FC = () => {
         title="Change language (session only)"
       >
         <span className="text-sm">{selectedLanguage.flag}</span>
-        <span className="font-medium text-gray-700 text-sm">{selectedLanguage.code.toUpperCase()}</span>
-        <ChevronDown 
-          className={`h-3 w-3 text-gray-400 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`} 
+        <span className="font-medium text-gray-700 text-sm">
+          {selectedLanguage.code.toUpperCase()}
+        </span>
+        <ChevronDown
+          className={`h-3 w-3 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           <div className="py-2">
-            {languages.map((language) => {
+            {languages.map(language => {
               const isSelected = language.code === sessionLanguage;
 
               return (
@@ -92,14 +94,12 @@ const LanguageSelector: React.FC = () => {
                       <div className="text-sm text-gray-500">{language.native_label}</div>
                     </div>
                   </div>
-                  {isSelected && (
-                    <Check className="h-4 w-4 text-blue-600" />
-                  )}
+                  {isSelected && <Check className="h-4 w-4 text-blue-600" />}
                 </button>
               );
             })}
           </div>
-          
+
           {/* Helper text */}
           <div className="border-t border-gray-100 px-4 py-2">
             <div className="text-xs text-gray-500">

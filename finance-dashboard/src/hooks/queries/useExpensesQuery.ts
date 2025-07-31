@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { expenseApi } from '../../services/apiService';
 import { Expense } from '../../types';
 import { uploadHistoryKeys } from './useUploadHistoryQuery';
@@ -14,14 +15,14 @@ export const expenseKeys = {
   charts: () => [...expenseKeys.all, 'charts'] as const,
   chartCategories: () => [...expenseKeys.charts(), 'categories'] as const,
   chartMonthly: () => [...expenseKeys.charts(), 'monthly'] as const,
-  categorySpending: (params: { currency?: string; month?: number; year?: number }) => 
+  categorySpending: (params: { currency?: string; month?: number; year?: number }) =>
     [...expenseKeys.all, 'category-spending', params] as const,
 };
 
 // Queries
-export function useExpenses(filters?: { 
-  month?: number; 
-  year?: number; 
+export function useExpenses(filters?: {
+  month?: number;
+  year?: number;
   type?: string;
   category?: string;
   startDate?: string;
@@ -43,7 +44,7 @@ export function useExpenses(filters?: {
     queryFn: () => expenseApi.getAll(normalizedFilters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    placeholderData: (prev) => prev,
+    placeholderData: prev => prev,
   });
 }
 
@@ -68,7 +69,9 @@ export function useMonthlyChartData() {
   });
 }
 
-export function useCategorySpending(params: { currency?: string; month?: number; year?: number } = {}) {
+export function useCategorySpending(
+  params: { currency?: string; month?: number; year?: number } = {}
+) {
   return useQuery({
     queryKey: expenseKeys.categorySpending(params),
     queryFn: () => expenseApi.getCategorySpending(params),
@@ -119,7 +122,7 @@ export function useUpdateExpense() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ expenseId, expense }: { expenseId: number; expense: Omit<Expense, 'id'> }) => 
+    mutationFn: ({ expenseId, expense }: { expenseId: number; expense: Omit<Expense, 'id'> }) =>
       expenseApi.update(expenseId, expense),
     onSuccess: () => {
       // Invalidate and refetch related queries

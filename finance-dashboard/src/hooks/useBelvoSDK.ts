@@ -9,7 +9,10 @@ interface BelvoWidgetConfig {
 declare global {
   interface Window {
     belvoSDK: {
-      createWidget: (accessToken: string, config: BelvoWidgetConfig) => {
+      createWidget: (
+        accessToken: string,
+        config: BelvoWidgetConfig
+      ) => {
         build: () => void;
       };
     };
@@ -32,11 +35,11 @@ export const useBelvoSDK = () => {
     script.src = 'https://cdn.belvo.io/belvo-widget-1-stable.js';
     script.type = 'text/javascript';
     script.async = true;
-    
+
     script.onload = () => {
       setIsSDKLoaded(true);
     };
-    
+
     script.onerror = () => {
       console.error('Failed to load Belvo SDK');
       setIsSDKLoaded(false);
@@ -56,9 +59,9 @@ export const useBelvoSDK = () => {
     const response = await fetch('/api/integrations/belvo/widget-token', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -94,10 +97,10 @@ export const useBelvoSDK = () => {
     belvoContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
 
     setIsLoading(true);
-    
+
     try {
       const accessToken = await getAccessToken();
-      
+
       // Enhanced config with exit handler to hide container
       const enhancedConfig = {
         ...config,
@@ -110,9 +113,9 @@ export const useBelvoSDK = () => {
           if (config.onExit) {
             config.onExit(data);
           }
-        }
+        },
       };
-      
+
       window.belvoSDK.createWidget(accessToken, enhancedConfig).build();
     } catch (error) {
       // Hide container on error
@@ -129,6 +132,6 @@ export const useBelvoSDK = () => {
   return {
     isSDKLoaded,
     isLoading,
-    openBelvoWidget
+    openBelvoWidget,
   };
 };

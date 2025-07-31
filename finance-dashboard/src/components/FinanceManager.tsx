@@ -1,31 +1,32 @@
 import React, { useState } from 'react';
-import Header from './layout/Header';
-import Navigation from './layout/Navigation';
-import GlobalFiltersSidebar from './layout/GlobalFiltersSidebar';
-import Dashboard from './pages/Dashboard';
-import Upload from './pages/Upload';
-import Expenses from './pages/Expenses';
-import Budgets from './pages/Budgets';
-import Insights from './pages/Insights';
-import Integrations from './pages/Integrations';
-import { useExpenses, useCreateBulkExpenses } from '../hooks/queries';
+
+import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
+import { useNotificationContext } from '../contexts/NotificationContext';
+import { useCreateBulkExpenses, useExpenses } from '../hooks/queries';
 import { useBudgets, useCreateBudget, useUpdateBudgetSpent } from '../hooks/queries';
 import { useCategories } from '../hooks/queries';
 import { useGenerateInsights } from '../hooks/queries';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { usePrivacyMode } from '../hooks/usePrivacyMode';
-import { useNotificationContext } from '../contexts/NotificationContext';
-import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
-import { getUserFriendlyError } from '../utils/errorMessages';
+import type { AIInsight, TabId } from '../types';
 import { convertAPICategoriesList } from '../utils/categoryMapper';
-import type { TabId, AIInsight } from '../types';
+import { getUserFriendlyError } from '../utils/errorMessages';
+import GlobalFiltersSidebar from './layout/GlobalFiltersSidebar';
+import Header from './layout/Header';
+import Navigation from './layout/Navigation';
+import Budgets from './pages/Budgets';
 import CategoryManagement from './pages/CategoryManagement';
+import Dashboard from './pages/Dashboard';
+import Expenses from './pages/Expenses';
+import Insights from './pages/Insights';
+import Integrations from './pages/Integrations';
+import Upload from './pages/Upload';
 
 const FinanceManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  
+
   const { showError, showSuccess } = useNotificationContext();
   const { filters: globalFilters } = useGlobalFilters();
 
@@ -37,13 +38,23 @@ const FinanceManager: React.FC = () => {
     endDate: globalFilters.endDate,
     search: globalFilters.search,
   };
-  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses(expenseQueryFilters);
+  const {
+    data: expenses = [],
+    isLoading: expensesLoading,
+    error: expensesError,
+  } = useExpenses(expenseQueryFilters);
   const { data: budgets = {}, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
-  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategories(true);
-  
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories(true);
+
   // Convert API categories to frontend categories
-  const categories = categoriesData?.categories ? convertAPICategoriesList(categoriesData.categories) : [];
-  
+  const categories = categoriesData?.categories
+    ? convertAPICategoriesList(categoriesData.categories)
+    : [];
+
   // Mutations
   const createBulkExpensesMutation = useCreateBulkExpenses();
   // const uploadFileMutation = useUploadExpenseFile(); // Currently handled by useFileUpload hook
@@ -53,7 +64,6 @@ const FinanceManager: React.FC = () => {
 
   const { hideAmounts, togglePrivacyMode } = usePrivacyMode();
 
-
   // Wrapper functions for the hooks
   const addExpense = async (expenses: any[]) => {
     await createBulkExpensesMutation.mutateAsync(expenses);
@@ -61,9 +71,9 @@ const FinanceManager: React.FC = () => {
 
   const addBudget = async (category: string, limit: string | number) => {
     try {
-      await createBudgetMutation.mutateAsync({ 
-        category, 
-        limit: parseFloat(limit.toString()) 
+      await createBudgetMutation.mutateAsync({
+        category,
+        limit: parseFloat(limit.toString()),
       });
       showSuccess('Budget Created', 'Budget created successfully');
     } catch (error: any) {
@@ -85,12 +95,11 @@ const FinanceManager: React.FC = () => {
     handleDrag,
     handleDrop,
     handleFileInput,
-    triggerFileInput
+    triggerFileInput,
   } = useFileUpload({
     onExpenseAdded: addExpense,
-    onBudgetUpdate: updateBudgetSpent
+    onBudgetUpdate: updateBudgetSpent,
   });
-
 
   const handleGenerateInsights = async (): Promise<void> => {
     try {
@@ -103,8 +112,6 @@ const FinanceManager: React.FC = () => {
       showError(friendlyError.title, friendlyError.message);
     }
   };
-
- 
 
   // Show loading state
   if (expensesLoading || budgetsLoading || categoriesLoading) {
@@ -125,7 +132,9 @@ const FinanceManager: React.FC = () => {
         <div className="text-center">
           <div className="text-red-600">
             <p className="text-lg font-semibold">Error loading data</p>
-            <p className="mt-2">{expensesError?.message || budgetsError?.message || categoriesError?.message}</p>
+            <p className="mt-2">
+              {expensesError?.message || budgetsError?.message || categoriesError?.message}
+            </p>
           </div>
         </div>
       </div>
@@ -135,13 +144,7 @@ const FinanceManager: React.FC = () => {
   const renderContent = (): React.ReactNode => {
     switch (activeTab) {
       case 'dashboard':
-        return (
-          <Dashboard
-            expenses={expenses}
-            budgets={budgets}
-            hideAmounts={hideAmounts}
-          />
-        );
+        return <Dashboard expenses={expenses} budgets={budgets} hideAmounts={hideAmounts} />;
       case 'upload':
         return (
           <Upload
@@ -157,13 +160,7 @@ const FinanceManager: React.FC = () => {
           />
         );
       case 'expenses':
-        return (
-          <Expenses
-            expenses={expenses}
-            categories={categories}
-            hideAmounts={hideAmounts}
-          />
-        );
+        return <Expenses expenses={expenses} categories={categories} hideAmounts={hideAmounts} />;
       case 'budgets':
         return (
           <Budgets
@@ -193,26 +190,18 @@ const FinanceManager: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header
-        hideAmounts={hideAmounts}
-        onTogglePrivacy={togglePrivacyMode}
-      />
-      
-      <Navigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-      
+      <Header hideAmounts={hideAmounts} onTogglePrivacy={togglePrivacyMode} />
+
+      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+
       <div className="flex h-[calc(100vh-120px)]">
-        <GlobalFiltersSidebar 
+        <GlobalFiltersSidebar
           isVisible={sidebarVisible}
           onToggle={() => setSidebarVisible(!sidebarVisible)}
         />
-        
+
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {renderContent()}
-          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{renderContent()}</div>
         </main>
       </div>
     </div>

@@ -1,12 +1,11 @@
 /**
  * Currency conversion utility functions
  */
-
 import { Expense } from '../types';
 
 /**
  * Get the converted amount for an expense in the specified currency.
- * 
+ *
  * @param expense - The expense object
  * @param targetCurrency - The currency to convert to (usually sessionCurrency for display)
  * @param convertAmount - The conversion function from CurrencyContext
@@ -47,6 +46,6 @@ export const getCurrencyConversionInfo = (
 
   const hasPreCalculated = expense.amounts && expense.amounts[targetCurrency] !== undefined;
   const conversionSource = hasPreCalculated ? 'stored rate' : 'current rate';
-  
+
   return `Converted from ${expense.original_currency} (${conversionSource})`;
 };

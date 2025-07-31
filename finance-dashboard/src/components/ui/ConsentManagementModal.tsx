@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { X, Shield, AlertCircle, ExternalLink, User, Building } from 'lucide-react';
-import { useConsentManagement } from '../../hooks/useConsentManagement';
+
+import { AlertCircle, Building, ExternalLink, Shield, User, X } from 'lucide-react';
+
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useConsentManagement } from '../../hooks/useConsentManagement';
 
 interface ConsentManagementModalProps {
   isOpen: boolean;
@@ -20,13 +22,13 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
   isOpen,
   onClose,
   mode = 'management',
-  renewalData
+  renewalData,
 }) => {
   const [formData, setFormData] = useState({
     cpf: '',
     full_name: '',
     cnpj: '',
-    user_type: 'individual' as 'individual' | 'business'
+    user_type: 'individual' as 'individual' | 'business',
   });
 
   const { openConsentManagement, openConsentRenewal, isLoading, error } = useConsentManagement();
@@ -48,7 +50,7 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
           cpf: formData.cpf,
           full_name: formData.full_name,
           cnpj: formData.user_type === 'business' ? formData.cnpj : undefined,
-          terms_and_conditions_url: window.location.origin + '/terms'
+          terms_and_conditions_url: window.location.origin + '/terms',
         });
       } else if (mode === 'renewal' && renewalData) {
         success = await openConsentRenewal({
@@ -56,15 +58,15 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
           full_name: formData.full_name,
           cnpj: formData.user_type === 'business' ? formData.cnpj : undefined,
           terms_and_conditions_url: window.location.origin + '/terms',
-          ...renewalData
+          ...renewalData,
         });
       }
 
       if (success) {
         showSuccess(
           'Success',
-          mode === 'management' 
-            ? 'Consent management portal opened in new window' 
+          mode === 'management'
+            ? 'Consent management portal opened in new window'
             : 'Consent renewal portal opened in new window'
         );
         onClose();
@@ -111,7 +113,8 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
                     Consent Expired
                   </h4>
                   <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                    Your consent for <strong>{renewalData.institution_display_name}</strong> has expired and needs to be renewed.
+                    Your consent for <strong>{renewalData.institution_display_name}</strong> has
+                    expired and needs to be renewed.
                   </p>
                 </div>
               </div>
@@ -126,7 +129,8 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
                   External Portal
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  This will open Belvo's secure consent management portal in a new window where you can manage your bank connection consents.
+                  This will open Belvo's secure consent management portal in a new window where you
+                  can manage your bank connection consents.
                 </p>
               </div>
             </div>
@@ -167,7 +171,10 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
 
           {/* CPF Field */}
           <div>
-            <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="cpf"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               CPF <span className="text-red-500">*</span>
             </label>
             <input
@@ -184,7 +191,10 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
 
           {/* Full Name Field */}
           <div>
-            <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="full_name"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Full Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -202,7 +212,10 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
           {/* CNPJ Field (for business users) */}
           {formData.user_type === 'business' && (
             <div>
-              <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="cnpj"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 CNPJ <span className="text-red-500">*</span>
               </label>
               <input
@@ -244,9 +257,7 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
               ) : (
                 <>
                   <ExternalLink className="h-4 w-4" />
-                  <span>
-                    {mode === 'management' ? 'Open Consent Portal' : 'Renew Consent'}
-                  </span>
+                  <span>{mode === 'management' ? 'Open Consent Portal' : 'Renew Consent'}</span>
                 </>
               )}
             </button>

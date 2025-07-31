@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+
+import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import { LoginCredentials } from '../../types';
 import { getUserFriendlyError } from '../../utils/errorMessages';
 
@@ -37,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
     } catch (error) {
       console.error('Login error:', error);
       const friendlyError = getUserFriendlyError(error);
-      
+
       setError(friendlyError.message);
       showError(friendlyError.title, friendlyError.message);
     }
@@ -58,11 +60,9 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {t('auth.signInTitle')}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {t('auth.signInSubtitle')}
-          </p>
+          <p className="mt-2 text-center text-sm text-gray-600">{t('auth.signInSubtitle')}</p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-md bg-red-50 p-4">
@@ -71,9 +71,7 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
                   <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    {error}
-                  </h3>
+                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
                 </div>
               </div>
             </div>
@@ -94,7 +92,7 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
                   type="email"
                   autoComplete="email"
                   required
-                  value={credentials.email} 
+                  value={credentials.email}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={t('auth.emailPlaceholder')}
@@ -127,11 +125,7 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>

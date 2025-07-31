@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
+
+import { AlertCircle, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+
 import { useAuth } from '../../contexts/AuthContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import { SignupCredentials } from '../../types';
-import { getUserFriendlyError, formatValidationErrors } from '../../utils/errorMessages';
+import { formatValidationErrors, getUserFriendlyError } from '../../utils/errorMessages';
 
 interface SignupProps {
   onToggleMode: () => void;
@@ -30,7 +32,12 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
     setError(null);
 
     // Validation
-    if (!credentials.email || !credentials.username || !credentials.full_name || !credentials.password) {
+    if (
+      !credentials.email ||
+      !credentials.username ||
+      !credentials.full_name ||
+      !credentials.password
+    ) {
       setError(t('auth.pleaseFieldsAll'));
       return;
     }
@@ -64,11 +71,11 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
     } catch (error) {
       console.error('Signup error:', error);
       const friendlyError = getUserFriendlyError(error);
-      
+
       // Format validation errors if present
       const validationDetails = formatValidationErrors(friendlyError);
       const errorMessage = validationDetails || friendlyError.message;
-      
+
       setError(errorMessage);
       showError(friendlyError.title, errorMessage);
     }
@@ -89,11 +96,9 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {t('auth.signUpTitle')}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {t('auth.signUpSubtitle')}
-          </p>
+          <p className="mt-2 text-center text-sm text-gray-600">{t('auth.signUpSubtitle')}</p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-md bg-red-50 p-4">
@@ -102,9 +107,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    {error}
-                  </h3>
+                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
                 </div>
               </div>
             </div>
@@ -153,9 +156,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   placeholder={t('auth.usernamePlaceholder')}
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {t('auth.usernameHelp')}
-              </p>
+              <p className="mt-1 text-xs text-gray-500">{t('auth.usernameHelp')}</p>
             </div>
 
             <div>
@@ -205,17 +206,11 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {t('auth.passwordLengthHelp')}
-              </p>
+              <p className="mt-1 text-xs text-gray-500">{t('auth.passwordLengthHelp')}</p>
             </div>
 
             <div>
@@ -233,7 +228,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   autoComplete="new-password"
                   required
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={e => setConfirmPassword(e.target.value)}
                   className="block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={t('auth.confirmPasswordPlaceholder')}
                 />
@@ -251,9 +246,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
                   </button>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {t('auth.confirmPasswordHelp')}
-              </p>
+              <p className="mt-1 text-xs text-gray-500">{t('auth.confirmPasswordHelp')}</p>
             </div>
           </div>
 

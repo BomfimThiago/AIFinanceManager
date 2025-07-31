@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -62,8 +63,8 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onD
   };
 
   const getStyles = () => {
-    const baseStyles = "border-l-4 shadow-lg";
-    
+    const baseStyles = 'border-l-4 shadow-lg';
+
     switch (notification.type) {
       case 'success':
         return `${baseStyles} bg-green-50 border-green-500`;
@@ -88,18 +89,12 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onD
       `}
     >
       <div className="flex items-start">
-        <div className="flex-shrink-0">
-          {getIcon()}
-        </div>
-        
+        <div className="flex-shrink-0">{getIcon()}</div>
+
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-gray-900">
-            {notification.title}
-          </h3>
-          <div className="mt-1 text-sm text-gray-700">
-            {notification.message}
-          </div>
-          
+          <h3 className="text-sm font-medium text-gray-900">{notification.title}</h3>
+          <div className="mt-1 text-sm text-gray-700">{notification.message}</div>
+
           {notification.actions && notification.actions.length > 0 && (
             <div className="mt-3 flex space-x-2">
               {notification.actions.map((action, index) => (
@@ -108,9 +103,10 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onD
                   onClick={action.onClick}
                   className={`
                     text-xs font-medium px-3 py-1.5 rounded-md transition-colors
-                    ${action.variant === 'primary' 
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                    ${
+                      action.variant === 'primary'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                     }
                   `}
                 >
@@ -120,7 +116,7 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onD
             </div>
           )}
         </div>
-        
+
         <div className="ml-4 flex-shrink-0">
           <button
             onClick={handleDismiss}

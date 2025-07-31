@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+
 import { insightsApi } from '../../services/apiService';
 
 // Query keys

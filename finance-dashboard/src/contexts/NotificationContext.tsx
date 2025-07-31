@@ -1,7 +1,8 @@
 import React, { createContext, useContext } from 'react';
-import { useNotifications } from '../hooks/useNotifications';
+
 import NotificationContainer from '../components/ui/NotificationContainer';
 import { NotificationData, NotificationType } from '../components/ui/NotificationToast';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface NotificationContextType {
   notifications: NotificationData[];
@@ -16,10 +17,26 @@ interface NotificationContextType {
   ) => string;
   removeNotification: (id: string) => void;
   clearAll: () => void;
-  showSuccess: (title: string, message: string, options?: { duration?: number; actions?: NotificationData['actions'] }) => string;
-  showError: (title: string, message: string, options?: { actions?: NotificationData['actions'] }) => string;
-  showWarning: (title: string, message: string, options?: { duration?: number; actions?: NotificationData['actions'] }) => string;
-  showInfo: (title: string, message: string, options?: { duration?: number; actions?: NotificationData['actions'] }) => string;
+  showSuccess: (
+    title: string,
+    message: string,
+    options?: { duration?: number; actions?: NotificationData['actions'] }
+  ) => string;
+  showError: (
+    title: string,
+    message: string,
+    options?: { actions?: NotificationData['actions'] }
+  ) => string;
+  showWarning: (
+    title: string,
+    message: string,
+    options?: { duration?: number; actions?: NotificationData['actions'] }
+  ) => string;
+  showInfo: (
+    title: string,
+    message: string,
+    options?: { duration?: number; actions?: NotificationData['actions'] }
+  ) => string;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);

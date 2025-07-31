@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import ConnectedIntegrationsModal from '../ui/ConnectedIntegrationsModal';
-import ConnectedBanks from '../integrations/ConnectedBanks';
-import AvailableIntegrations from '../integrations/AvailableIntegrations';
-import ConfirmationModal from '../ui/ConfirmationModal';
-import { ConsentManagementModal } from '../ui/ConsentManagementModal';
-import { useNotificationContext } from '../../contexts/NotificationContext';
+
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import { useBelvoSDK } from '../../hooks/useBelvoSDK';
 import { useIntegrations } from '../../hooks/useIntegrations';
-
+import AvailableIntegrations from '../integrations/AvailableIntegrations';
+import ConnectedBanks from '../integrations/ConnectedBanks';
+import ConfirmationModal from '../ui/ConfirmationModal';
+import ConnectedIntegrationsModal from '../ui/ConnectedIntegrationsModal';
+import { ConsentManagementModal } from '../ui/ConsentManagementModal';
 
 const Integrations: React.FC = () => {
   const { t } = useTranslation();
@@ -28,9 +28,8 @@ const Integrations: React.FC = () => {
     requestDeleteIntegration,
     requestGetTransactions,
     handleConfirmation,
-    closeConfirmation
+    closeConfirmation,
   } = useIntegrations();
-
 
   // Belvo SDK success callback
   const handleBelvoSuccess = async (link: string, institution: any) => {
@@ -38,35 +37,35 @@ const Integrations: React.FC = () => {
       console.log('Belvo connection successful:');
       console.log('Link ID:', link);
       console.log('Institution data:', JSON.stringify(institution, null, 2));
-      
+
       // Hide the Belvo widget container
       const belvoContainer = document.getElementById('belvo');
       if (belvoContainer) {
         belvoContainer.style.display = 'none';
       }
-      
+
       // Send link data to backend
       // Note: The Belvo callback provides link (string) and institution (string name)
       const response = await fetch('/api/integrations/belvo/save-connection', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          link_id: link,  // This is the Belvo link ID
+          link_id: link, // This is the Belvo link ID
           institution: {
-            raw_data: institution,  // This is the institution name string from Belvo
-            name: institution,      // Use the institution name
-            id: link               // Use link_id as fallback ID
-          }
-        })
+            raw_data: institution, // This is the institution name string from Belvo
+            name: institution, // Use the institution name
+            id: link, // Use link_id as fallback ID
+          },
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         showSuccess(
-          t('integrations.bankConnected'), 
+          t('integrations.bankConnected'),
           t('integrations.bankConnectedMessage').replace('{bank}', data.institution_name)
         );
         // Refresh integrations list
@@ -74,17 +73,11 @@ const Integrations: React.FC = () => {
       } else {
         const errorData = await response.text();
         console.error('Failed to save integration:', errorData);
-        showError(
-          t('integrations.connectionFailed'), 
-          t('integrations.connectionFailedMessage')
-        );
+        showError(t('integrations.connectionFailed'), t('integrations.connectionFailedMessage'));
       }
     } catch (error) {
       console.error('Error processing Belvo callback:', error);
-      showError(
-        t('integrations.connectionError'), 
-        t('integrations.connectionErrorMessage')
-      );
+      showError(t('integrations.connectionError'), t('integrations.connectionErrorMessage'));
     }
   };
 
@@ -95,7 +88,10 @@ const Integrations: React.FC = () => {
       const error = data.last_encountered_error;
       showWarning(
         t('integrations.connectionIssue'),
-        t('integrations.connectionIssueMessage').replace('{error}', error.message || 'Please try again.')
+        t('integrations.connectionIssueMessage').replace(
+          '{error}',
+          error.message || 'Please try again.'
+        )
       );
     }
   };
@@ -111,7 +107,6 @@ const Integrations: React.FC = () => {
       );
     }
   };
-
 
   const handleConnect = async (integrationId: string) => {
     if (integrationId === 'plaid') {
@@ -132,46 +127,35 @@ const Integrations: React.FC = () => {
   const handlePlaidConnect = async () => {
     // TODO: Implement Plaid Link
     console.log('Starting Plaid Link flow...');
-    showInfo(
-      t('integrations.comingSoon'), 
-      t('integrations.plaidComingSoon')
-    );
+    showInfo(t('integrations.comingSoon'), t('integrations.plaidComingSoon'));
   };
 
   const handleBelvoConnect = async () => {
     if (!isSDKLoaded) {
-      showError(
-        t('integrations.sdkNotReady'),
-        t('integrations.sdkNotReadyMessage')
-      );
+      showError(t('integrations.sdkNotReady'), t('integrations.sdkNotReadyMessage'));
       return;
     }
 
     setConnectingIntegration('belvo');
-    
+
     try {
       // Open Belvo widget using SDK
       await openBelvoWidget({
         callback: handleBelvoSuccess,
         onExit: handleBelvoExit,
-        onEvent: handleBelvoEvent
+        onEvent: handleBelvoEvent,
       });
-      
     } catch (error) {
       console.error('Failed to start Belvo connection:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       showError(
-        t('integrations.connectionFailed'), 
+        t('integrations.connectionFailed'),
         `${t('integrations.connectionFailedMessage')}: ${errorMessage}`
       );
     } finally {
       setConnectingIntegration(null);
     }
   };
-
-
-
-
 
   return (
     <div className="space-y-6">
@@ -184,24 +168,46 @@ const Integrations: React.FC = () => {
           <button
             onClick={() => {
               // Public MBP - direct link as per documentation
-              window.open('https://meuportal.belvo.com/?mode=landing', '_blank', 'noopener,noreferrer');
-              showInfo(t('integrations.consentPortalOpened'), t('integrations.manageConsentMessage'));
+              window.open(
+                'https://meuportal.belvo.com/?mode=landing',
+                '_blank',
+                'noopener,noreferrer'
+              );
+              showInfo(
+                t('integrations.consentPortalOpened'),
+                t('integrations.manageConsentMessage')
+              );
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
             <span>{t('integrations.manageConsents')}</span>
           </button>
-          
+
           <button
             onClick={() => setShowConsentManagementModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             <span>{t('integrations.customPortal')}</span>
           </button>
@@ -245,15 +251,25 @@ const Integrations: React.FC = () => {
 
       {/* Comparison Table */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('integrations.providerComparison')}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('integrations.providerComparison')}
+        </h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.provider')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.coverage')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.bestFor')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('integrations.connectionMethod')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('integrations.provider')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('integrations.coverage')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('integrations.bestFor')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t('integrations.connectionMethod')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -266,8 +282,12 @@ const Integrations: React.FC = () => {
                     <span className="font-medium">Plaid</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.plaidCoverage')}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.plaidBestFor')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {t('integrations.plaidCoverage')}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {t('integrations.plaidBestFor')}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.plaidMethod')}</td>
               </tr>
               <tr>
@@ -279,8 +299,12 @@ const Integrations: React.FC = () => {
                     <span className="font-medium">Belvo</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.belvoCoverage')}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.belvoBestFor')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {t('integrations.belvoCoverage')}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {t('integrations.belvoBestFor')}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{t('integrations.belvoMethod')}</td>
               </tr>
             </tbody>
@@ -313,15 +337,27 @@ const Integrations: React.FC = () => {
 
       {/* Consent Management Section */}
       <div className="bg-green-50 p-6 rounded-xl border border-green-200">
-        <h3 className="text-lg font-semibold text-green-900 mb-4">{t('integrations.consentManagement')}</h3>
-        
+        <h3 className="text-lg font-semibold text-green-900 mb-4">
+          {t('integrations.consentManagement')}
+        </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           {/* Public Portal Option */}
           <div className="bg-white p-4 rounded-lg border border-green-200">
             <div className="flex items-center space-x-2 mb-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <svg
+                  className="h-4 w-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
                 </svg>
               </div>
               <h4 className="font-semibold text-green-900">{t('integrations.publicPortal')}</h4>
@@ -341,9 +377,24 @@ const Integrations: React.FC = () => {
           <div className="bg-white p-4 rounded-lg border border-green-200">
             <div className="flex items-center space-x-2 mb-2">
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="h-4 w-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
               </div>
               <h4 className="font-semibold text-green-900">{t('integrations.customPortal')}</h4>
@@ -380,15 +431,15 @@ const Integrations: React.FC = () => {
               <p className="text-sm">{t('integrations.revokeAccessDescription')}</p>
             </div>
           </div>
-          
+
           <div className="mt-4 p-3 bg-green-100 rounded-lg">
             <p className="text-sm text-green-800">
-              <strong>{t('integrations.regulatoryCompliance')}</strong> {t('integrations.regulatoryComplianceDescription')}
+              <strong>{t('integrations.regulatoryCompliance')}</strong>{' '}
+              {t('integrations.regulatoryComplianceDescription')}
             </p>
           </div>
         </div>
       </div>
-
 
       {/* Connected Integrations Modal */}
       <ConnectedIntegrationsModal
@@ -403,7 +454,7 @@ const Integrations: React.FC = () => {
         onDelete={requestDeleteIntegration}
         onGetTransactions={requestGetTransactions}
       />
-      
+
       {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmationState.isOpen}
@@ -422,7 +473,7 @@ const Integrations: React.FC = () => {
         onClose={() => setShowConsentManagementModal(false)}
         mode="management"
       />
-      
+
       {/* Belvo Widget Container - Required by Belvo SDK */}
       <div id="belvo" style={{ display: 'none' }}></div>
     </div>

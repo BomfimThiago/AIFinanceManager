@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
+
+import { AlertCircle, CheckCircle, X, XCircle } from 'lucide-react';
 
 interface ToastProps {
   type: 'success' | 'error' | 'info';
@@ -54,23 +55,19 @@ const Toast: React.FC<ToastProps> = ({ type, message, onClose, duration = 5000 }
     <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
       <div className={`max-w-md rounded-lg border p-4 shadow-lg ${getBackgroundColor()}`}>
         <div className="flex items-start">
-          <div className="flex-shrink-0">
-            {getIcon()}
-          </div>
+          <div className="flex-shrink-0">{getIcon()}</div>
           <div className="ml-3 flex-1">
-            <p className={`text-sm font-medium ${getTextColor()}`}>
-              {message}
-            </p>
+            <p className={`text-sm font-medium ${getTextColor()}`}>{message}</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button
               onClick={onClose}
               className={`inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                type === 'success' 
-                  ? 'text-green-500 hover:bg-green-100 focus:ring-green-600' 
+                type === 'success'
+                  ? 'text-green-500 hover:bg-green-100 focus:ring-green-600'
                   : type === 'error'
-                  ? 'text-red-500 hover:bg-red-100 focus:ring-red-600'
-                  : 'text-blue-500 hover:bg-blue-100 focus:ring-blue-600'
+                    ? 'text-red-500 hover:bg-red-100 focus:ring-red-600'
+                    : 'text-blue-500 hover:bg-blue-100 focus:ring-blue-600'
               }`}
             >
               <X className="h-4 w-4" />

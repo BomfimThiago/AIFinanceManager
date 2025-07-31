@@ -89,7 +89,9 @@ async def init_database():
         from .budgets.models import BudgetModel  # noqa: F401, PLC0415
         from .expenses.models import ExpenseModel  # noqa: F401, PLC0415
         from .insights.models import InsightModel  # noqa: F401, PLC0415
-        from .integrations.institution_models import BelvoInstitution  # noqa: F401, PLC0415
+        from .integrations.institution_models import (
+            BelvoInstitution,  # noqa: F401
+        )
         from .integrations.models import (  # noqa: F401, PLC0415
             ConnectedAccount,
             Integration,

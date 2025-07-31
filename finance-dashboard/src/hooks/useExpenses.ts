@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Expense } from '../types';
+import { useEffect, useState } from 'react';
+
 import { expenseApi } from '../services/apiService';
+import { Expense } from '../types';
 
 interface UseExpensesReturn {
   expenses: Expense[];
@@ -35,7 +36,9 @@ export const useExpenses = (): UseExpensesReturn => {
     refreshExpenses();
   }, []);
 
-  const addExpense = async (expenseData: Omit<Expense, 'id'> | Omit<Expense, 'id'>[]): Promise<void> => {
+  const addExpense = async (
+    expenseData: Omit<Expense, 'id'> | Omit<Expense, 'id'>[]
+  ): Promise<void> => {
     try {
       setError(null);
       if (Array.isArray(expenseData)) {
@@ -67,8 +70,8 @@ export const useExpenses = (): UseExpensesReturn => {
   };
 
   const updateExpense = (id: number, updatedExpense: Partial<Expense>): void => {
-    setExpenses(prev => 
-      prev.map(expense => expense.id === id ? { ...expense, ...updatedExpense } : expense)
+    setExpenses(prev =>
+      prev.map(expense => (expense.id === id ? { ...expense, ...updatedExpense } : expense))
     );
   };
 
@@ -79,6 +82,6 @@ export const useExpenses = (): UseExpensesReturn => {
     updateExpense,
     loading,
     error,
-    refreshExpenses
+    refreshExpenses,
   };
 };

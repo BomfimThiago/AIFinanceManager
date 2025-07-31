@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Currency } from '../types';
+import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+
 import { getCurrencies, getExchangeRates } from '../services/apiService';
+import type { Currency } from '../types';
 
 interface CurrencyContextType {
   selectedCurrency: string;
@@ -23,7 +24,7 @@ interface CurrencyProviderProps {
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
   // User's saved preference (from database/preferences)
   const [selectedCurrency, setSelectedCurrency] = useState<string>('EUR');
-  
+
   // Session-only currency for temporary viewing (not saved to database)
   const [sessionCurrency, setSessionCurrency] = useState<string>(() => {
     // First try sessionStorage (if user changed it during this session)
@@ -34,7 +35,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     // Otherwise use the selectedCurrency (user's preference)
     return 'EUR'; // Will be updated when selectedCurrency loads
   });
-  
+
   const [currencies, setCurrencies] = useState<Record<string, Currency>>({});
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -44,7 +45,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     const loadCurrencyData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch currency information
         const currencyData = await getCurrencies();
         setCurrencies(currencyData.currencies);
@@ -85,14 +86,14 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   const formatAmount = (amount: number, currency?: string): string => {
     const currencyCode = currency || sessionCurrency;
     const currencyInfo = currencies[currencyCode];
-    
+
     if (!currencyInfo) {
       return amount.toFixed(2);
     }
 
     // Format number with appropriate decimal places
     const formattedNumber = amount.toFixed(2);
-    
+
     // Return with currency symbol
     if (currencyCode === 'BRL') {
       return `${currencyInfo.symbol} ${formattedNumber}`;
@@ -101,13 +102,9 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     }
   };
 
-  const convertAmount = (
-    amount: number, 
-    fromCurrency: string, 
-    toCurrency?: string
-  ): number => {
+  const convertAmount = (amount: number, fromCurrency: string, toCurrency?: string): number => {
     const targetCurrency = toCurrency || sessionCurrency;
-    
+
     if (fromCurrency === targetCurrency) {
       return amount;
     }
@@ -141,11 +138,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     convertAmount,
   };
 
-  return (
-    <CurrencyContext.Provider value={value}>
-      {children}
-    </CurrencyContext.Provider>
-  );
+  return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 };
 
 export const useCurrency = () => {

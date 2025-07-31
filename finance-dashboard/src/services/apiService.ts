@@ -1,4 +1,15 @@
-import { Expense, AIInsight, Budgets, AuthToken, LoginCredentials, SignupCredentials, User, UploadHistory, CurrencyInfo, ExchangeRates } from '../types';
+import {
+  AIInsight,
+  AuthToken,
+  Budgets,
+  CurrencyInfo,
+  ExchangeRates,
+  Expense,
+  LoginCredentials,
+  SignupCredentials,
+  UploadHistory,
+  User,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
@@ -19,14 +30,14 @@ export const getAuthToken = (): string | null => authToken;
 // Generic API request function with authentication
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const headers = new Headers(options.headers);
 
   // Add authorization header if token exists
   if (authToken) {
     headers.set('Authorization', `Bearer ${authToken}`);
   }
-  
+
   // Conditionally set Content-Type header
   if (options.body && !(options.body instanceof FormData)) {
     if (!headers.has('Content-Type')) {
@@ -59,7 +70,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     if (!response.ok) {
       let errorData: any = null;
       let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
-      
+
       try {
         errorData = await response.json();
         if (errorData.detail) {
@@ -78,13 +89,13 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
           errorMessage = errorText;
         }
       }
-      
+
       // Create error object with response data for better error handling
       const error = new Error(errorMessage) as any;
       error.response = {
         status: response.status,
         statusText: response.statusText,
-        data: errorData
+        data: errorData,
       };
       throw error;
     }
@@ -104,9 +115,9 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 
 // Expense API calls
 export const expenseApi = {
-  getAll: (filters?: { 
-    month?: number; 
-    year?: number; 
+  getAll: (filters?: {
+    month?: number;
+    year?: number;
     type?: string;
     category?: string;
     start_date?: string;
@@ -135,10 +146,10 @@ export const expenseApi = {
     if (filters?.search) {
       params.append('search', filters.search);
     }
-    
+
     const queryString = params.toString();
     const endpoint = queryString ? `/api/expenses?${queryString}` : '/api/expenses';
-    
+
     return apiRequest<Expense[]>(endpoint);
   },
 
@@ -147,7 +158,7 @@ export const expenseApi = {
       method: 'POST',
       body: JSON.stringify(expense),
     }),
-    
+
   createBulk: (expenses: Omit<Expense, 'id'>[]): Promise<Expense[]> =>
     apiRequest<Expense[]>('/api/expenses/bulk', {
       method: 'POST',
@@ -171,13 +182,15 @@ export const expenseApi = {
     category_spending: Record<string, number>;
   }> => apiRequest('/api/expenses/summary'),
 
-  getCategoriesChart: (): Promise<Array<{name: string; value: number; color: string}>> =>
+  getCategoriesChart: (): Promise<Array<{ name: string; value: number; color: string }>> =>
     apiRequest('/api/expenses/charts/categories'),
 
-  getMonthlyChart: (): Promise<Array<{month: string; income: number; expenses: number}>> =>
+  getMonthlyChart: (): Promise<Array<{ month: string; income: number; expenses: number }>> =>
     apiRequest('/api/expenses/charts/monthly'),
 
-  getCategorySpending: (params: { currency?: string; month?: number; year?: number } = {}): Promise<{
+  getCategorySpending: (
+    params: { currency?: string; month?: number; year?: number } = {}
+  ): Promise<{
     currency: string;
     category_spending: Record<string, number>;
   }> => {
@@ -191,10 +204,12 @@ export const expenseApi = {
     if (params.year && params.year > 0) {
       searchParams.append('year', params.year.toString());
     }
-    
+
     const queryString = searchParams.toString();
-    const endpoint = queryString ? `/api/expenses/category-spending?${queryString}` : '/api/expenses/category-spending';
-    
+    const endpoint = queryString
+      ? `/api/expenses/category-spending?${queryString}`
+      : '/api/expenses/category-spending';
+
     return apiRequest(endpoint);
   },
 
@@ -204,7 +219,7 @@ export const expenseApi = {
       body: JSON.stringify(expense),
     }),
 
-  delete: (expenseId: number): Promise<{message: string}> =>
+  delete: (expenseId: number): Promise<{ message: string }> =>
     apiRequest(`/api/expenses/${expenseId}`, {
       method: 'DELETE',
     }),
@@ -212,16 +227,19 @@ export const expenseApi = {
 
 // Budget API calls
 export const budgetApi = {
-  getAll: (): Promise<Record<string, {limit: number; spent: number}>> =>
+  getAll: (): Promise<Record<string, { limit: number; spent: number }>> =>
     apiRequest('/api/budgets'),
 
-  create: (budget: {category: string; limit: number}): Promise<{limit: number; spent: number}> =>
+  create: (budget: {
+    category: string;
+    limit: number;
+  }): Promise<{ limit: number; spent: number }> =>
     apiRequest('/api/budgets', {
       method: 'POST',
       body: JSON.stringify(budget),
     }),
 
-  updateSpent: (category: string, amount: number): Promise<{limit: number; spent: number}> =>
+  updateSpent: (category: string, amount: number): Promise<{ limit: number; spent: number }> =>
     apiRequest(`/api/budgets/${category}/spent`, {
       method: 'PUT',
       body: JSON.stringify(amount),
@@ -230,7 +248,7 @@ export const budgetApi = {
       },
     }),
 
-  delete: (category: string): Promise<{message: string}> =>
+  delete: (category: string): Promise<{ message: string }> =>
     apiRequest(`/api/budgets/${category}`, {
       method: 'DELETE',
     }),
@@ -254,7 +272,10 @@ export const processFileWithAI = async (file: File): Promise<Expense[] | null> =
   }
 };
 
-export const generateAIInsights = async (_expenses: Expense[], _budgets: Budgets): Promise<AIInsight[]> => {
+export const generateAIInsights = async (
+  _expenses: Expense[],
+  _budgets: Budgets
+): Promise<AIInsight[]> => {
   try {
     return await insightsApi.generate();
   } catch (error) {
@@ -265,10 +286,12 @@ export const generateAIInsights = async (_expenses: Expense[], _budgets: Budgets
 
 // Currency API functions
 export const getCurrencies = async (): Promise<CurrencyInfo> => {
-  const response = await apiRequest<{currencies: Record<string, {name: string, symbol: string, flag: string, code: string}>}>('/api/currencies');
+  const response = await apiRequest<{
+    currencies: Record<string, { name: string; symbol: string; flag: string; code: string }>;
+  }>('/api/currencies');
   return {
     currencies: response.currencies,
-    supported: Object.keys(response.currencies)
+    supported: Object.keys(response.currencies),
   };
 };
 
@@ -280,10 +303,10 @@ export const getExchangeRates = async (): Promise<ExchangeRates> => {
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthToken> => {
     const response = await apiRequest<any>('/api/auth/login', {
-      method: 'POST', 
+      method: 'POST',
       body: JSON.stringify(credentials),
     });
-    
+
     // Handle new auth response structure
     if (response.success && response.token) {
       setAuthToken(response.token.access_token);
@@ -292,7 +315,7 @@ export const authApi = {
         refresh_token: response.token.refresh_token,
         token_type: response.token.token_type,
         expires_in: response.token.expires_in,
-        user: response.token.user
+        user: response.token.user,
       };
     }
     throw new Error(response.message || 'Login failed');
@@ -303,16 +326,16 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({
         ...credentials,
-        terms_accepted: true
+        terms_accepted: true,
       }),
     });
-    
+
     // Handle new auth response structure
     if (response.success && response.user) {
       // For registration, we need to login separately
       return await authApi.login({
         email: credentials.email,
-        password: credentials.password
+        password: credentials.password,
       });
     }
     throw new Error(response.message || 'Registration failed');
@@ -322,8 +345,7 @@ export const authApi = {
     setAuthToken(null);
   },
 
-  getCurrentUser: (): Promise<User> =>
-    apiRequest<User>('/api/auth/me'),
+  getCurrentUser: (): Promise<User> => apiRequest<User>('/api/auth/me'),
 
   refreshToken: (refreshToken: string): Promise<AuthToken> =>
     apiRequest<AuthToken>('/api/auth/refresh', {
@@ -334,8 +356,7 @@ export const authApi = {
 
 // Upload History API
 export const uploadHistoryApi = {
-  getAll: (): Promise<UploadHistory[]> =>
-    apiRequest<UploadHistory[]>('/api/upload-history/'),
+  getAll: (): Promise<UploadHistory[]> => apiRequest<UploadHistory[]>('/api/upload-history/'),
 
   delete: (uploadId: number): Promise<{ message: string }> =>
     apiRequest<{ message: string }>(`/api/upload-history/${uploadId}`, {
@@ -402,11 +423,9 @@ export const categoryApi = {
       method: 'DELETE',
     }),
 
-  getStats: (): Promise<any> =>
-    apiRequest<any>('/api/categories/stats'),
+  getStats: (): Promise<any> => apiRequest<any>('/api/categories/stats'),
 
-  getNames: (): Promise<string[]> =>
-    apiRequest<string[]>('/api/categories/names'),
+  getNames: (): Promise<string[]> => apiRequest<string[]>('/api/categories/names'),
 
   addPreference: (accountName: string, categoryName: string): Promise<any> =>
     apiRequest<any>(`/api/categories/preferences/${accountName}/${categoryName}`, {
@@ -471,16 +490,15 @@ export const userPreferencesApi = {
 // Generic API service for other modules
 export const apiService = {
   get: <T>(endpoint: string): Promise<T> => apiRequest<T>(endpoint),
-  post: <T>(endpoint: string, data?: any): Promise<T> => 
+  post: <T>(endpoint: string, data?: any): Promise<T> =>
     apiRequest<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     }),
-  put: <T>(endpoint: string, data?: any): Promise<T> => 
+  put: <T>(endpoint: string, data?: any): Promise<T> =>
     apiRequest<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     }),
-  delete: <T>(endpoint: string): Promise<T> => 
-    apiRequest<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string): Promise<T> => apiRequest<T>(endpoint, { method: 'DELETE' }),
 };

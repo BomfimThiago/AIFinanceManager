@@ -1,14 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider } from './contexts/AuthContext'
-import { CurrencyProvider } from './contexts/CurrencyContext'
-import { LanguageProvider } from './contexts/LanguageContext'
-import { NotificationProvider } from './contexts/NotificationContext'
-import { GlobalFiltersProvider } from './contexts/GlobalFiltersContext'
-import { UserPreferencesProvider } from './contexts/UserPreferencesContext'
-import App from './App.tsx'
-import './index.css'
+import React from 'react';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import ReactDOM from 'react-dom/client';
+
+import App from './App.tsx';
+import { AuthProvider } from './contexts/AuthContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
+import { GlobalFiltersProvider } from './contexts/GlobalFiltersContext';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
+import './index.css';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -23,7 +26,7 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -42,5 +45,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);

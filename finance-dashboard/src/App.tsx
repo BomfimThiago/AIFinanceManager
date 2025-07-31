@@ -1,7 +1,8 @@
 import React from 'react';
-import { useAuth } from './contexts/AuthContext';
-import AuthPage from './components/auth/AuthPage';
+
 import FinanceManager from './components/FinanceManager';
+import AuthPage from './components/auth/AuthPage';
+import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();

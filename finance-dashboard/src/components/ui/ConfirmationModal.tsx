@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+
+import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'danger',
-  isLoading = false
+  isLoading = false,
 }) => {
   if (!isOpen) return null;
 

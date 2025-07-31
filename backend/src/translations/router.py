@@ -2,9 +2,9 @@
 Translation API endpoints.
 """
 
-from typing import Dict, List
 
 import logging
+
 from fastapi import APIRouter, HTTPException, status
 
 logger = logging.getLogger(__name__)
@@ -34,20 +34,20 @@ async def extract_translation_keys(request: ExtractRequest) -> ExtractResponse:
     """
     try:
         logger.info(f"Extracting translation keys from {len(request.files)} files")
-        
+
         result = translation_service.extract_from_files(
             file_paths=request.files,
             dry_run=request.dry_run
         )
-        
+
         logger.info(f"Extraction completed: {result.new_keys} new keys found")
         return result
-        
+
     except Exception as e:
         logger.error(f"Translation extraction failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to extract translation keys: {str(e)}"
+            detail=f"Failed to extract translation keys: {e!s}"
         )
 
 
@@ -61,21 +61,21 @@ async def translate_missing_strings(request: TranslateRequest) -> TranslateRespo
     """
     try:
         logger.info(f"Starting translation for languages: {request.target_languages}")
-        
+
         result = await translation_service.translate_missing(
             target_languages=request.target_languages,
             force=request.force,
             batch_size=request.batch_size
         )
-        
+
         logger.info(f"Translation completed: {result.total_translated} strings translated")
         return result
-        
+
     except Exception as e:
         logger.error(f"Translation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to translate strings: {str(e)}"
+            detail=f"Failed to translate strings: {e!s}"
         )
 
 
@@ -90,7 +90,7 @@ async def get_translations(language: str) -> TranslationsResponse:
     try:
         result = translation_service.get_translations(language)
         return result
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -100,12 +100,12 @@ async def get_translations(language: str) -> TranslationsResponse:
         logger.error(f"Failed to get translations for {language}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get translations: {str(e)}"
+            detail=f"Failed to get translations: {e!s}"
         )
 
 
-@router.get("/translations", response_model=Dict[str, str])
-async def get_available_languages() -> Dict[str, str]:
+@router.get("/translations", response_model=dict[str, str])
+async def get_available_languages() -> dict[str, str]:
     """
     Get list of available languages.
     
@@ -122,7 +122,7 @@ async def get_available_languages() -> Dict[str, str]:
 
 
 @router.get("/admin/translations/stats")
-async def get_translation_stats() -> Dict[str, Dict]:
+async def get_translation_stats() -> dict[str, dict]:
     """
     Get translation statistics for all languages.
     
@@ -131,7 +131,7 @@ async def get_translation_stats() -> Dict[str, Dict]:
     try:
         stats = {}
         languages = translation_service.get_available_languages()
-        
+
         for lang_code in languages.keys():
             translation_data = translation_service.get_translations(lang_code)
             stats[lang_code] = {
@@ -142,9 +142,9 @@ async def get_translation_stats() -> Dict[str, Dict]:
                 "missing_keys": translation_data.stats.missing_keys,
                 "last_updated": translation_data.last_updated
             }
-        
+
         return stats
-        
+
     except Exception as e:
         logger.error(f"Failed to get translation stats: {e}")
         raise HTTPException(

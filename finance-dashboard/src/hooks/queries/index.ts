@@ -23,10 +23,7 @@ export {
 } from './useBudgetsQuery';
 
 // Insights
-export {
-  useGenerateInsights,
-  insightKeys,
-} from './useInsightsQuery';
+export { useGenerateInsights, insightKeys } from './useInsightsQuery';
 
 // Upload History
 export {

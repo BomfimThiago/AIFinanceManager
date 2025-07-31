@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, DollarSign } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { Check, ChevronDown, DollarSign } from 'lucide-react';
+
 import { useCurrency } from '../../contexts/CurrencyContext';
 
 const CurrencySelector: React.FC = () => {
@@ -39,17 +41,15 @@ const CurrencySelector: React.FC = () => {
       >
         <span className="text-sm">{selectedCurrencyInfo?.flag || '🇪🇺'}</span>
         <span className="font-medium text-gray-700 text-sm">{sessionCurrency}</span>
-        <ChevronDown 
-          className={`h-3 w-3 text-gray-400 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`} 
+        <ChevronDown
+          className={`h-3 w-3 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           <div className="py-2">
-            {supportedCurrencies.map((currencyCode) => {
+            {supportedCurrencies.map(currencyCode => {
               const currency = currencies[currencyCode];
               if (!currency) return null;
 
@@ -73,14 +73,12 @@ const CurrencySelector: React.FC = () => {
                       <div className="text-sm text-gray-500">{currency.name}</div>
                     </div>
                   </div>
-                  {isSelected && (
-                    <Check className="h-4 w-4 text-blue-600" />
-                  )}
+                  {isSelected && <Check className="h-4 w-4 text-blue-600" />}
                 </button>
               );
             })}
           </div>
-          
+
           {/* Helper text */}
           <div className="border-t border-gray-100 px-4 py-2">
             <div className="text-xs text-gray-500">

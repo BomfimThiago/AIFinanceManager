@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Upload as UploadIcon, FileText, Trash2, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { UploadedFile, UploadHistory } from '../../types';
-import { useUploadHistoryQuery, useDeleteUploadHistoryMutation } from '../../hooks/queries';
+
+import { CheckCircle, Clock, FileText, Trash2, Upload as UploadIcon, XCircle } from 'lucide-react';
+
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useDeleteUploadHistoryMutation, useUploadHistoryQuery } from '../../hooks/queries';
+import { UploadHistory, UploadedFile } from '../../types';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
@@ -19,16 +21,16 @@ interface UploadProps {
   hideAmounts: boolean;
 }
 
-const Upload: React.FC<UploadProps> = ({ 
-  uploadedFiles, 
-  dragActive, 
-  isProcessing, 
-  fileInputRef, 
-  handleDrag, 
-  handleDrop, 
-  handleFileInput, 
+const Upload: React.FC<UploadProps> = ({
+  uploadedFiles,
+  dragActive,
+  isProcessing,
+  fileInputRef,
+  handleDrag,
+  handleDrop,
+  handleFileInput,
   triggerFileInput,
-  hideAmounts 
+  hideAmounts,
 }) => {
   const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency } = useCurrency();
   const { t } = useTranslation();
@@ -97,9 +99,7 @@ const Upload: React.FC<UploadProps> = ({
 
       <div
         className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all ${
-          dragActive
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+          dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -114,27 +114,25 @@ const Upload: React.FC<UploadProps> = ({
           onChange={handleFileInput}
           className="hidden"
         />
-        
+
         <div className="space-y-4">
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
             <UploadIcon className="h-8 w-8 text-white" />
           </div>
-          
+
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{t('upload.dropFilesHere')}</h3>
             <p className="text-gray-500">{t('upload.orClickToSelect')}</p>
           </div>
-          
+
           <button
             onClick={triggerFileInput}
             className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
           >
             {t('upload.chooseFiles')}
           </button>
-          
-          <p className="text-sm text-gray-500">
-            {t('upload.supportedFormats')}
-          </p>
+
+          <p className="text-sm text-gray-500">{t('upload.supportedFormats')}</p>
         </div>
       </div>
 
@@ -152,7 +150,10 @@ const Upload: React.FC<UploadProps> = ({
           <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('upload.processedFiles')}</h3>
           <div className="space-y-3">
             {uploadedFiles.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-3">
                   <FileText className="h-5 w-5 text-gray-500" />
                   <span className="text-sm font-medium text-gray-900">{item.file.name}</span>
@@ -165,19 +166,27 @@ const Upload: React.FC<UploadProps> = ({
                     <div className="text-sm text-green-600 font-medium">
                       {(() => {
                         if (hideAmounts) return '*** - ' + item.expense.category;
-                        
+
                         // Convert amount to selected currency
-                        const convertedAmount = getExpenseAmountInCurrency(item.expense, sessionCurrency, convertAmount);
-                        
+                        const convertedAmount = getExpenseAmountInCurrency(
+                          item.expense,
+                          sessionCurrency,
+                          convertAmount
+                        );
+
                         return `${formatCurrencyAmount(convertedAmount)} - ${item.expense.category}`;
-                      })()} 
+                      })()}
                     </div>
                   )}
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    item.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                    item.status === 'error' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <div
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      item.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : item.status === 'error'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
                     {t(`upload.${item.status}`)}
                   </div>
                 </div>
@@ -192,8 +201,11 @@ const Upload: React.FC<UploadProps> = ({
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('upload.uploadHistory')}</h3>
           <div className="space-y-3">
-            {uploadHistory.map((upload) => (
-              <div key={upload.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            {uploadHistory.map(upload => (
+              <div
+                key={upload.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-3">
                   <FileText className="h-5 w-5 text-gray-500" />
                   <div>
@@ -209,11 +221,15 @@ const Upload: React.FC<UploadProps> = ({
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(upload.status)}
-                    <span className={`text-xs font-medium capitalize ${
-                      upload.status === 'success' ? 'text-green-600' :
-                      upload.status === 'failed' ? 'text-red-600' :
-                      'text-yellow-600'
-                    }`}>
+                    <span
+                      className={`text-xs font-medium capitalize ${
+                        upload.status === 'success'
+                          ? 'text-green-600'
+                          : upload.status === 'failed'
+                            ? 'text-red-600'
+                            : 'text-yellow-600'
+                      }`}
+                    >
                       {t(`upload.${upload.status}`)}
                     </span>
                   </div>
@@ -238,7 +254,10 @@ const Upload: React.FC<UploadProps> = ({
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title={t('upload.deleteUploadTitle')}
-        message={t('upload.deleteUploadMessage', uploadToDelete?.filename || '').replace('{filename}', uploadToDelete?.filename || '')}
+        message={t('upload.deleteUploadMessage', uploadToDelete?.filename || '').replace(
+          '{filename}',
+          uploadToDelete?.filename || ''
+        )}
         confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"

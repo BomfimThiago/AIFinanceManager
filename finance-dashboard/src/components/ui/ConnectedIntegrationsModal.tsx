@@ -1,49 +1,56 @@
 import React from 'react';
-import { X, Settings, CheckCircle, XCircle, Plus, Trash2, RefreshCw, Download } from 'lucide-react';
+
+import { CheckCircle, Download, Plus, RefreshCw, Settings, Trash2, X, XCircle } from 'lucide-react';
+
 import { useTranslation } from '../../contexts/LanguageContext';
 
 // Helper function to get country flag emoji
 const getCountryFlag = (countryCode?: string): string => {
   if (!countryCode) return '🌎';
-  
+
   const flags: Record<string, string> = {
-    'BR': '🇧🇷',
-    'MX': '🇲🇽',
-    'CO': '🇨🇴',
-    'AR': '🇦🇷',
-    'CL': '🇨🇱',
-    'PE': '🇵🇪',
+    BR: '🇧🇷',
+    MX: '🇲🇽',
+    CO: '🇨🇴',
+    AR: '🇦🇷',
+    CL: '🇨🇱',
+    PE: '🇵🇪',
   };
-  
+
   return flags[countryCode.toUpperCase()] || '🌎';
 };
 
 // Bank Icon Component that uses real logos or fallback
-const BankIcon: React.FC<{ 
+const BankIcon: React.FC<{
   integration: ConnectedIntegration;
-  className?: string; 
-}> = ({ integration, className = "h-10 w-10" }) => {
+  className?: string;
+}> = ({ integration, className = 'h-10 w-10' }) => {
   // Try direct metadata first, then nested institution object
-  const iconUrl = integration.metadata?.icon_logo || 
-                  integration.metadata?.logo || 
-                  integration.metadata?.institution?.icon_logo || 
-                  integration.metadata?.institution?.logo;
-  const bankName = integration.metadata?.display_name || 
-                   integration.metadata?.name ||
-                   integration.metadata?.institution?.display_name || 
-                   integration.institution_name;
-  const primaryColor = integration.metadata?.primary_color || 
-                       integration.metadata?.institution?.primary_color || 
-                       '#056dae';
-  
+  const iconUrl =
+    integration.metadata?.icon_logo ||
+    integration.metadata?.logo ||
+    integration.metadata?.institution?.icon_logo ||
+    integration.metadata?.institution?.logo;
+  const bankName =
+    integration.metadata?.display_name ||
+    integration.metadata?.name ||
+    integration.metadata?.institution?.display_name ||
+    integration.institution_name;
+  const primaryColor =
+    integration.metadata?.primary_color ||
+    integration.metadata?.institution?.primary_color ||
+    '#056dae';
+
   if (iconUrl) {
     return (
-      <div className={`${className} rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center`}>
-        <img 
-          src={iconUrl} 
+      <div
+        className={`${className} rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center`}
+      >
+        <img
+          src={iconUrl}
           alt={`${bankName} logo`}
           className="w-full h-full object-contain p-1"
-          onError={(e) => {
+          onError={e => {
             // Fallback to text icon if image fails to load
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
@@ -56,10 +63,10 @@ const BankIcon: React.FC<{
       </div>
     );
   }
-  
+
   // Fallback to colored letter icon
   return (
-    <div 
+    <div
       className={`${className} rounded-lg flex items-center justify-center text-white font-bold text-sm`}
       style={{ backgroundColor: primaryColor }}
     >
@@ -81,35 +88,35 @@ interface ConnectedIntegration {
     name?: string;
     display_name?: string;
     code?: string;
-    
+
     // Visual branding
     logo?: string;
     icon_logo?: string;
     text_logo?: string;
     primary_color?: string;
-    
+
     // Geographic information
     country_code?: string;
     country_codes?: string[];
     country?: string;
-    
+
     // Technical details
     type?: string;
     website?: string | null;
     status?: string;
     integration_type?: string;
-    
+
     // Capabilities
     resources?: string[];
     features?: any[];
     form_fields?: any[];
     openbanking_information?: any;
-    
+
     // Connection metadata
     connected_at?: string;
     integration_source?: string;
     raw_institution_data?: any;
-    
+
     // Legacy nested institution object (for backward compatibility)
     institution?: {
       display_name?: string;
@@ -140,7 +147,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
   onAddNew,
   onSync,
   onDelete,
-  onGetTransactions
+  onGetTransactions,
 }) => {
   const { t } = useTranslation();
   const [syncingId, setSyncingId] = React.useState<number | null>(null);
@@ -185,7 +192,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -195,15 +202,17 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">{t('integrations.connectedIntegrations')}</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {t('integrations.connectedIntegrations')}
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
-              {integrations.length} {integrations.length === 1 ? t('integrations.bankConnected') : t('integrations.banksConnected')}
+              {integrations.length}{' '}
+              {integrations.length === 1
+                ? t('integrations.bankConnected')
+                : t('integrations.banksConnected')}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
@@ -226,17 +235,18 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {integrations.map((integration) => {
+              {integrations.map(integration => {
                 // Use direct metadata first, then nested institution object
-                const bankName = integration.metadata?.display_name || 
-                               integration.metadata?.name ||
-                               integration.metadata?.institution?.display_name || 
-                               integration.institution_name;
+                const bankName =
+                  integration.metadata?.display_name ||
+                  integration.metadata?.name ||
+                  integration.metadata?.institution?.display_name ||
+                  integration.institution_name;
                 const institution = integration.metadata?.institution; // Keep for backward compatibility
-                
+
                 return (
-                  <div 
-                    key={integration.id} 
+                  <div
+                    key={integration.id}
                     className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-r from-white to-gray-50"
                   >
                     <div className="flex items-start justify-between">
@@ -252,21 +262,25 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
                                 ) : (
                                   <XCircle className="h-4 w-4 text-red-500" />
                                 )}
-                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                  integration.status === 'connected' 
-                                    ? 'bg-green-100 text-green-700' 
-                                    : 'bg-red-100 text-red-700'
-                                }`}>
+                                <span
+                                  className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                    integration.status === 'connected'
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-red-100 text-red-700'
+                                  }`}
+                                >
                                   {integration.status === 'connected' ? 'Connected' : 'Error'}
                                 </span>
                               </div>
                             </div>
-                            
+
                             {/* Institution Details */}
                             <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 mt-2">
                               <div>
                                 <span className="font-medium text-gray-700">Connected:</span>
-                                <div className="text-gray-600">{formatDate(integration.created_at)}</div>
+                                <div className="text-gray-600">
+                                  {formatDate(integration.created_at)}
+                                </div>
                               </div>
                               <div>
                                 <span className="font-medium text-gray-700">Last sync:</span>
@@ -274,24 +288,39 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
                                   {syncingId === integration.id ? (
                                     <span className="text-blue-600 font-medium">Syncing...</span>
                                   ) : integration.last_sync ? (
-                                    <span className="text-gray-600">{formatDate(integration.last_sync)}</span>
+                                    <span className="text-gray-600">
+                                      {formatDate(integration.last_sync)}
+                                    </span>
                                   ) : (
                                     <span className="text-gray-400 italic">Never synced</span>
                                   )}
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Institution Type & Country */}
                             <div className="flex items-center space-x-3 mt-2">
                               {(institution?.type || integration.metadata?.type) && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-blue-50 text-blue-700 border border-blue-200">
-                                  {((institution?.type || integration.metadata?.type) || 'bank').charAt(0).toUpperCase() + ((institution?.type || integration.metadata?.type) || 'bank').slice(1)}
+                                  {(institution?.type || integration.metadata?.type || 'bank')
+                                    .charAt(0)
+                                    .toUpperCase() +
+                                    (
+                                      institution?.type ||
+                                      integration.metadata?.type ||
+                                      'bank'
+                                    ).slice(1)}
                                 </span>
                               )}
-                              {(integration.metadata?.country_code || integration.metadata?.country) && (
+                              {(integration.metadata?.country_code ||
+                                integration.metadata?.country) && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-gray-50 text-gray-700 border border-gray-200">
-                                  {getCountryFlag(integration.metadata?.country_code || integration.metadata?.country)} {integration.metadata?.country_code || integration.metadata?.country}
+                                  {getCountryFlag(
+                                    integration.metadata?.country_code ||
+                                      integration.metadata?.country
+                                  )}{' '}
+                                  {integration.metadata?.country_code ||
+                                    integration.metadata?.country}
                                 </span>
                               )}
                               <span className="inline-flex items-center px-2 py-1 rounded-md text-xs bg-purple-50 text-purple-700 border border-purple-200">
@@ -301,7 +330,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Action Buttons */}
                       <div className="flex items-center space-x-2 ml-4">
                         {onSync && integration.status === 'connected' && (
@@ -318,7 +347,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
                             )}
                           </button>
                         )}
-                        
+
                         {onGetTransactions && integration.status === 'connected' && (
                           <button
                             onClick={() => handleGetTransactions(integration.id)}
@@ -333,14 +362,14 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
                             )}
                           </button>
                         )}
-                        
+
                         <button
                           className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-colors"
                           title="Settings"
                         >
                           <Settings className="h-4 w-4" />
                         </button>
-                        
+
                         {onDelete && (
                           <button
                             onClick={() => handleDelete(integration.id)}
@@ -369,7 +398,15 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
           <div className="border-t p-6 bg-gray-50">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                {integrations.length === 1 ? t('integrations.totalIntegration').replace('{count}', integrations.length.toString()) : t('integrations.totalIntegrations').replace('{count}', integrations.length.toString())}
+                {integrations.length === 1
+                  ? t('integrations.totalIntegration').replace(
+                      '{count}',
+                      integrations.length.toString()
+                    )
+                  : t('integrations.totalIntegrations').replace(
+                      '{count}',
+                      integrations.length.toString()
+                    )}
               </div>
               <button
                 onClick={onAddNew}

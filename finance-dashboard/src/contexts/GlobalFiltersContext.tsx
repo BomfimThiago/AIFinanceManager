@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { ReactNode, createContext, useCallback, useContext, useState } from 'react';
 
 export interface GlobalFilters {
   category?: string;
@@ -39,18 +39,18 @@ export const GlobalFiltersProvider: React.FC<GlobalFiltersProviderProps> = ({ ch
     setFiltersState(newFilters);
   }, []);
 
-  const updateFilter = useCallback(<K extends keyof GlobalFilters>(
-    key: K,
-    value: GlobalFilters[K]
-  ) => {
-    setFiltersState(prev => {
-      if (value === undefined || value === '' || value === null) {
-        const { [key]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [key]: value };
-    });
-  }, []);
+  const updateFilter = useCallback(
+    <K extends keyof GlobalFilters>(key: K, value: GlobalFilters[K]) => {
+      setFiltersState(prev => {
+        if (value === undefined || value === '' || value === null) {
+          const { [key]: _, ...rest } = prev;
+          return rest;
+        }
+        return { ...prev, [key]: value };
+      });
+    },
+    []
+  );
 
   const clearFilters = useCallback(() => {
     setFiltersState({});
@@ -64,9 +64,10 @@ export const GlobalFiltersProvider: React.FC<GlobalFiltersProviderProps> = ({ ch
   }, []);
 
   const hasActiveFilters = Object.keys(filters).length > 0;
-  const activeFilterCount = Object.keys(filters).filter(key => 
-    filters[key as keyof GlobalFilters] !== undefined && 
-    filters[key as keyof GlobalFilters] !== ''
+  const activeFilterCount = Object.keys(filters).filter(
+    key =>
+      filters[key as keyof GlobalFilters] !== undefined &&
+      filters[key as keyof GlobalFilters] !== ''
   ).length;
 
   const value: GlobalFiltersContextType = {
@@ -79,9 +80,5 @@ export const GlobalFiltersProvider: React.FC<GlobalFiltersProviderProps> = ({ ch
     activeFilterCount,
   };
 
-  return (
-    <GlobalFiltersContext.Provider value={value}>
-      {children}
-    </GlobalFiltersContext.Provider>
-  );
+  return <GlobalFiltersContext.Provider value={value}>{children}</GlobalFiltersContext.Provider>;
 };

@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { budgetApi } from '../../services/apiService';
 
 // Query keys
@@ -35,7 +36,7 @@ export function useUpdateBudgetSpent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ category, amount }: { category: string; amount: number }) => 
+    mutationFn: ({ category, amount }: { category: string; amount: number }) =>
       budgetApi.updateSpent(category, amount),
     onSuccess: () => {
       // Invalidate and refetch budgets

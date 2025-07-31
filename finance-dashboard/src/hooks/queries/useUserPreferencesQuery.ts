@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userPreferencesApi, UserPreferencesUpdate } from '../../services/apiService';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { UserPreferencesUpdate, userPreferencesApi } from '../../services/apiService';
 
 // Query keys
 export const userPreferencesKeys = {
@@ -23,8 +24,7 @@ export function useUpdateUserPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (preferences: UserPreferencesUpdate) => 
-      userPreferencesApi.update(preferences),
+    mutationFn: (preferences: UserPreferencesUpdate) => userPreferencesApi.update(preferences),
     onSuccess: () => {
       // Invalidate and refetch user preferences
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
@@ -36,8 +36,7 @@ export function useUpdateCurrencyPreference() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (currency: string) => 
-      userPreferencesApi.updateCurrency(currency),
+    mutationFn: (currency: string) => userPreferencesApi.updateCurrency(currency),
     onSuccess: () => {
       // Invalidate and refetch user preferences
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
@@ -49,8 +48,7 @@ export function useUpdateLanguagePreference() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (language: string) => 
-      userPreferencesApi.updateLanguage(language),
+    mutationFn: (language: string) => userPreferencesApi.updateLanguage(language),
     onSuccess: () => {
       // Invalidate and refetch user preferences
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });
@@ -62,8 +60,7 @@ export function useUpdateUIPreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (uiPreferences: Record<string, any>) => 
-      userPreferencesApi.updateUI(uiPreferences),
+    mutationFn: (uiPreferences: Record<string, any>) => userPreferencesApi.updateUI(uiPreferences),
     onSuccess: () => {
       // Invalidate and refetch user preferences
       queryClient.invalidateQueries({ queryKey: userPreferencesKeys.all });

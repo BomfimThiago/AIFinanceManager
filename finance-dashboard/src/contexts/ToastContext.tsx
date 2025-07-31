@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { ReactNode, createContext, useContext, useState } from 'react';
+
 import Toast from '../components/ui/Toast';
 
 interface ToastMessage {
@@ -26,7 +27,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const showToast = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Date.now().toString();
     const newToast: ToastMessage = { id, type, message };
-    
+
     setToasts(prevToasts => [...prevToasts, newToast]);
   };
 

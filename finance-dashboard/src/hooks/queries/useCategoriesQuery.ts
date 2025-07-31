@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryApi, CategoryCreate, CategoryUpdate } from '../../services/apiService';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { CategoryCreate, CategoryUpdate, categoryApi } from '../../services/apiService';
 
 // Query keys
 export const categoryKeys = {
@@ -47,7 +48,7 @@ export const useUpdateCategory = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CategoryUpdate }) => 
+    mutationFn: ({ id, data }: { id: number; data: CategoryUpdate }) =>
       categoryApi.update(id, data),
     onSuccess: () => {
       // Invalidate all category queries to refetch data

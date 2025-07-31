@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useEffect } from 'react';
-import { useUserPreferences, useUpdateUserPreferences } from '../hooks/queries';
+
+import { useUpdateUserPreferences, useUserPreferences } from '../hooks/queries';
 import { UserPreferences, UserPreferencesUpdate } from '../services/apiService';
+import { useAuth } from './AuthContext';
 import { useCurrency } from './CurrencyContext';
 import { useNotificationContext } from './NotificationContext';
-import { useAuth } from './AuthContext';
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null;
@@ -49,7 +50,7 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
     try {
       await updateMutation.mutateAsync(preferences);
       showSuccess('Preferences Updated', 'Your preferences have been saved successfully');
-      
+
       // If currency was updated, sync with Currency context
       if (preferences.default_currency) {
         setSelectedCurrency(preferences.default_currency);
@@ -74,9 +75,7 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   };
 
   return (
-    <UserPreferencesContext.Provider value={value}>
-      {children}
-    </UserPreferencesContext.Provider>
+    <UserPreferencesContext.Provider value={value}>{children}</UserPreferencesContext.Provider>
   );
 };
 

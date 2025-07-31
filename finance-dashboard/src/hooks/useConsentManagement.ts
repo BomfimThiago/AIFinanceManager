@@ -5,15 +5,15 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001
 // Generic API request function
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const headers = new Headers(options.headers);
-  
+
   // Add authorization header
   const authToken = localStorage.getItem('authToken');
   if (authToken) {
     headers.set('Authorization', `Bearer ${authToken}`);
   }
-  
+
   // Set Content-Type for JSON requests
   if (options.body && !(options.body instanceof FormData)) {
     if (!headers.has('Content-Type')) {
@@ -104,7 +104,8 @@ export const useConsentManagement = () => {
 
       return response;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate consent management URL';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to generate consent management URL';
       setError(errorMessage);
       return null;
     } finally {
@@ -129,7 +130,8 @@ export const useConsentManagement = () => {
 
       return response;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate consent renewal URL';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to generate consent renewal URL';
       setError(errorMessage);
       return null;
     } finally {
@@ -139,25 +141,25 @@ export const useConsentManagement = () => {
 
   const openConsentManagement = async (request: ConsentManagementRequest) => {
     const result = await generateConsentManagementUrl(request);
-    
+
     if (result) {
       // Open the consent management portal in a new window
       window.open(result.consent_management_url, '_blank', 'noopener,noreferrer');
       return true;
     }
-    
+
     return false;
   };
 
   const openConsentRenewal = async (request: ConsentRenewalRequest) => {
     const result = await generateConsentRenewalUrl(request);
-    
+
     if (result) {
       // Open the consent renewal portal in a new window
       window.open(result.consent_renewal_url, '_blank', 'noopener,noreferrer');
       return true;
     }
-    
+
     return false;
   };
 

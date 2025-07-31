@@ -1,5 +1,7 @@
 import React from 'react';
-import { BarChart3, Upload, CreditCard, Target, Tag, Brain, Link2 } from 'lucide-react';
+
+import { BarChart3, Brain, CreditCard, Link2, Tag, Target, Upload } from 'lucide-react';
+
 import { useTranslation } from '../../contexts/LanguageContext';
 import type { TabId } from '../../types';
 
@@ -16,7 +18,7 @@ const tabs: Tab[] = [
   { id: 'budgets', nameKey: 'navigation.budgets', icon: Target },
   { id: 'categories', nameKey: 'navigation.categories', icon: Tag },
   { id: 'insights', nameKey: 'navigation.insights', icon: Brain },
-  { id: 'integrations', nameKey: 'navigation.integrations', icon: Link2 }
+  { id: 'integrations', nameKey: 'navigation.integrations', icon: Link2 },
 ];
 
 interface NavigationProps {

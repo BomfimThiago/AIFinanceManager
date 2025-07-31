@@ -1,4 +1,5 @@
 import React from 'react';
+
 import NotificationToast, { NotificationData } from './NotificationToast';
 
 interface NotificationContainerProps {
@@ -6,13 +7,13 @@ interface NotificationContainerProps {
   onDismiss: (id: string) => void;
 }
 
-const NotificationContainer: React.FC<NotificationContainerProps> = ({ 
-  notifications, 
-  onDismiss 
+const NotificationContainer: React.FC<NotificationContainerProps> = ({
+  notifications,
+  onDismiss,
 }) => {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
-      {notifications.map((notification) => (
+      {notifications.map(notification => (
         <NotificationToast
           key={notification.id}
           notification={notification}

@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { useNotificationContext } from '../../contexts/NotificationContext';
 import { uploadHistoryApi } from '../../services/apiService';
 import { UploadHistory } from '../../types';
-import { useNotificationContext } from '../../contexts/NotificationContext';
 
 // Query key factory
 export const uploadHistoryKeys = {
@@ -32,10 +33,7 @@ export const useDeleteUploadHistoryMutation = () => {
     },
     onError: (error: any) => {
       console.error('Failed to delete upload history:', error);
-      showError(
-        'Delete Failed',
-        error?.message || 'Failed to delete upload history'
-      );
+      showError('Delete Failed', error?.message || 'Failed to delete upload history');
     },
   });
-}; 
+};

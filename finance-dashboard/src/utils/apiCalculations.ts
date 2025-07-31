@@ -26,7 +26,7 @@ export async function getExpenseSummary() {
       total_income: 0,
       total_expenses: 0,
       net_amount: 0,
-      category_spending: {}
+      category_spending: {},
     };
   }
 }

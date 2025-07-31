@@ -67,21 +67,55 @@ class AIService:
 
         return ""
 
+    def _is_complex_document(self, file_content: bytes, file_type: str) -> bool:
+        """
+        Determine if a document is complex and requires advanced AI processing.
+        
+        Complex documents: PDFs, large files, handwritten receipts
+        Simple documents: Small images, structured digital receipts
+        """
+        # File size threshold (500KB)
+        if len(file_content) > 500 * 1024:
+            return True
+
+        # PDF files are generally more complex
+        if "pdf" in file_type.lower():
+            return True
+
+        # For now, assume images under 500KB are simple
+        # In the future, could add image analysis for handwriting detection
+        return False
+
     async def process_file_with_ai(
         self, file_content: bytes, file_type: str, user_id: int | None = None
     ) -> list[Expense] | None:
         """Process uploaded file (receipt/document) and extract expense information."""
         try:
-            # Try processing with full document first
-            expenses = await self._process_document_full(
-                file_content, file_type, user_id
-            )
+            # Determine document complexity to optimize model selection
+            is_complex_document = self._is_complex_document(file_content, file_type)
 
-            # If full processing fails due to size, try chunked processing
-            if not expenses:
-                logger.info(
-                    "Full document processing failed, attempting chunked processing..."
+            # Try processing with appropriate model based on complexity
+            if is_complex_document:
+                logger.info("Processing complex document with Sonnet model")
+                expenses = await self._process_document_full(
+                    file_content, file_type, user_id, use_advanced_model=True
                 )
+            else:
+                logger.info("Processing simple document with Haiku model")
+                expenses = await self._process_document_full(
+                    file_content, file_type, user_id, use_advanced_model=False
+                )
+
+            # If processing fails, try with advanced model as fallback
+            if not expenses and not is_complex_document:
+                logger.info("Simple model failed, falling back to advanced model...")
+                expenses = await self._process_document_full(
+                    file_content, file_type, user_id, use_advanced_model=True
+                )
+
+            # If still no results, try chunked processing
+            if not expenses:
+                logger.info("Full document processing failed, attempting chunked processing...")
                 expenses = await self._process_document_chunked(
                     file_content, file_type, user_id
                 )
@@ -93,15 +127,19 @@ class AIService:
             return None
 
     async def _process_document_full(
-        self, file_content: bytes, file_type: str, user_id: int | None = None
+        self, file_content: bytes, file_type: str, user_id: int | None = None, use_advanced_model: bool = True
     ) -> list[Expense] | None:
         """Process the entire document in one AI call."""
         try:
             # Convert file to base64
             base64_data = base64.b64encode(file_content).decode()
 
+            # Select model based on document complexity
+            model = "claude-sonnet-4-20250514" if use_advanced_model else "claude-3-5-haiku-20241022"
+            logger.info(f"Processing document with model: {model}")
+
             message = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=model,
                 max_tokens=3000,
                 messages=[
                     {
@@ -441,7 +479,7 @@ class AIService:
             """
 
             message = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-3-5-haiku-20241022",  # Optimized: Use cheaper model for simple categorization
                 max_tokens=50,
                 messages=[
                     {

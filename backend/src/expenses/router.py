@@ -48,8 +48,8 @@ async def get_expenses(
 ):
     """Get expenses with optional filtering."""
     return await expense_service.get_all(
-        month=month, 
-        year=year, 
+        month=month,
+        year=year,
         expense_type=type,
         category=category,
         start_date=start_date,

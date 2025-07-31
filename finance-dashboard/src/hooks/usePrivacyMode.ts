@@ -9,6 +9,6 @@ export const usePrivacyMode = () => {
 
   return {
     hideAmounts,
-    togglePrivacyMode
+    togglePrivacyMode,
   };
 };

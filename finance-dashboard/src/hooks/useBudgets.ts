@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Budgets } from '../types';
+import { useEffect, useState } from 'react';
+
 import { budgetApi } from '../services/apiService';
+import { Budgets } from '../types';
 
 interface UseBudgetsReturn {
   budgets: Budgets;
@@ -38,13 +39,13 @@ export const useBudgets = (): UseBudgetsReturn => {
   const addBudget = async (category: string, limit: string | number): Promise<void> => {
     try {
       setError(null);
-      const budget = await budgetApi.create({ 
-        category, 
-        limit: parseFloat(limit.toString()) 
+      const budget = await budgetApi.create({
+        category,
+        limit: parseFloat(limit.toString()),
       });
       setBudgets(prev => ({
         ...prev,
-        [category]: budget
+        [category]: budget,
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add budget');
@@ -59,7 +60,7 @@ export const useBudgets = (): UseBudgetsReturn => {
       const updatedBudget = await budgetApi.updateSpent(category, amount);
       setBudgets(prev => ({
         ...prev,
-        [category]: updatedBudget
+        [category]: updatedBudget,
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update budget');
@@ -91,6 +92,6 @@ export const useBudgets = (): UseBudgetsReturn => {
     removeBudget,
     loading,
     error,
-    refreshBudgets
+    refreshBudgets,
   };
 };

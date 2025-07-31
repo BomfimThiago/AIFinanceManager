@@ -1,15 +1,17 @@
-import React, { useState, useCallback } from 'react';
-import { TrendingUp, CreditCard, Wallet, Target, RefreshCw } from 'lucide-react';
-import SummaryCard from '../ui/SummaryCard';
-import InteractiveExpenseFlow from '../charts/InteractiveExpenseFlow';
-import InteractiveSpendingTimeline from '../charts/InteractiveSpendingTimeline';
-import SpendingHeatmap from '../charts/SpendingHeatmap';
-import { Expense, Budgets } from '../../types';
-import { useExpenseSummary, useCategoryChartData, useMonthlyChartData } from '../../hooks/queries';
+import React, { useCallback, useState } from 'react';
+
+import { CreditCard, RefreshCw, Target, TrendingUp, Wallet } from 'lucide-react';
+
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useCategoryChartData, useExpenseSummary, useMonthlyChartData } from '../../hooks/queries';
+import { Budgets, Expense } from '../../types';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
+import InteractiveExpenseFlow from '../charts/InteractiveExpenseFlow';
+import InteractiveSpendingTimeline from '../charts/InteractiveSpendingTimeline';
+import SpendingHeatmap from '../charts/SpendingHeatmap';
+import SummaryCard from '../ui/SummaryCard';
 
 interface DashboardProps {
   expenses: Expense[];
@@ -18,36 +20,42 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts }) => {
-  const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency, exchangeRates, currencies } = useCurrency();
+  const {
+    formatAmount: formatCurrencyAmount,
+    convertAmount,
+    sessionCurrency,
+    exchangeRates,
+    currencies,
+  } = useCurrency();
   const { filters, clearFilters } = useGlobalFilters();
   const { t } = useTranslation();
-  
+
   // Dashboard interaction state
   const [dashboardState, setDashboardState] = useState({
     selectedCategory: null as string | null,
     selectedTimeRange: null as { start: string; end: string } | null,
-    selectedDate: null as string | null
+    selectedDate: null as string | null,
   });
 
   // Chart interaction handlers
   const handleCategoryClick = useCallback((category: string) => {
     setDashboardState(prev => ({
       ...prev,
-      selectedCategory: category
+      selectedCategory: category,
     }));
   }, []);
 
   const handleTimeRangeSelect = useCallback((startDate: string, endDate: string) => {
     setDashboardState(prev => ({
       ...prev,
-      selectedTimeRange: { start: startDate, end: endDate }
+      selectedTimeRange: { start: startDate, end: endDate },
     }));
   }, []);
 
   const handleDateClick = useCallback((date: string) => {
     setDashboardState(prev => ({
       ...prev,
-      selectedDate: date
+      selectedDate: date,
     }));
   }, []);
 
@@ -55,27 +63,24 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
     setDashboardState({
       selectedCategory: null,
       selectedTimeRange: null,
-      selectedDate: null
+      selectedDate: null,
     });
     clearFilters();
   }, [clearFilters]);
 
   // TanStack Query hooks
-  const {
-    isLoading: summaryLoading,
-    error: summaryError
-  } = useExpenseSummary();
+  const { isLoading: summaryLoading, error: summaryError } = useExpenseSummary();
 
   const {
     data: categoryData = [],
     isLoading: categoryLoading,
-    error: categoryError
+    error: categoryError,
   } = useCategoryChartData();
 
   const {
     data: monthlyData = [],
     isLoading: monthlyLoading,
-    error: monthlyError
+    error: monthlyError,
   } = useMonthlyChartData();
 
   // Helper function to convert expense amounts to session currency
@@ -86,10 +91,10 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
   // Get conversion rates for display
   const getConversionRateDisplay = () => {
     if (sessionCurrency === 'EUR') return null; // No conversion needed for base currency
-    
+
     const rate = exchangeRates[sessionCurrency];
     if (!rate) return null;
-    
+
     const currencyInfo = currencies[sessionCurrency];
     return `1 EUR = ${rate.toFixed(4)} ${currencyInfo?.symbol || sessionCurrency}`;
   };
@@ -98,11 +103,11 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
   const localTotalIncome = expenses
     .filter(expense => expense.type === 'income')
     .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
-  
+
   const localTotalExpenses = expenses
     .filter(expense => expense.type === 'expense')
     .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
-  
+
   const localNetAmount = localTotalIncome - localTotalExpenses;
 
   // Use local calculations since they're now currency-aware
@@ -129,8 +134,13 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
   }
 
   // Check if any filters are active
-  const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== null && value !== '');
-  const hasActiveDashboardState = dashboardState.selectedCategory || dashboardState.selectedTimeRange || dashboardState.selectedDate;
+  const hasActiveFilters = Object.values(filters).some(
+    value => value !== undefined && value !== null && value !== ''
+  );
+  const hasActiveDashboardState =
+    dashboardState.selectedCategory ||
+    dashboardState.selectedTimeRange ||
+    dashboardState.selectedDate;
 
   return (
     <div className="space-y-8">
@@ -143,7 +153,7 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
           </div>
         </div>
       )}
-      
+
       {/* Active Filters Banner */}
       {(hasActiveFilters || hasActiveDashboardState) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -151,11 +161,31 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
             <div className="flex items-center space-x-4">
               <div className="text-sm text-blue-700">
                 <span className="font-medium">{t('dashboard.activeFilters')}:</span>
-                {filters.category && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">{t('dashboard.filterCategory')}: {filters.category}</span>}
-                {filters.type && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">{t('dashboard.filterType')}: {filters.type}</span>}
-                {filters.startDate && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">{t('dashboard.filterFrom')}: {filters.startDate}</span>}
-                {filters.endDate && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">{t('dashboard.filterTo')}: {filters.endDate}</span>}
-                {filters.search && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">{t('dashboard.filterSearch')}: "{filters.search}"</span>}
+                {filters.category && (
+                  <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">
+                    {t('dashboard.filterCategory')}: {filters.category}
+                  </span>
+                )}
+                {filters.type && (
+                  <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">
+                    {t('dashboard.filterType')}: {filters.type}
+                  </span>
+                )}
+                {filters.startDate && (
+                  <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">
+                    {t('dashboard.filterFrom')}: {filters.startDate}
+                  </span>
+                )}
+                {filters.endDate && (
+                  <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">
+                    {t('dashboard.filterTo')}: {filters.endDate}
+                  </span>
+                )}
+                {filters.search && (
+                  <span className="ml-2 px-2 py-1 bg-blue-100 rounded-md">
+                    {t('dashboard.filterSearch')}: "{filters.search}"
+                  </span>
+                )}
               </div>
             </div>
             <button
@@ -168,18 +198,19 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
           </div>
         </div>
       )}
-      
+
       {/* Currency Conversion Notice */}
       {sessionCurrency !== 'EUR' && getConversionRateDisplay() && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center">
             <div className="text-xs text-blue-700">
-              <span className="font-medium">{t('dashboard.currencyConversion')}:</span> {t('dashboard.usingCurrentRates')} - {getConversionRateDisplay()}
+              <span className="font-medium">{t('dashboard.currencyConversion')}:</span>{' '}
+              {t('dashboard.usingCurrentRates')} - {getConversionRateDisplay()}
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <SummaryCard
@@ -189,7 +220,7 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
           bgColor="bg-green-100"
           textColor="text-green-600"
         />
-        
+
         <SummaryCard
           title={t('dashboard.totalExpenses')}
           value={hideAmounts ? '***' : formatCurrencyAmount(totalExpenses)}
@@ -197,15 +228,19 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
           bgColor="bg-red-100"
           textColor="text-red-600"
         />
-        
+
         <SummaryCard
           title={t('dashboard.netSavings')}
-          value={hideAmounts ? '***' : `${netAmount >= 0 ? '+' : ''}${formatCurrencyAmount(Math.abs(netAmount))}`}
+          value={
+            hideAmounts
+              ? '***'
+              : `${netAmount >= 0 ? '+' : ''}${formatCurrencyAmount(Math.abs(netAmount))}`
+          }
           icon={Wallet}
           bgColor={netAmount >= 0 ? 'bg-green-100' : 'bg-red-100'}
           textColor={netAmount >= 0 ? 'text-green-600' : 'text-red-600'}
         />
-        
+
         <SummaryCard
           title={t('dashboard.activeBudgets')}
           value={Object.keys(budgets).length}
@@ -219,22 +254,16 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
       <div className="space-y-8">
         {/* Top Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <InteractiveSpendingTimeline 
-            expenses={expenses} 
+          <InteractiveSpendingTimeline
+            expenses={expenses}
             onTimeRangeSelect={handleTimeRangeSelect}
           />
-          <InteractiveExpenseFlow 
-            expenses={expenses} 
-            onCategoryClick={handleCategoryClick}
-          />
+          <InteractiveExpenseFlow expenses={expenses} onCategoryClick={handleCategoryClick} />
         </div>
-        
+
         {/* Heatmap Chart */}
         <div className="grid grid-cols-1 gap-8">
-          <SpendingHeatmap 
-            expenses={expenses} 
-            onDateClick={handleDateClick}
-          />
+          <SpendingHeatmap expenses={expenses} onDateClick={handleDateClick} />
         </div>
       </div>
     </div>

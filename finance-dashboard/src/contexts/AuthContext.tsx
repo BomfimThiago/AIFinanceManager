@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, AuthContextType, LoginCredentials, SignupCredentials } from '../types';
+import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+
 import { authApi, getAuthToken, setAuthToken } from '../services/apiService';
+import { AuthContextType, LoginCredentials, SignupCredentials, User } from '../types';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -56,7 +57,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = async (credentials: SignupCredentials): Promise<void> => {
     setIsLoading(true);
     try {
-      console.log('Attempting signup with:', { email: credentials.email, username: credentials.username });
+      console.log('Attempting signup with:', {
+        email: credentials.email,
+        username: credentials.username,
+      });
       const response = await authApi.signup(credentials);
       console.log('Signup successful:', { user: response.user });
       setUser(response.user);
@@ -87,11 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {
