@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Check, DollarSign, Globe, X } from 'lucide-react';
 
 import { useUserPreferencesContext } from '../../contexts/UserPreferencesContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { UserPreferencesUpdate } from '../../services/apiService';
 
 interface PreferencesModalProps {
@@ -13,6 +14,7 @@ interface PreferencesModalProps {
 const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) => {
   const { preferences, availableCurrencies, availableLanguages, isLoading, updatePreferences } =
     useUserPreferencesContext();
+  const { t } = useTranslation();
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
@@ -91,22 +93,35 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
   const getCurrencyName = (currency: string) => {
     switch (currency) {
       case 'USD':
-        return 'US Dollar';
+        return t('preferences.usDollar');
       case 'EUR':
-        return 'Euro';
+        return t('preferences.euro');
       case 'BRL':
-        return 'Brazilian Real';
+        return t('preferences.brazilianReal');
       default:
         return currency;
     }
   };
 
+  const getLanguageName = (code: string) => {
+    switch (code) {
+      case 'en':
+        return t('preferences.english');
+      case 'es':
+        return t('preferences.spanish');
+      case 'pt':
+        return t('preferences.portuguese');
+      default:
+        return code;
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Preferences</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">{t('preferences.title')}</h2>
           <button
             onClick={handleCancel}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -116,10 +131,10 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="flex justify-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
           ) : (
             <>
@@ -127,28 +142,27 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
               <div>
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <DollarSign className="h-4 w-4 mr-2" />
-                  Default Currency
+                  {t('preferences.defaultCurrency')}
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  Your base currency preference. You can temporarily view in other currencies using
-                  the header selector.
+                  {t('preferences.defaultCurrencyHelp')}
                 </p>
                 <div className="space-y-2">
                   {availableCurrencies.map(currency => (
                     <button
                       key={currency}
                       onClick={() => setSelectedCurrency(currency)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
+                      className={`w-full flex items-center justify-between p-2.5 rounded-lg border transition-all ${
                         selectedCurrency === currency
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-300 hover:border-gray-400'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{getCurrencyFlag(currency)}</span>
+                      <div className="flex items-center space-x-2.5">
+                        <span className="text-xl">{getCurrencyFlag(currency)}</span>
                         <div className="text-left">
-                          <div className="font-medium text-gray-900">{currency}</div>
-                          <div className="text-sm text-gray-500">{getCurrencyName(currency)}</div>
+                          <div className="font-medium text-gray-900 text-sm">{currency}</div>
+                          <div className="text-xs text-gray-500">{getCurrencyName(currency)}</div>
                         </div>
                       </div>
                       {selectedCurrency === currency && <Check className="h-5 w-5 text-blue-600" />}
@@ -161,26 +175,25 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
               <div>
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Globe className="h-4 w-4 mr-2" />
-                  Default Language
+                  {t('preferences.defaultLanguage')}
                 </label>
                 <p className="text-xs text-gray-500 mb-3">
-                  Your base language preference. You can temporarily view in other languages using
-                  the header selector.
+                  {t('preferences.defaultLanguageHelp')}
                 </p>
                 <div className="space-y-2">
                   {availableLanguages.map(language => (
                     <button
                       key={language.code}
                       onClick={() => setSelectedLanguage(language.code)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
+                      className={`w-full flex items-center justify-between p-2.5 rounded-lg border transition-all ${
                         selectedLanguage === language.code
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-300 hover:border-gray-400'
                       }`}
                     >
                       <div className="text-left">
-                        <div className="font-medium text-gray-900">{language.label}</div>
-                        <div className="text-sm text-gray-500">{language.native_label}</div>
+                        <div className="font-medium text-gray-900 text-sm">{getLanguageName(language.code)}</div>
+                        <div className="text-xs text-gray-500">{language.native_label}</div>
                       </div>
                       {selectedLanguage === language.code && (
                         <Check className="h-5 w-5 text-blue-600" />
@@ -194,13 +207,13 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
+        <div className="flex items-center justify-end space-x-3 p-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleCancel}
             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             disabled={isSaving}
           >
-            Cancel
+            {t('preferences.cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -214,10 +227,10 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
             {isSaving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                <span>Saving...</span>
+                <span>{t('preferences.saving')}</span>
               </>
             ) : (
-              <span>Save Changes</span>
+              <span>{t('preferences.saveChanges')}</span>
             )}
           </button>
         </div>

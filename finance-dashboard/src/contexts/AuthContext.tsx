@@ -29,7 +29,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setAuthToken(null);
           setTokenState(null);
           setUser(null);
-          // Don't show error for expired tokens during initialization
         }
       }
       setIsLoading(false);
@@ -41,9 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
     try {
-      console.log('Attempting login with:', { email: credentials.email });
       const response = await authApi.login(credentials);
-      console.log('Login successful:', { user: response.user });
       setUser(response.user);
       setTokenState(response.access_token);
     } catch (error) {
@@ -57,12 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = async (credentials: SignupCredentials): Promise<void> => {
     setIsLoading(true);
     try {
-      console.log('Attempting signup with:', {
-        email: credentials.email,
-        username: credentials.username,
-      });
       const response = await authApi.signup(credentials);
-      console.log('Signup successful:', { user: response.user });
       setUser(response.user);
       setTokenState(response.access_token);
     } catch (error) {

@@ -27,12 +27,7 @@ const App: React.FC = () => {
 
   // Show authentication page if not authenticated
   if (!isAuthenticated) {
-    return (
-      <>
-        <AuthPage />
-        <NotificationContainer />
-      </>
-    );
+    return <AuthPage />;
   }
 
   // Show main finance manager if authenticated

@@ -515,5 +515,22 @@
     "categoryRequiredForSpending": "Category is required for spending goals",
     "targetDateRequired": "Target date is required for savings and debt goals",
     "currentAmountNegative": "Current amount cannot be negative"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "defaultCurrency": "Default Currency",
+    "defaultCurrencyHelp": "Your base currency preference. You can temporarily view in other currencies using the header selector.",
+    "defaultLanguage": "Default Language",
+    "defaultLanguageHelp": "Your base language preference. You can temporarily view in other languages using the header selector.",
+    "usDollar": "US Dollar",
+    "euro": "Euro",
+    "brazilianReal": "Brazilian Real",
+    "english": "English",
+    "spanish": "Spanish",
+    "portuguese": "Portuguese",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "loading": "Loading..."
   }
 }

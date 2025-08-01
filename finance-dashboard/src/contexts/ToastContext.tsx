@@ -9,7 +9,7 @@ interface ToastMessage {
 }
 
 interface ToastContextType {
-  showToast: (type: 'success' | 'error' | 'info', message: string) => void;
+  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
   showSuccess: (message: string) => void;
   showError: (message: string) => void;
   showInfo: (message: string) => void;
@@ -24,16 +24,16 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     const id = Date.now().toString();
     const newToast: ToastMessage = { id, type, message };
 
     setToasts(prevToasts => [...prevToasts, newToast]);
   };
 
-  const showSuccess = (message: string) => showToast('success', message);
-  const showError = (message: string) => showToast('error', message);
-  const showInfo = (message: string) => showToast('info', message);
+  const showSuccess = (message: string) => showToast(message, 'success');
+  const showError = (message: string) => showToast(message, 'error');
+  const showInfo = (message: string) => showToast(message, 'info');
 
   const removeToast = (id: string) => {
     setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));

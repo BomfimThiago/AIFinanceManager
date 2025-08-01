@@ -515,5 +515,22 @@
     "categoryRequiredForSpending": "La categoría es requerida para metas de gasto",
     "targetDateRequired": "La fecha objetivo es requerida para metas de ahorro y deuda",
     "currentAmountNegative": "La cantidad actual no puede ser negativa"
+  },
+  "preferences": {
+    "title": "Preferencias",
+    "defaultCurrency": "Moneda Predeterminada",
+    "defaultCurrencyHelp": "Tu preferencia de moneda base. Puedes ver temporalmente en otras monedas usando el selector del encabezado.",
+    "defaultLanguage": "Idioma Predeterminado",
+    "defaultLanguageHelp": "Tu preferencia de idioma base. Puedes ver temporalmente en otros idiomas usando el selector del encabezado.",
+    "usDollar": "Dólar Estadounidense",
+    "euro": "Euro",
+    "brazilianReal": "Real Brasileño",
+    "english": "Inglés",
+    "spanish": "Español",
+    "portuguese": "Portugués",
+    "saving": "Guardando...",
+    "saveChanges": "Guardar Cambios",
+    "cancel": "Cancelar",
+    "loading": "Cargando..."
   }
 }

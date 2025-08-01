@@ -4,7 +4,7 @@ import { AlertCircle, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useAppNotifications } from '../../hooks/useAppNotifications';
+import { useToast } from '../../contexts/ToastContext';
 import { SignupCredentials } from '../../types';
 import { formatValidationErrors, getUserFriendlyError } from '../../utils/errorMessages';
 import Logo from '../ui/Logo';
@@ -15,7 +15,7 @@ interface SignupProps {
 
 const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
   const { signup, isLoading } = useAuth();
-  const { showSuccess, showError } = useAppNotifications();
+  const { showToast } = useToast();
   const { t } = useTranslation();
   const [credentials, setCredentials] = useState<SignupCredentials>({
     email: '',
@@ -67,7 +67,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
 
     try {
       await signup(credentials);
-      showSuccess(t('auth.accountCreatedTitle'), t('auth.accountCreatedMessage'));
+      showToast(t('auth.accountCreatedMessage'), 'success');
       // Navigation will be handled by the app component
     } catch (error) {
       console.error('Signup error:', error);
@@ -78,7 +78,7 @@ const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
       const errorMessage = validationDetails || friendlyError.message;
 
       setError(errorMessage);
-      showError(friendlyError.title, errorMessage);
+      showToast(errorMessage, 'error');
     }
   };
 

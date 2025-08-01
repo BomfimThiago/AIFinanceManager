@@ -4,7 +4,7 @@ import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useAppNotifications } from '../../hooks/useAppNotifications';
+import { useToast } from '../../contexts/ToastContext';
 import { LoginCredentials } from '../../types';
 import { getUserFriendlyError } from '../../utils/errorMessages';
 import Logo from '../ui/Logo';
@@ -15,7 +15,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
   const { login, isLoading } = useAuth();
-  const { showSuccess, showError } = useAppNotifications();
+  const { showToast } = useToast();
   const { t } = useTranslation();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
@@ -35,14 +35,14 @@ const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
 
     try {
       await login(credentials);
-      showSuccess(t('auth.loginSuccessTitle'), t('auth.loginSuccessMessage'));
+      showToast(t('auth.loginSuccessMessage'), 'success');
       // Navigation will be handled by the app component
     } catch (error) {
       console.error('Login error:', error);
       const friendlyError = getUserFriendlyError(error);
 
       setError(friendlyError.message);
-      showError(friendlyError.title, friendlyError.message);
+      showToast(friendlyError.message, 'error');
     }
   };
 

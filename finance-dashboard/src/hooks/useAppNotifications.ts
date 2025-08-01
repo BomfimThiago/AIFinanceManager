@@ -7,7 +7,8 @@ import { useCallback } from 'react';
 import { useAppState } from '../store/AppStateManager';
 
 export function useAppNotifications() {
-  const { state, dispatch } = useAppState();
+  try {
+    const { state, dispatch } = useAppState();
 
   const showSuccess = useCallback((message: string, title?: string) => {
     dispatch({
@@ -57,13 +58,26 @@ export function useAppNotifications() {
     dispatch({ type: 'CLEAR_NOTIFICATIONS' });
   }, [dispatch]);
 
-  return {
-    notifications: state.notifications,
-    showSuccess,
-    showError,
-    showInfo,
-    showWarning,
-    removeNotification,
-    clearNotifications,
-  };
+    return {
+      notifications: state.notifications,
+      showSuccess,
+      showError,
+      showInfo,
+      showWarning,
+      removeNotification,
+      clearNotifications,
+    };
+  } catch (error) {
+    // Fallback to empty functions if AppStateProvider is not available
+    console.warn('AppStateProvider not available, using fallback notifications');
+    return {
+      notifications: [],
+      showSuccess: () => {},
+      showError: () => {},
+      showInfo: () => {},
+      showWarning: () => {},
+      removeNotification: () => {},
+      clearNotifications: () => {},
+    };
+  }
 }

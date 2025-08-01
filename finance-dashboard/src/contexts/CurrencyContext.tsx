@@ -1,6 +1,6 @@
 import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-import { getCurrencies, getExchangeRates } from '../services/apiService';
+import { getCurrencies, getExchangeRates, getAuthToken } from '../services/apiService';
 import type { Currency } from '../types';
 
 interface CurrencyContextType {
@@ -43,16 +43,29 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   // Load currency information and exchange rates
   useEffect(() => {
     const loadCurrencyData = async () => {
+      const isAuthenticated = !!getAuthToken();
+      
       try {
         setIsLoading(true);
 
-        // Fetch currency information
-        const currencyData = await getCurrencies();
-        setCurrencies(currencyData.currencies);
+        // If authenticated, fetch from API
+        if (isAuthenticated) {
+          // Fetch currency information
+          const currencyData = await getCurrencies();
+          setCurrencies(currencyData.currencies);
 
-        // Fetch exchange rates
-        const ratesData = await getExchangeRates();
-        setExchangeRates(ratesData.rates);
+          // Fetch exchange rates
+          const ratesData = await getExchangeRates();
+          setExchangeRates(ratesData.rates);
+        } else {
+          // Use fallback data for unauthenticated state
+          setCurrencies({
+            USD: { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+            EUR: { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+            BRL: { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+          });
+          setExchangeRates({ USD: 1.08, EUR: 1.0, BRL: 6.15 });
+        }
       } catch (error) {
         console.error('Error loading currency data:', error);
         // Set fallback data

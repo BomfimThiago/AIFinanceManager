@@ -2,7 +2,7 @@ import React, { ReactNode, createContext, useContext, useEffect, useState } from
 
 import { useQuery } from '@tanstack/react-query';
 
-import { apiService } from '../services/apiService';
+import { apiService, getAuthToken } from '../services/apiService';
 import { Category } from '../services/apiService';
 
 interface LanguageContextType {
@@ -44,20 +44,36 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     return sessionStorage.getItem('sessionLanguage') || 'en';
   });
 
+  // Check if user is authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!getAuthToken();
+  });
+
+  // Monitor authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = getAuthToken();
+      setIsAuthenticated(!!token);
+    };
+
+    checkAuth();
+  }, []);
+
   // Save session language to sessionStorage when it changes
   useEffect(() => {
     sessionStorage.setItem('sessionLanguage', sessionLanguage);
   }, [sessionLanguage]);
 
-  // Fetch available languages
+  // Fetch available languages (only when authenticated)
   const { data: availableLanguages = {} } = useQuery({
     queryKey: ['availableLanguages'],
     queryFn: () => apiService.get<Record<string, string>>('/api/translations'),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: isAuthenticated,
   });
 
-  // Fetch translations for current session language
+  // Fetch translations for current session language (only when authenticated)
   const { data: translationData, isLoading } = useQuery({
     queryKey: ['translations', sessionLanguage],
     queryFn: () =>
@@ -75,10 +91,82 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       }>(`/api/translations/${sessionLanguage}`),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    enabled: !!sessionLanguage,
+    enabled: isAuthenticated && !!sessionLanguage,
   });
 
-  const translations = translationData?.translations || {};
+  // Fallback translations for unauthenticated state (login/signup page)
+  const fallbackTranslations = {
+    en: {
+      auth: {
+        login: 'Login',
+        signup: 'Sign Up',
+        email: 'Email',
+        password: 'Password',
+        confirmPassword: 'Confirm Password',
+        username: 'Username',
+        loginToAccount: 'Login to your account',
+        createAccount: 'Create your account',
+        dontHaveAccount: "Don't have an account?",
+        alreadyHaveAccount: 'Already have an account?',
+        signUpHere: 'Sign up here',
+        loginHere: 'Login here',
+        pleaseFieldsAll: 'Please fill in all fields',
+        passwordsNoMatch: 'Passwords do not match',
+        loginSuccessMessage: 'Login successful!',
+        signupSuccessMessage: 'Account created successfully!',
+        loggingIn: 'Logging in...',
+        signingUp: 'Signing up...',
+      }
+    },
+    es: {
+      auth: {
+        login: 'Iniciar Sesión',
+        signup: 'Registrarse',
+        email: 'Correo',
+        password: 'Contraseña',
+        confirmPassword: 'Confirmar Contraseña',
+        username: 'Usuario',
+        loginToAccount: 'Inicia sesión en tu cuenta',
+        createAccount: 'Crea tu cuenta',
+        dontHaveAccount: "¿No tienes cuenta?",
+        alreadyHaveAccount: '¿Ya tienes cuenta?',
+        signUpHere: 'Regístrate aquí',
+        loginHere: 'Inicia sesión aquí',
+        pleaseFieldsAll: 'Por favor completa todos los campos',
+        passwordsNoMatch: 'Las contraseñas no coinciden',
+        loginSuccessMessage: '¡Inicio de sesión exitoso!',
+        signupSuccessMessage: '¡Cuenta creada exitosamente!',
+        loggingIn: 'Iniciando sesión...',
+        signingUp: 'Registrando...',
+      }
+    },
+    pt: {
+      auth: {
+        login: 'Entrar',
+        signup: 'Cadastrar',
+        email: 'Email',
+        password: 'Senha',
+        confirmPassword: 'Confirmar Senha',
+        username: 'Usuário',
+        loginToAccount: 'Entre na sua conta',
+        createAccount: 'Crie sua conta',
+        dontHaveAccount: "Não tem conta?",
+        alreadyHaveAccount: 'Já tem conta?',
+        signUpHere: 'Cadastre-se aqui',
+        loginHere: 'Entre aqui',
+        pleaseFieldsAll: 'Por favor preencha todos os campos',
+        passwordsNoMatch: 'As senhas não coincidem',
+        loginSuccessMessage: 'Login realizado com sucesso!',
+        signupSuccessMessage: 'Conta criada com sucesso!',
+        loggingIn: 'Entrando...',
+        signingUp: 'Cadastrando...',
+      }
+    }
+  };
+
+  const translations = isAuthenticated 
+    ? (translationData?.translations || {})
+    : (fallbackTranslations[sessionLanguage as keyof typeof fallbackTranslations] || fallbackTranslations.en);
 
   // Locale mapping for date formatting
   const getLocale = (): string => {

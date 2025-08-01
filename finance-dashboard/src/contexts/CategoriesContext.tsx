@@ -1,8 +1,8 @@
-import React, { ReactNode, createContext, useContext } from 'react';
+import React, { ReactNode, createContext, useContext, useState, useEffect } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
-import { Category, categoryApi } from '../services/apiService';
+import { Category, categoryApi, getAuthToken } from '../services/apiService';
 
 interface CategoriesContextType {
   categories: Category[];
@@ -18,6 +18,21 @@ interface CategoriesProviderProps {
 }
 
 export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children }) => {
+  // Check if user is authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!getAuthToken();
+  });
+
+  // Monitor authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = getAuthToken();
+      setIsAuthenticated(!!token);
+    };
+
+    checkAuth();
+  }, []);
+
   const {
     data: categoriesData,
     isLoading,
@@ -27,6 +42,7 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
     queryFn: () => categoryApi.getAll(true), // Include default categories
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: isAuthenticated, // Only fetch when authenticated
   });
 
   const categories = categoriesData?.categories || [];

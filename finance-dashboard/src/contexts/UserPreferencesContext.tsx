@@ -4,7 +4,7 @@ import { useUpdateUserPreferences, useUserPreferences } from '../hooks/queries';
 import { UserPreferences, UserPreferencesUpdate } from '../services/apiService';
 import { useAuth } from './AuthContext';
 import { useCurrency } from './CurrencyContext';
-import { useAppNotifications } from '../hooks/useAppNotifications';
+import { useToast } from './ToastContext';
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null;
@@ -37,7 +37,7 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   const { data, isLoading } = useUserPreferences(isAuthenticated);
   const updateMutation = useUpdateUserPreferences();
   const { setSelectedCurrency } = useCurrency();
-  const { showSuccess, showError } = useAppNotifications();
+  const { showToast } = useToast();
 
   // Sync currency preference with Currency context when preferences load
   useEffect(() => {
@@ -49,7 +49,7 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   const updatePreferences = async (preferences: UserPreferencesUpdate) => {
     try {
       await updateMutation.mutateAsync(preferences);
-      showSuccess('Preferences Updated', 'Your preferences have been saved successfully');
+      showToast('Your preferences have been saved successfully', 'success');
 
       // If currency was updated, sync with Currency context
       if (preferences.default_currency) {
@@ -57,7 +57,7 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
       }
     } catch (error: any) {
       console.error('Failed to update preferences:', error);
-      showError('Update Failed', 'Failed to update preferences. Please try again.');
+      showToast('Failed to update preferences. Please try again.', 'error');
       throw error;
     }
   };

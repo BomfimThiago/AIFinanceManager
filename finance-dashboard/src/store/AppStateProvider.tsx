@@ -23,18 +23,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
         dispatch({ type: 'SET_PREFERENCES', payload: preferences });
       }
 
-      // Load authentication state
-      const authToken = localStorage.getItem('authToken');
-      const userData = localStorage.getItem('userData');
-      if (authToken && userData) {
-        dispatch({
-          type: 'SET_AUTH',
-          payload: {
-            isAuthenticated: true,
-            user: JSON.parse(userData),
-          },
-        });
-      }
+      // Note: Authentication state is managed by AuthContext, not here
     } catch (error) {
       console.error('Failed to load persisted state:', error);
     }

@@ -514,6 +514,23 @@
     "validContributionRequired": "Por favor insira um valor de contribuição válido",
     "categoryRequiredForSpending": "Categoria é obrigatória para metas de gastos",
     "targetDateRequired": "Data alvo é obrigatória para metas de poupança e dívida",
-    "currentAmountNegative": "O valor atual não pode ser negativo"
+    "currentAmountNegative": "O valor atual náo pode ser negativo"
+  },
+  "preferences": {
+    "title": "Preferências",
+    "defaultCurrency": "Moeda Padrão",
+    "defaultCurrencyHelp": "Sua preferência de moeda base. Você pode visualizar temporariamente em outras moedas usando o seletor do cabeçalho.",
+    "defaultLanguage": "Idioma Padrão",
+    "defaultLanguageHelp": "Sua preferência de idioma base. Você pode visualizar temporariamente em outros idiomas usando o seletor do cabeçalho.",
+    "usDollar": "Dólar Americano",
+    "euro": "Euro",
+    "brazilianReal": "Real Brasileiro",
+    "english": "Inglês",
+    "spanish": "Espanhol",
+    "portuguese": "Português",
+    "saving": "Salvando...",
+    "saveChanges": "Salvar Alterações",
+    "cancel": "Cancelar",
+    "loading": "Carregando..."
   }
 }
