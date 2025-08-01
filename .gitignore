@@ -254,4 +254,29 @@ alembic/versions/*.py
 !alembic/versions/.gitkeep
 
 # Docker
-.dockerignore 
+.dockerignore
+
+# Terraform and AWS Infrastructure
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+konta-production-key.pem
+AWS-DEPLOYMENT-INFO.md
+AWS-ARCHITECTURE.md
+PRODUCTION-READY.md
+
+# Infrastructure credentials and sensitive info
+*-deployment-info.md
+*-credentials.md
+infrastructure-secrets/
+
+# Deployment scripts with sensitive data
+scripts/deploy-backend.sh
+scripts/deploy-backend-auto.sh
+scripts/run-migrations.sh
+scripts/setup-nginx-ssl.sh
+BACKEND-DEPLOYMENT-GUIDE.md
+!scripts/*.template.sh 
