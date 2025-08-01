@@ -10,7 +10,7 @@ import logging
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .institution_models import BelvoInstitution
+from src.integrations.institution_models import BelvoInstitution
 
 logger = logging.getLogger(__name__)
 

@@ -6,12 +6,15 @@ including spending budgets, savings goals, and debt payoff goals.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from src.shared.constants import (
-    GoalType, TimeHorizon, GoalRecurrence, GoalStatus, BudgetPeriod
+    BudgetPeriod,
+    GoalRecurrence,
+    GoalStatus,
+    GoalType,
+    TimeHorizon,
 )
 
 
@@ -19,14 +22,14 @@ class GoalBase(BaseModel):
     """Base goal schema with common fields."""
 
     title: str = Field(..., min_length=1, max_length=200, description="Goal title")
-    description: Optional[str] = Field(None, description="Goal description")
+    description: str | None = Field(None, description="Goal description")
     goal_type: GoalType = Field(..., description="Type of goal (spending, saving, debt)")
     time_horizon: TimeHorizon = Field(..., description="Time horizon (short, medium, long)")
     recurrence: GoalRecurrence = Field(..., description="Recurrence pattern")
     target_amount: float = Field(..., gt=0, description="Target amount")
-    contribution_amount: Optional[float] = Field(None, gt=0, description="Amount to save/pay per recurrence period")
-    category: Optional[str] = Field(None, description="Category for spending goals")
-    target_date: Optional[str] = Field(default=None, description="Target completion date (YYYY-MM-DD)")
+    contribution_amount: float | None = Field(None, gt=0, description="Amount to save/pay per recurrence period")
+    category: str | None = Field(None, description="Category for spending goals")
+    target_date: str | None = Field(default=None, description="Target completion date (YYYY-MM-DD)")
     priority: int = Field(1, ge=1, le=3, description="Priority (1=high, 2=medium, 3=low)")
     auto_calculate: bool = Field(True, description="Auto-calculate progress from expenses")
 
@@ -39,7 +42,7 @@ class GoalCreate(GoalBase):
         # Spending goals require a category
         if self.goal_type == GoalType.SPENDING and not self.category:
             raise ValueError("Spending goals must have a category")
-        
+
         # Savings and debt goals should have target dates
         if self.goal_type in (GoalType.SAVING, GoalType.DEBT) and not self.target_date:
             raise ValueError("Savings and debt goals should have a target date")
@@ -48,15 +51,15 @@ class GoalCreate(GoalBase):
 class GoalUpdate(BaseModel):
     """Schema for updating a goal."""
 
-    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
-    description: Optional[str] = Field(default=None)
-    target_amount: Optional[float] = Field(default=None, gt=0)
-    contribution_amount: Optional[float] = Field(default=None, gt=0)
-    current_amount: Optional[float] = Field(default=None, ge=0)
-    target_date: Optional[str] = Field(default=None)
-    priority: Optional[int] = Field(default=None, ge=1, le=3)
-    status: Optional[GoalStatus] = Field(default=None)
-    auto_calculate: Optional[bool] = Field(default=None)
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None)
+    target_amount: float | None = Field(default=None, gt=0)
+    contribution_amount: float | None = Field(default=None, gt=0)
+    current_amount: float | None = Field(default=None, ge=0)
+    target_date: str | None = Field(default=None)
+    priority: int | None = Field(default=None, ge=1, le=3)
+    status: GoalStatus | None = Field(default=None)
+    auto_calculate: bool | None = Field(default=None)
 
 
 class Goal(GoalBase):
@@ -97,8 +100,8 @@ class GoalProgress(BaseModel):
 
     goal_id: int = Field(..., description="Goal ID")
     amount: float = Field(..., description="Progress amount to add/subtract")
-    date: Optional[str] = Field(default=None, description="Date of progress (defaults to today, YYYY-MM-DD format)")
-    notes: Optional[str] = Field(default=None, description="Optional notes about the progress")
+    date: str | None = Field(default=None, description="Date of progress (defaults to today, YYYY-MM-DD format)")
+    notes: str | None = Field(default=None, description="Optional notes about the progress")
 
 
 class GoalSummary(BaseModel):
@@ -111,11 +114,11 @@ class GoalSummary(BaseModel):
     saving_goals: int = Field(..., description="Number of saving goals")
     debt_goals: int = Field(..., description="Number of debt goals")
     completed_goals: int = Field(..., description="Number of completed goals")
-    
+
     total_target: float = Field(..., description="Total target amount across all goals")
     total_progress: float = Field(..., description="Total progress amount across all goals")
     overall_progress_percentage: float = Field(..., description="Overall progress percentage")
-    
+
     goals_by_type: dict[GoalType, list[Goal]] = Field(
         ..., description="Goals grouped by type"
     )
@@ -128,9 +131,9 @@ class GoalTemplateCreate(BaseModel):
     """Schema for creating goals from templates."""
 
     template_type: str = Field(..., description="Template type (monthly_budget, emergency_fund, etc.)")
-    category: Optional[str] = Field(default=None, description="Category for spending goals")
+    category: str | None = Field(default=None, description="Category for spending goals")
     amount: float = Field(..., gt=0, description="Goal amount")
-    months: Optional[int] = Field(default=None, gt=0, description="Number of months for savings goals")
+    months: int | None = Field(default=None, gt=0, description="Number of months for savings goals")
 
 
 # Legacy Budget schemas for backward compatibility
@@ -151,8 +154,8 @@ class BudgetCreate(BudgetBase):
 class BudgetUpdate(BaseModel):
     """Legacy schema for updating a budget."""
 
-    limit: Optional[float] = Field(default=None, ge=0, description="Budget limit amount")
-    spent: Optional[float] = Field(default=None, ge=0, description="Budget spent amount")
+    limit: float | None = Field(default=None, ge=0, description="Budget limit amount")
+    spent: float | None = Field(default=None, ge=0, description="Budget spent amount")
 
 
 class Budget(BudgetBase):

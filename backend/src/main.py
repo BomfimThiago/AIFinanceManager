@@ -15,22 +15,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.auth.router import router as auth_router
-from src.budgets.router import router as budgets_router
 from src.budgets.goals_router import router as goals_router
+from src.budgets.router import router as budgets_router
 from src.categories.router import router as categories_router
 from src.categories.service import CategoryService
 from src.config import settings
 from src.currency.router import router as currency_router
-from src.database import close_database, get_database_session, init_database, check_database_health
+from src.database import (
+    check_database_health,
+    close_database,
+    get_database_session,
+    init_database,
+)
 from src.expenses.router import router as expenses_router
 from src.insights.router import router as insights_router
 from src.integrations.institution_repository import BelvoInstitutionRepository
 from src.integrations.router import router as integrations_router
-from src.translations.router import router as translations_router
 from src.services.belvo_service import belvo_service
 from src.shared.dependencies import get_db
 from src.shared.exceptions import AppException
 from src.shared.models import HealthResponse
+from src.translations.router import router as translations_router
 from src.upload_history.router import router as upload_history_router
 from src.user_preferences.router import router as preferences_router
 

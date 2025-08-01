@@ -9,15 +9,15 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, status
 
-from .constants import Currency
-from .schemas import (
+from src.currency.constants import Currency
+from src.currency.schemas import (
     ConvertAmountRequest,
     ConvertAmountResponse,
     CurrenciesResponse,
     CurrencyInfo,
     ExchangeRatesResponse,
 )
-from .service import currency_service
+from src.currency.service import currency_service
 
 logger = logging.getLogger(__name__)
 

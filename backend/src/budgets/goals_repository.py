@@ -6,14 +6,13 @@ including the unified goals system (spending, saving, debt goals).
 """
 
 from datetime import date, datetime
-from typing import List, Optional
 
-from sqlalchemy import delete, select, update, func, and_, or_
+from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.budgets.models import GoalModel, BudgetModel
-from src.budgets.schemas import GoalCreate, GoalUpdate, GoalProgress
-from src.shared.constants import GoalType, GoalStatus, TimeHorizon, GoalRecurrence
+from src.budgets.models import GoalModel
+from src.budgets.schemas import GoalCreate, GoalProgress, GoalUpdate
+from src.shared.constants import GoalRecurrence, GoalStatus, GoalType, TimeHorizon
 from src.shared.repository import BaseRepository
 
 
@@ -24,21 +23,21 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
         super().__init__(GoalModel, db)
         self.db = db
 
-    async def get_by_type(self, goal_type: GoalType) -> List[GoalModel]:
+    async def get_by_type(self, goal_type: GoalType) -> list[GoalModel]:
         """Get all goals by type."""
         result = await self.db.execute(
             select(GoalModel).where(GoalModel.goal_type == goal_type.value)
         )
         return list(result.scalars().all())
 
-    async def get_active_goals(self) -> List[GoalModel]:
+    async def get_active_goals(self) -> list[GoalModel]:
         """Get all active goals."""
         result = await self.db.execute(
             select(GoalModel).where(GoalModel.status == GoalStatus.ACTIVE.value)
         )
         return list(result.scalars().all())
 
-    async def get_spending_goals(self) -> List[GoalModel]:
+    async def get_spending_goals(self) -> list[GoalModel]:
         """Get all spending (budget) goals."""
         result = await self.db.execute(
             select(GoalModel).where(
@@ -50,7 +49,7 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
         )
         return list(result.scalars().all())
 
-    async def get_by_category(self, category: str) -> Optional[GoalModel]:
+    async def get_by_category(self, category: str) -> GoalModel | None:
         """Get spending goal by category."""
         result = await self.db.execute(
             select(GoalModel).where(
@@ -62,21 +61,21 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
         )
         return result.scalar_one_or_none()
 
-    async def get_goals_by_priority(self, priority: int) -> List[GoalModel]:
+    async def get_goals_by_priority(self, priority: int) -> list[GoalModel]:
         """Get goals by priority level."""
         result = await self.db.execute(
             select(GoalModel).where(GoalModel.priority == priority)
         )
         return list(result.scalars().all())
 
-    async def get_goals_by_time_horizon(self, time_horizon: TimeHorizon) -> List[GoalModel]:
+    async def get_goals_by_time_horizon(self, time_horizon: TimeHorizon) -> list[GoalModel]:
         """Get goals by time horizon."""
         result = await self.db.execute(
             select(GoalModel).where(GoalModel.time_horizon == time_horizon.value)
         )
         return list(result.scalars().all())
 
-    async def get_goals_due_soon(self, days: int = 30) -> List[GoalModel]:
+    async def get_goals_due_soon(self, days: int = 30) -> list[GoalModel]:
         """Get goals due within specified days."""
         cutoff_date = date.today() + datetime.timedelta(days=days)
         result = await self.db.execute(
@@ -90,7 +89,7 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
         )
         return list(result.scalars().all())
 
-    async def get_completed_goals(self, limit: int = 10) -> List[GoalModel]:
+    async def get_completed_goals(self, limit: int = 10) -> list[GoalModel]:
         """Get recently completed goals."""
         result = await self.db.execute(
             select(GoalModel)
@@ -109,7 +108,7 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
                 target_date = datetime.strptime(goal_data.target_date, "%Y-%m-%d").date()
             except ValueError:
                 raise ValueError("target_date must be in YYYY-MM-DD format")
-        
+
         db_goal = GoalModel(
             title=goal_data.title,
             description=goal_data.description,
@@ -190,7 +189,7 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
             )
             .group_by(GoalModel.goal_type, GoalModel.status)
         )
-        
+
         summary_data = {}
         for row in result:
             goal_type = row.goal_type
@@ -202,14 +201,14 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
                 'total_target': row.total_target or 0,
                 'total_progress': row.total_progress or 0
             }
-        
+
         return summary_data
 
     # Legacy budget compatibility methods
     async def create_or_update_budget(self, category: str, limit: float) -> GoalModel:
         """Create or update a spending goal (legacy budget compatibility)."""
         existing = await self.get_by_category(category)
-        
+
         if existing:
             # Update existing spending goal
             result = await self.db.execute(
@@ -243,13 +242,13 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
         goal = await self.get_by_category(category)
         if not goal:
             raise ValueError(f"No spending goal found for category: {category}")
-        
+
         return await self.set_goal_progress(goal.id, spent_amount)
 
     async def get_budgets_dict(self) -> dict:
         """Get spending goals as budgets dictionary (legacy compatibility)."""
         spending_goals = await self.get_spending_goals()
-        
+
         result = {}
         for goal in spending_goals:
             result[goal.category] = {
@@ -260,5 +259,5 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
                 'created_at': goal.created_at,
                 'updated_at': goal.updated_at
             }
-        
+
         return result

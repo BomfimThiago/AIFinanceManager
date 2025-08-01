@@ -273,10 +273,7 @@ PRODUCTION-READY.md
 *-credentials.md
 infrastructure-secrets/
 
-# Deployment scripts with sensitive data
-scripts/deploy-backend.sh
-scripts/deploy-backend-auto.sh
-scripts/run-migrations.sh
-scripts/setup-nginx-ssl.sh
-BACKEND-DEPLOYMENT-GUIDE.md
-!scripts/*.template.sh 
+# Deployment scripts with sensitive data (keep templates)
+scripts/*
+!scripts/*.template.sh
+BACKEND-DEPLOYMENT-GUIDE.md 

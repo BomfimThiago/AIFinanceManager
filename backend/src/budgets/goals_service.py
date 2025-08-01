@@ -6,16 +6,22 @@ including the unified goals system and legacy budget compatibility.
 """
 
 import logging
-from datetime import date, datetime, timedelta
-from typing import List, Dict, Optional
+from datetime import date, timedelta
 
-from src.budgets.models import GoalModel
 from src.budgets.goals_repository import GoalsRepository
+from src.budgets.models import GoalModel
 from src.budgets.schemas import (
-    Goal, GoalCreate, GoalUpdate, GoalProgress, GoalSummary, GoalTemplateCreate,
-    Budget, BudgetCreate, BudgetSummary  # Legacy support
+    Budget,  # Legacy support
+    BudgetCreate,
+    BudgetSummary,
+    Goal,
+    GoalCreate,
+    GoalProgress,
+    GoalSummary,
+    GoalTemplateCreate,
+    GoalUpdate,
 )
-from src.shared.constants import GoalType, GoalStatus, TimeHorizon, GoalRecurrence
+from src.shared.constants import GoalRecurrence, GoalStatus, GoalType, TimeHorizon
 
 logger = logging.getLogger(__name__)
 
@@ -47,27 +53,27 @@ class GoalsService:
             updated_at=goal_model.updated_at,
         )
 
-    async def get_all_goals(self) -> List[Goal]:
+    async def get_all_goals(self) -> list[Goal]:
         """Get all goals."""
         goal_models = await self.repository.get_all()
         return [self._model_to_schema(model) for model in goal_models]
 
-    async def get_active_goals(self) -> List[Goal]:
+    async def get_active_goals(self) -> list[Goal]:
         """Get all active goals."""
         goal_models = await self.repository.get_active_goals()
         return [self._model_to_schema(model) for model in goal_models]
 
-    async def get_goals_by_type(self, goal_type: GoalType) -> List[Goal]:
+    async def get_goals_by_type(self, goal_type: GoalType) -> list[Goal]:
         """Get goals by type."""
         goal_models = await self.repository.get_by_type(goal_type)
         return [self._model_to_schema(model) for model in goal_models]
 
-    async def get_spending_goals(self) -> List[Goal]:
+    async def get_spending_goals(self) -> list[Goal]:
         """Get all spending (budget) goals."""
         goal_models = await self.repository.get_spending_goals()
         return [self._model_to_schema(model) for model in goal_models]
 
-    async def get_goal_by_id(self, goal_id: int) -> Optional[Goal]:
+    async def get_goal_by_id(self, goal_id: int) -> Goal | None:
         """Get goal by ID."""
         goal_model = await self.repository.get_by_id(goal_id)
         return self._model_to_schema(goal_model) if goal_model else None
@@ -88,7 +94,7 @@ class GoalsService:
     async def update_goal(self, goal_id: int, goal_data: GoalUpdate) -> Goal:
         """Update an existing goal."""
         goal_model = await self.repository.update(goal_id, goal_data)
-        
+
         # Check if goal is completed
         if goal_model.current_amount >= goal_model.target_amount:
             await self.repository.update_goal_status(goal_id, GoalStatus.COMPLETED)
@@ -103,7 +109,7 @@ class GoalsService:
     async def update_goal_progress(self, goal_id: int, progress: GoalProgress) -> Goal:
         """Update goal progress."""
         goal_model = await self.repository.update_goal_progress(goal_id, progress)
-        
+
         # Check if goal is completed
         if goal_model.current_amount >= goal_model.target_amount:
             await self.repository.update_goal_status(goal_id, GoalStatus.COMPLETED)
@@ -114,7 +120,7 @@ class GoalsService:
     async def set_goal_progress(self, goal_id: int, amount: float) -> Goal:
         """Set goal progress to specific amount."""
         goal_model = await self.repository.set_goal_progress(goal_id, amount)
-        
+
         # Check if goal is completed
         if goal_model.current_amount >= goal_model.target_amount:
             await self.repository.update_goal_status(goal_id, GoalStatus.COMPLETED)
@@ -217,10 +223,10 @@ class GoalsService:
             return f"{goal_data.goal_type.value.title()} Goal"
 
     # Legacy budget compatibility methods
-    async def get_budgets_dict(self) -> Dict[str, Budget]:
+    async def get_budgets_dict(self) -> dict[str, Budget]:
         """Get spending goals as budgets dictionary (legacy compatibility)."""
         budgets_dict = await self.repository.get_budgets_dict()
-        
+
         result = {}
         for category, budget_data in budgets_dict.items():
             result[category] = Budget(
@@ -232,7 +238,7 @@ class GoalsService:
                 created_at=budget_data['created_at'],
                 updated_at=budget_data['updated_at'],
             )
-        
+
         return result
 
     async def create_or_update_budget(self, budget_data: BudgetCreate) -> Budget:
@@ -240,7 +246,7 @@ class GoalsService:
         goal_model = await self.repository.create_or_update_budget(
             budget_data.category, budget_data.limit
         )
-        
+
         return Budget(
             id=goal_model.id,
             category=goal_model.category,
@@ -254,7 +260,7 @@ class GoalsService:
     async def update_budget_spent(self, category: str, spent_amount: float) -> Budget:
         """Update budget spent amount (legacy compatibility)."""
         goal_model = await self.repository.update_budget_spent(category, spent_amount)
-        
+
         return Budget(
             id=goal_model.id,
             category=goal_model.category,
@@ -268,10 +274,10 @@ class GoalsService:
     async def get_budget_summary(self) -> BudgetSummary:
         """Get budget summary (legacy compatibility)."""
         budgets = await self.get_budgets_dict()
-        
+
         total_limit = sum(budget.limit for budget in budgets.values())
         total_spent = sum(budget.spent for budget in budgets.values())
-        
+
         return BudgetSummary(
             total_budgets=len(budgets),
             total_limit=total_limit,

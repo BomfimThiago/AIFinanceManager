@@ -70,7 +70,7 @@ class AIService:
     def _is_complex_document(self, file_content: bytes, file_type: str) -> bool:
         """
         Determine if a document is complex and requires advanced AI processing.
-        
+
         Complex documents: PDFs, large files, handwritten receipts
         Simple documents: Small images, structured digital receipts
         """
@@ -464,7 +464,7 @@ class AIService:
 
                 Available Categories: {categories}
 
-                User Category Preferences (learn from these patterns): 
+                User Category Preferences (learn from these patterns):
                 {user_preferences}
 
                 Rules:

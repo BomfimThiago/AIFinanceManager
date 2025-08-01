@@ -10,8 +10,8 @@ from typing import Any
 
 from pydantic import Field
 
-from .constants import Currency
-from .models import CustomModel
+from src.shared.constants import Currency
+from src.shared.models import CustomModel
 
 
 class IdResponse(CustomModel):

@@ -30,17 +30,17 @@ class CategoryTranslationService:
     async def translate_category_content(
         self,
         category_name: str,
-        category_description: str = None,
+        category_description: str | None = None,
         source_language: str = "auto"
     ) -> dict[str, dict[str, str]]:
         """
         Translate a category name and description into all supported languages.
-        
+
         Args:
             category_name: The category name to translate
             category_description: The category description to translate (optional)
             source_language: Source language code (or "auto" for detection)
-            
+
         Returns:
             Dictionary with 'name' and 'description' keys containing language translations
             Example: {
@@ -93,7 +93,7 @@ class CategoryTranslationService:
                 fallback["description"] = dict.fromkeys(SUPPORTED_LANGUAGES.keys(), category_description)
             return fallback
 
-    def _create_content_translation_prompt(self, category_name: str, category_description: str = None, source_language: str = "auto") -> str:
+    def _create_content_translation_prompt(self, category_name: str, category_description: str | None = None, source_language: str = "auto") -> str:
         """Create a prompt for translating the category name and description."""
         language_list = ", ".join([f"{code} ({name})" for code, name in SUPPORTED_LANGUAGES.items()])
 
@@ -115,7 +115,7 @@ class CategoryTranslationService:
 
 The category represents a type of expense that users track in their personal finance app. Provide translations that are:
 1. Appropriate for personal finance/expense categorization
-2. Commonly used terms that users would recognize  
+2. Commonly used terms that users would recognize
 3. Concise for names (1-2 words when possible), descriptive for descriptions
 4. Culturally appropriate for each language
 
@@ -178,15 +178,15 @@ Note: Always include the "name" field. Only include "description" field if a des
             logger.error(f"Response text: {response_text}")
             raise ValueError(f"Invalid translation response format: {e}")
 
-    def get_category_name_translation(self, category_name: str, language: str, translations: dict[str, dict[str, str]] = None) -> str:
+    def get_category_name_translation(self, category_name: str, language: str, translations: dict[str, dict[str, str]] | None = None) -> str:
         """
         Get a specific language translation for a category name.
-        
+
         Args:
             category_name: Original category name
             language: Target language code
             translations: Pre-computed translations dictionary (optional)
-            
+
         Returns:
             Translated category name or original if translation not available
         """
@@ -195,15 +195,15 @@ Note: Always include the "name" field. Only include "description" field if a des
 
         return translations["name"].get(language, category_name)
 
-    def get_category_description_translation(self, category_description: str, language: str, translations: dict[str, dict[str, str]] = None) -> str:
+    def get_category_description_translation(self, category_description: str, language: str, translations: dict[str, dict[str, str]] | None = None) -> str:
         """
         Get a specific language translation for a category description.
-        
+
         Args:
             category_description: Original category description
             language: Target language code
             translations: Pre-computed translations dictionary (optional)
-            
+
         Returns:
             Translated category description or original if translation not available
         """
@@ -215,7 +215,7 @@ Note: Always include the "name" field. Only include "description" field if a des
     def populate_default_category_translations(self) -> dict[str, dict[str, dict[str, str]]]:
         """
         Get translations for default categories with names and descriptions.
-        
+
         Returns:
             Dictionary mapping category names to their content translations
         """

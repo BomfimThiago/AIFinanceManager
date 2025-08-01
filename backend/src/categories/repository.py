@@ -56,7 +56,7 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
         return list(result.scalars().all())
 
     async def create_user_category(
-        self, user_id: int, category_data: CategoryCreate, translations: dict = None
+        self, user_id: int, category_data: CategoryCreate, translations: dict | None = None
     ) -> CategoryModel:
         """Create a custom category for a user."""
         db_obj = self.model(

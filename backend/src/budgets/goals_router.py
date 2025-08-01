@@ -6,19 +6,25 @@ including the unified goals system and legacy budget compatibility.
 """
 
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from src.auth.dependencies import get_current_user
 from src.auth.schemas import User
 from src.budgets.goals_dependencies import get_goals_service
-from src.budgets.schemas import (
-    Goal, GoalCreate, GoalUpdate, GoalProgress, GoalSummary, GoalTemplateCreate,
-    Budget, BudgetCreate, BudgetSummary  # Legacy support
-)
 from src.budgets.goals_service import GoalsService
-from src.shared.constants import GoalType, GoalStatus, TimeHorizon
+from src.budgets.schemas import (
+    Budget,  # Legacy support
+    BudgetCreate,
+    BudgetSummary,
+    Goal,
+    GoalCreate,
+    GoalProgress,
+    GoalSummary,
+    GoalTemplateCreate,
+    GoalUpdate,
+)
+from src.shared.constants import GoalStatus, GoalType, TimeHorizon
 from src.shared.exceptions import DatabaseError, NotFoundError
 
 logger = logging.getLogger(__name__)
@@ -32,11 +38,11 @@ budgets_router = APIRouter(prefix="/api/budgets", tags=["budgets"])
 
 # === GOALS ENDPOINTS (New System) ===
 
-@goals_router.get("", response_model=List[Goal])
+@goals_router.get("", response_model=list[Goal])
 async def get_goals(
-    goal_type: Optional[GoalType] = Query(None, description="Filter by goal type"),
-    status: Optional[GoalStatus] = Query(None, description="Filter by status"),
-    time_horizon: Optional[TimeHorizon] = Query(None, description="Filter by time horizon"),
+    goal_type: GoalType | None = Query(None, description="Filter by goal type"),
+    status: GoalStatus | None = Query(None, description="Filter by status"),
+    time_horizon: TimeHorizon | None = Query(None, description="Filter by time horizon"),
     goals_service: GoalsService = Depends(get_goals_service),
     current_user: User = Depends(get_current_user),
 ):
@@ -123,10 +129,10 @@ async def delete_goal(
     try:
         logger.info(f"Deleting goal {goal_id}")
         success = await goals_service.delete_goal(goal_id)
-        
+
         if not success:
             raise NotFoundError("Goal", str(goal_id))
-        
+
         return {"message": "Goal deleted successfully"}
     except NotFoundError:
         raise

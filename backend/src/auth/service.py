@@ -12,9 +12,9 @@ import bcrypt
 import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .config import auth_settings
-from .constants import ROLE_PERMISSIONS, Permission, TokenType, UserRole
-from .exceptions import (
+from src.auth.config import auth_settings
+from src.auth.constants import ROLE_PERMISSIONS, Permission, TokenType, UserRole
+from src.auth.exceptions import (
     AuthenticationError,
     InactiveUserError,
     InvalidCredentialsError,
@@ -23,9 +23,9 @@ from .exceptions import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from .models import UserModel
-from .repository import UserRepository
-from .schemas import (
+from src.auth.models import UserModel
+from src.auth.repository import UserRepository
+from src.auth.schemas import (
     LoginResponse,
     PasswordChange,
     RegistrationResponse,

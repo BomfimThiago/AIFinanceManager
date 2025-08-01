@@ -11,15 +11,15 @@ from pathlib import Path
 
 import anthropic
 
-logger = logging.getLogger(__name__)
-
-from .models import (
+from src.translations.models import (
     ExtractResponse,
     TranslateResponse,
     TranslationKey,
     TranslationsResponse,
     TranslationStats,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TranslationService:
@@ -228,7 +228,7 @@ class TranslationService:
 
     async def translate_missing(
         self,
-        target_languages: list[str] = None,
+        target_languages: list[str] | None = None,
         force: bool = False,
         batch_size: int = 50
     ) -> TranslateResponse:
@@ -379,7 +379,7 @@ Return ONLY a valid JSON object with the translations (same keys, translated val
 
     def get_translations(self, language: str) -> TranslationsResponse:
         """Get translations for a specific language."""
-        if language not in ['en'] + list(self.SUPPORTED_LANGUAGES.keys()):
+        if language not in ['en', *list(self.SUPPORTED_LANGUAGES.keys())]:
             raise ValueError(f"Unsupported language: {language}")
 
         lang_file = self.locales_dir / f"{language}.json"

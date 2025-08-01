@@ -9,14 +9,14 @@ from fastapi import APIRouter, HTTPException, status
 
 logger = logging.getLogger(__name__)
 
-from .models import (
+from src.translations.models import (
     ExtractRequest,
     ExtractResponse,
     TranslateRequest,
     TranslateResponse,
     TranslationsResponse,
 )
-from .service import TranslationService
+from src.translations.service import TranslationService
 
 router = APIRouter(prefix="/api", tags=["translations"])
 
@@ -28,7 +28,7 @@ translation_service = TranslationService()
 async def extract_translation_keys(request: ExtractRequest) -> ExtractResponse:
     """
     Extract translation keys from frontend source files.
-    
+
     This endpoint scans the provided files for t('key') patterns and
     adds any new keys to the master English translation file.
     """
@@ -55,7 +55,7 @@ async def extract_translation_keys(request: ExtractRequest) -> ExtractResponse:
 async def translate_missing_strings(request: TranslateRequest) -> TranslateResponse:
     """
     Translate missing strings using Anthropic Claude.
-    
+
     This endpoint finds untranslated strings and uses AI to translate them
     into the specified target languages.
     """
@@ -83,7 +83,7 @@ async def translate_missing_strings(request: TranslateRequest) -> TranslateRespo
 async def get_translations(language: str) -> TranslationsResponse:
     """
     Get translations for a specific language.
-    
+
     This endpoint returns the complete translation object for the frontend
     to use at runtime.
     """
@@ -108,7 +108,7 @@ async def get_translations(language: str) -> TranslationsResponse:
 async def get_available_languages() -> dict[str, str]:
     """
     Get list of available languages.
-    
+
     Returns a mapping of language codes to language names.
     """
     try:
@@ -125,14 +125,14 @@ async def get_available_languages() -> dict[str, str]:
 async def get_translation_stats() -> dict[str, dict]:
     """
     Get translation statistics for all languages.
-    
+
     Returns completion percentages and other stats for each language.
     """
     try:
         stats = {}
         languages = translation_service.get_available_languages()
 
-        for lang_code in languages.keys():
+        for lang_code in languages:
             translation_data = translation_service.get_translations(lang_code)
             stats[lang_code] = {
                 "language_name": languages[lang_code],

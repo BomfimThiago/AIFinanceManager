@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 
-from .exceptions import DatabaseError, DuplicateError
+from src.shared.exceptions import DatabaseError, DuplicateError
 
 # Type variables for generic repository
 ModelType = TypeVar("ModelType", bound=DeclarativeBase)

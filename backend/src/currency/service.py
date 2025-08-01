@@ -9,7 +9,7 @@ import logging
 
 import aiohttp
 
-from .constants import CURRENCY_INFO, Currency
+from src.currency.constants import CURRENCY_INFO, Currency
 
 logger = logging.getLogger(__name__)
 

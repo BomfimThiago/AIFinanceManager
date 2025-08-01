@@ -14,7 +14,7 @@ from typing import Any
 
 from cryptography.fernet import Fernet
 
-from .config import integration_config
+from src.integrations.config import integration_config
 
 logger = logging.getLogger(__name__)
 

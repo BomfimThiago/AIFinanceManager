@@ -6,9 +6,8 @@ including spending budgets, savings goals, and debt payoff goals.
 """
 
 from datetime import datetime
-from typing import Optional
 
-from sqlalchemy import DateTime, Float, String, Text, Boolean, Date, func
+from sqlalchemy import Boolean, Date, DateTime, Float, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -20,33 +19,33 @@ class GoalModel(Base):
     __tablename__ = "goals"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    
+
     # Basic goal information
     title: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     # Goal type and classification
     goal_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # spending, saving, debt
     time_horizon: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # short, medium, long
     recurrence: Mapped[str] = mapped_column(String(20), nullable=False)  # one_time, weekly, monthly, etc.
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", index=True)
-    
+
     # Financial amounts
     target_amount: Mapped[float] = mapped_column(Float, nullable=False)
     current_amount: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    contribution_amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    
+    contribution_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+
     # Category (for spending goals only)
-    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
-    
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+
     # Time-based fields
-    target_date: Mapped[Optional[datetime]] = mapped_column(Date, nullable=True)
+    target_date: Mapped[datetime | None] = mapped_column(Date, nullable=True)
     start_date: Mapped[datetime] = mapped_column(Date, nullable=False, server_default=func.current_date())
-    
+
     # Configuration
     auto_calculate: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)  # Auto-calc from expenses
     priority: Mapped[int] = mapped_column(nullable=False, default=1)  # 1=high, 2=medium, 3=low
-    
+
     # Metadata
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
