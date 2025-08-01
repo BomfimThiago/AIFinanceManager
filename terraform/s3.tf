@@ -50,6 +50,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
     id     = "delete_old_files"
     status = "Enabled"
 
+    # Apply to all objects
+    filter {}
+
     # Delete files older than 90 days to save storage costs
     expiration {
       days = 90

@@ -54,13 +54,3 @@ variable "key_pair_name" {
   type        = string
 }
 
-# Common tags
-locals {
-  common_tags = {
-    Project     = "Konta"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
-  
-  name_prefix = "konta-${var.environment}"
-}

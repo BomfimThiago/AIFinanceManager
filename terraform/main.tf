@@ -1,5 +1,5 @@
-# AI Finance Manager - Terraform Infrastructure
-# Production-ready AWS infrastructure with VPC, RDS, ECS, ALB, and S3
+# Konta - Budget-Friendly Terraform Infrastructure
+# AWS infrastructure with VPC, EC2, RDS, and S3
 
 terraform {
   required_version = ">= 1.0"
@@ -24,7 +24,7 @@ provider "aws" {
   
   default_tags {
     tags = {
-      Project     = "AI Finance Manager"
+      Project     = "Konta"
       Environment = var.environment
       ManagedBy   = "Terraform"
     }
@@ -33,10 +33,10 @@ provider "aws" {
 
 # Local values for resource naming
 locals {
-  name_prefix = "${var.environment}-ai-finance"
+  name_prefix = "konta-${var.environment}"
   
   common_tags = {
-    Project     = "AI Finance Manager"
+    Project     = "Konta"
     Environment = var.environment
     ManagedBy   = "Terraform"
   }

@@ -35,9 +35,10 @@ COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY run.py ./
 
-# Create logs directory
+# Create logs directory and uv cache directory
 RUN mkdir -p webhook_logs && \
-    chown -R appuser:appuser /app
+    mkdir -p /home/appuser/.cache && \
+    chown -R appuser:appuser /app /home/appuser
 
 # Switch to non-root user
 USER appuser
