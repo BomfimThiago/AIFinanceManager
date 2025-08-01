@@ -3,6 +3,7 @@ import React from 'react';
 import { AlertCircle, CheckCircle, ExternalLink, Settings, XCircle } from 'lucide-react';
 
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import type { ConnectedIntegration } from '../../hooks/useIntegrations';
 
 // Bank provider icon components
@@ -170,6 +171,7 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
   onShowSettings,
 }) => {
   const { t } = useTranslation();
+  const { formatDateTime } = useDateFormatter();
   const integrations = getIntegrations(connectedIntegrations);
 
   return (
@@ -240,7 +242,7 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
 
                 {integration.status === 'connected' && integration.lastSync && (
                   <div className="text-xs text-gray-500 mb-4">
-                    {t('integrations.lastSync')}: {new Date(integration.lastSync).toLocaleString()}
+                    {t('integrations.lastSync')}: {formatDateTime(integration.lastSync)}
                   </div>
                 )}
 

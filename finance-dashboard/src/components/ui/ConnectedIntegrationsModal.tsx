@@ -3,6 +3,7 @@ import React from 'react';
 import { CheckCircle, Download, Plus, RefreshCw, Settings, Trash2, X, XCircle } from 'lucide-react';
 
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 
 // Helper function to get country flag emoji
 const getCountryFlag = (countryCode?: string): string => {
@@ -150,6 +151,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
   onGetTransactions,
 }) => {
   const { t } = useTranslation();
+  const { formatDateTime } = useDateFormatter();
   const [syncingId, setSyncingId] = React.useState<number | null>(null);
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
   const [fetchingTransactionsId, setFetchingTransactionsId] = React.useState<number | null>(null);
@@ -187,13 +189,7 @@ const ConnectedIntegrationsModal: React.FC<ConnectedIntegrationsModalProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatDateTime(dateString);
   };
 
   return (

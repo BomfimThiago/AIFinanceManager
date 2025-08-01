@@ -4,7 +4,7 @@ import { useUpdateUserPreferences, useUserPreferences } from '../hooks/queries';
 import { UserPreferences, UserPreferencesUpdate } from '../services/apiService';
 import { useAuth } from './AuthContext';
 import { useCurrency } from './CurrencyContext';
-import { useNotificationContext } from './NotificationContext';
+import { useAppNotifications } from '../hooks/useAppNotifications';
 
 interface UserPreferencesContextType {
   preferences: UserPreferences | null;
@@ -37,7 +37,7 @@ export const UserPreferencesProvider: React.FC<UserPreferencesProviderProps> = (
   const { data, isLoading } = useUserPreferences(isAuthenticated);
   const updateMutation = useUpdateUserPreferences();
   const { setSelectedCurrency } = useCurrency();
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError } = useAppNotifications();
 
   // Sync currency preference with Currency context when preferences load
   useEffect(() => {

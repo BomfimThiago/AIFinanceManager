@@ -4,6 +4,7 @@ import { CheckCircle, Clock, FileText, Trash2, Upload as UploadIcon, XCircle } f
 
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { useDeleteUploadHistoryMutation, useUploadHistoryQuery } from '../../hooks/queries';
 import { UploadHistory, UploadedFile } from '../../types';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
@@ -34,6 +35,7 @@ const Upload: React.FC<UploadProps> = ({
 }) => {
   const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency } = useCurrency();
   const { t } = useTranslation();
+  const { formatDateTime } = useDateFormatter();
   const { data: uploadHistory = [] } = useUploadHistoryQuery();
   const deleteUploadMutation = useDeleteUploadHistoryMutation();
   const [uploadToDelete, setUploadToDelete] = useState<UploadHistory | null>(null);
@@ -48,8 +50,7 @@ const Upload: React.FC<UploadProps> = ({
   };
 
   const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
+    return formatDateTime(dateString);
   };
 
   const getStatusIcon = (status: UploadHistory['status']) => {

@@ -123,6 +123,7 @@ export const expenseApi = {
     year?: number;
     type?: string;
     category?: string;
+    categories?: string[];
     start_date?: string;
     end_date?: string;
     search?: string;
@@ -137,7 +138,12 @@ export const expenseApi = {
     if (filters?.type) {
       params.append('type', filters.type);
     }
-    if (filters?.category) {
+    if (filters?.categories && filters.categories.length > 0) {
+      // Add multiple category parameters: ?category=TECH&category=TRANSPORT
+      filters.categories.forEach(cat => {
+        params.append('category', cat);
+      });
+    } else if (filters?.category) {
       params.append('category', filters.category);
     }
     if (filters?.start_date) {
@@ -260,7 +266,7 @@ export const budgetApi = {
 // AI Insights API calls
 export const insightsApi = {
   generate: (): Promise<AIInsight[]> =>
-    apiRequest('/api/insights', {
+    apiRequest('/api/insights/generate', {
       method: 'POST',
     }),
 };

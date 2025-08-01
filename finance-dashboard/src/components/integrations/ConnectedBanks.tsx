@@ -3,6 +3,7 @@ import React from 'react';
 import { CheckCircle, ExternalLink, Settings } from 'lucide-react';
 
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import type { ConnectedIntegration } from '../../hooks/useIntegrations';
 
 interface ConnectedBanksProps {
@@ -17,6 +18,7 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
   onShowSettings,
 }) => {
   const { t } = useTranslation();
+  const { formatShortDate } = useDateFormatter();
 
   if (integrations.length === 0) {
     return null;
@@ -82,7 +84,7 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
                     <span className="text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-500">
                       {integration.last_sync
-                        ? `${t('integrations.synced')} ${new Date(integration.last_sync).toLocaleDateString()}`
+                        ? `${t('integrations.synced')} ${formatShortDate(integration.last_sync)}`
                         : t('integrations.neverSynced')}
                     </span>
                   </div>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useAppNotifications } from '../useAppNotifications';
 import { uploadHistoryApi } from '../../services/apiService';
 import { UploadHistory } from '../../types';
 
@@ -22,7 +22,7 @@ export const useUploadHistoryQuery = () => {
 // Delete upload history mutation
 export const useDeleteUploadHistoryMutation = () => {
   const queryClient = useQueryClient();
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError } = useAppNotifications();
 
   return useMutation({
     mutationFn: uploadHistoryApi.delete,

@@ -4,6 +4,7 @@ import Chart from 'react-apexcharts';
 
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { Expense } from '../../types';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 
@@ -15,8 +16,14 @@ interface SpendingHeatmapProps {
 const SpendingHeatmap: React.FC<SpendingHeatmapProps> = ({ expenses, onDateClick }) => {
   const { formatAmount, convertAmount, sessionCurrency } = useCurrency();
   const { updateFilter } = useGlobalFilters();
+  const { formatMonth } = useDateFormatter();
 
   const heatmapData = useMemo(() => {
+    // Safety check for expenses prop
+    if (!expenses || !Array.isArray(expenses)) {
+      return { series: [], categories: [] };
+    }
+
     // Get current year data
     const currentYear = new Date().getFullYear();
     const startDate = new Date(currentYear, 0, 1);
@@ -57,9 +64,7 @@ const SpendingHeatmap: React.FC<SpendingHeatmapProps> = ({ expenses, onDateClick
 
     // Create data for each month
     for (let month = 0; month < 12; month++) {
-      const monthName = new Date(currentYear, month, 1).toLocaleDateString('en-US', {
-        month: 'short',
-      });
+      const monthName = formatMonth(new Date(currentYear, month, 1)).slice(0, 3); // Short month format
 
       const monthData: Array<{ x: string; y: number }> = [];
 
@@ -222,7 +227,8 @@ const SpendingHeatmap: React.FC<SpendingHeatmapProps> = ({ expenses, onDateClick
           const day = dataPointIndex + 1;
           const currentYear = new Date().getFullYear();
 
-          return `${formatAmount(val)} spent on ${monthName} ${day}, ${currentYear}`;
+          const fullMonthName = formatMonth(new Date(currentYear, seriesIndex, 1));
+          return `${formatAmount(val)} spent on ${fullMonthName} ${day}, ${currentYear}`;
         },
       },
       marker: {

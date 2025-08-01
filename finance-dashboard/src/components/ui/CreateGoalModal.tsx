@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { useCategoryTranslation } from '../../contexts/LanguageContext';
+import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
 import { Category, GoalType, TimeHorizon, GoalRecurrence, GoalCreate } from '../../types';
 
 interface CreateGoalModalProps {
@@ -37,6 +37,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 }) => {
   const { sessionCurrency, formatAmount } = useCurrency();
   const { tCategory } = useCategoryTranslation(categories);
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState<GoalFormData>({
     title: '',
@@ -60,22 +61,22 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
   const goalTypes = [
     {
       value: 'spending' as GoalType,
-      label: 'Spending Budget',
-      description: 'Set recurring spending limits (e.g., $500/month for food)',
+      label: t('goals.spendingBudget'),
+      description: t('goals.spendingBudgetDescription'),
       icon: DollarSign,
       color: 'text-green-600 bg-green-100',
     },
     {
       value: 'saving' as GoalType,
-      label: 'Savings Goal',
-      description: 'Save for specific purchases (e.g., car, vacation, emergency fund)',
+      label: t('goals.savingsGoal'),
+      description: t('goals.savingsGoalDescription'),
       icon: PiggyBank,
       color: 'text-purple-600 bg-purple-100',
     },
     {
       value: 'debt' as GoalType,
-      label: 'Debt Payoff',
-      description: 'Pay off loans or credit cards by a target date',
+      label: t('goals.debtPayoff'),
+      description: t('goals.debtPayoffDescription'),
       icon: CreditCard,
       color: 'text-red-600 bg-red-100',
     },
@@ -84,20 +85,20 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
   const timeHorizons = [
     {
       value: 'short' as TimeHorizon,
-      label: 'Short-term',
-      description: '1-6 months',
+      label: t('goals.shortTerm'),
+      description: t('goals.shortTermDescription'),
       icon: Clock,
     },
     {
       value: 'medium' as TimeHorizon,
-      label: 'Medium-term',
-      description: '6 months - 2 years',
+      label: t('goals.mediumTerm'),
+      description: t('goals.mediumTermDescription'),
       icon: Calendar,
     },
     {
       value: 'long' as TimeHorizon,
-      label: 'Long-term',
-      description: '2+ years',
+      label: t('goals.longTerm'),
+      description: t('goals.longTermDescription'),
       icon: TrendingUp,
     },
   ];
@@ -106,26 +107,26 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
     if (formData.goal_type === 'spending') {
       // Spending goals (budgets) are typically recurring
       return [
-        { value: 'weekly' as GoalRecurrence, label: 'Weekly Budget' },
-        { value: 'monthly' as GoalRecurrence, label: 'Monthly Budget' },
-        { value: 'quarterly' as GoalRecurrence, label: 'Quarterly Budget' },
-        { value: 'yearly' as GoalRecurrence, label: 'Yearly Budget' },
+        { value: 'weekly' as GoalRecurrence, label: t('goals.weeklyBudget') },
+        { value: 'monthly' as GoalRecurrence, label: t('goals.monthlyBudget') },
+        { value: 'quarterly' as GoalRecurrence, label: t('goals.quarterlyBudget') },
+        { value: 'yearly' as GoalRecurrence, label: t('goals.yearlyBudget') },
       ];
     } else {
       // Savings and debt goals are typically one-time
       return [
-        { value: 'one_time' as GoalRecurrence, label: 'One-time Goal' },
-        { value: 'monthly' as GoalRecurrence, label: 'Monthly Contributions' },
-        { value: 'quarterly' as GoalRecurrence, label: 'Quarterly Contributions' },
-        { value: 'yearly' as GoalRecurrence, label: 'Yearly Contributions' },
+        { value: 'one_time' as GoalRecurrence, label: t('goals.oneTimeGoal') },
+        { value: 'monthly' as GoalRecurrence, label: t('goals.monthlyContributions') },
+        { value: 'quarterly' as GoalRecurrence, label: t('goals.quarterlyContributions') },
+        { value: 'yearly' as GoalRecurrence, label: t('goals.yearlyContributions') },
       ];
     }
   };
 
   const priorityOptions = [
-    { value: 1 as const, label: 'High Priority', color: 'text-red-600' },
-    { value: 2 as const, label: 'Medium Priority', color: 'text-yellow-600' },
-    { value: 3 as const, label: 'Low Priority', color: 'text-green-600' },
+    { value: 1 as const, label: t('goals.highPriority'), color: 'text-red-600' },
+    { value: 2 as const, label: t('goals.mediumPriority'), color: 'text-yellow-600' },
+    { value: 3 as const, label: t('goals.lowPriority'), color: 'text-green-600' },
   ];
 
   const handleInputChange = (field: keyof GoalFormData, value: any) => {
@@ -170,26 +171,26 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
     const newErrors: Partial<GoalFormData> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('goals.titleRequired');
     }
 
     if (!formData.target_amount || parseFloat(formData.target_amount) <= 0) {
-      newErrors.target_amount = 'Please enter a valid amount';
+      newErrors.target_amount = t('goals.validAmountRequired');
     }
 
     // Validate contribution amount for recurring goals (excluding one_time and spending goals)
     if (formData.goal_type !== 'spending' && formData.recurrence !== 'one_time') {
       if (!formData.contribution_amount || parseFloat(formData.contribution_amount) <= 0) {
-        newErrors.contribution_amount = 'Please enter a valid contribution amount';
+        newErrors.contribution_amount = t('goals.validContributionRequired');
       }
     }
 
     if (formData.goal_type === 'spending' && !formData.category) {
-      newErrors.category = 'Category is required for spending goals';
+      newErrors.category = t('goals.categoryRequiredForSpending');
     }
 
     if ((formData.goal_type === 'saving' || formData.goal_type === 'debt') && !formData.target_date) {
-      newErrors.target_date = 'Target date is required for savings and debt goals';
+      newErrors.target_date = t('goals.targetDateRequired');
     }
 
     setErrors(newErrors);
@@ -252,8 +253,8 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Create New Goal</h2>
-              <p className="text-gray-600 text-sm mt-1">Set up your financial goal with custom parameters</p>
+              <h2 className="text-xl font-semibold text-gray-900">{t('goals.createNewGoal')}</h2>
+              <p className="text-gray-600 text-sm mt-1">{t('goals.createNewGoalSubtitle')}</p>
             </div>
             <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X className="h-5 w-5" />
@@ -263,7 +264,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
           <div className="p-6 space-y-6">
             {/* Goal Type Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Goal Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-3">{t('goals.goalType')}</label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {goalTypes.map((type) => (
                   <button
@@ -291,7 +292,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Goal Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.goalTitle')}</label>
                 <input
                   type="text"
                   value={formData.title}
@@ -299,7 +300,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                   className={`w-full border rounded-lg px-3 py-2 ${
                     errors.title ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="e.g., Emergency Fund, Food Budget"
+                  placeholder={t('goals.goalTitlePlaceholder')}
                 />
                 {errors.title && (
                   <p className="text-red-600 text-sm mt-1 flex items-center">
@@ -311,7 +312,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Target Amount ({sessionCurrency})
+                  {t('goals.targetAmount')} ({sessionCurrency})
                 </label>
                 <input
                   type="number"
@@ -336,14 +337,14 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description (Optional)
+                {t('goals.descriptionOptional')}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 rows={2}
-                placeholder="Brief description of your goal..."
+                placeholder={t('goals.descriptionPlaceholder')}
               />
             </div>
 
@@ -351,7 +352,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {formData.goal_type !== 'spending' && formData.recurrence !== 'one_time' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contribution Amount ({sessionCurrency})
+                  {t('goals.contributionAmount')} ({sessionCurrency})
                 </label>
                 <input
                   type="number"
@@ -371,7 +372,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  How much you plan to save/pay per {formData.recurrence.replace('_', ' ')} period
+                  {t('goals.contributionAmountHelp', { period: formData.recurrence.replace('_', ' ') })}
                 </p>
               </div>
             )}
@@ -379,7 +380,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Category (for spending goals) */}
             {formData.goal_type === 'spending' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.category')}</label>
                 <select
                   value={formData.category}
                   onChange={(e) => handleInputChange('category', e.target.value)}
@@ -387,7 +388,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                     errors.category ? 'border-red-300' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Select a category</option>
+                  <option value="">{t('goals.selectCategory')}</option>
                   {categories.map(category => (
                     <option key={category.name} value={category.name}>
                       {tCategory(category.name)}
@@ -406,7 +407,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Time Planning */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Time Horizon</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.timeHorizon')}</label>
                 <div className="space-y-2">
                   {timeHorizons.map((horizon) => (
                     <button
@@ -431,7 +432,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {formData.goal_type === 'spending' ? 'Budget Period' : 'Contribution Schedule'}
+                  {formData.goal_type === 'spending' ? t('goals.budgetPeriod') : t('goals.contributionSchedule')}
                 </label>
                 <select
                   value={formData.recurrence}
@@ -446,10 +447,10 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
                   {formData.goal_type === 'spending' 
-                    ? 'How often this budget resets'
+                    ? t('goals.budgetPeriodHelp')
                     : formData.recurrence === 'one_time' 
-                      ? 'Single target to reach (like buying a car)'
-                      : 'How often you plan to contribute toward this goal'
+                      ? t('goals.oneTimeGoalHelp')
+                      : t('goals.contributionScheduleHelp')
                   }
                 </p>
               </div>
@@ -458,7 +459,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Target Date (for savings and debt goals) */}
             {(formData.goal_type === 'saving' || formData.goal_type === 'debt') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Target Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.targetDate')}</label>
                 <input
                   type="date"
                   value={formData.target_date}
@@ -480,7 +481,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Priority and Settings */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.priority')}</label>
                 <select
                   value={formData.priority}
                   onChange={(e) => handleInputChange('priority', parseInt(e.target.value) as 1 | 2 | 3)}
@@ -503,7 +504,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
                 <label htmlFor="auto_calculate" className="text-sm text-gray-700">
-                  Auto-calculate progress from expenses
+                  {t('goals.autoCalculateProgress')}
                 </label>
               </div>
             </div>
@@ -511,7 +512,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             {/* Preview */}
             {formData.title && formData.target_amount && (
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Goal Preview</h4>
+                <h4 className="font-medium text-gray-900 mb-2">{t('goals.goalPreview')}</h4>
                 <div className="flex items-center space-x-3">
                   {selectedGoalType && (
                     <div className={`p-2 rounded-lg ${selectedGoalType.color}`}>
@@ -521,11 +522,11 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                   <div>
                     <div className="font-medium">{formData.title}</div>
                     <div className="text-sm text-gray-600">
-                      Target: {formatAmount(parseFloat(formData.target_amount) || 0)}
+                      {t('goals.target')}: {formatAmount(parseFloat(formData.target_amount) || 0)}
                       {formData.contribution_amount && formData.goal_type !== 'spending' && formData.recurrence !== 'one_time' && (
                         <> • {formatAmount(parseFloat(formData.contribution_amount) || 0)}/{formData.recurrence.replace('_', ' ')}</>
                       )}
-                      {' '} • {formData.time_horizon}-term • {formData.recurrence}
+                      {' '} • {t(`goals.${formData.time_horizon}`)} • {formData.recurrence}
                     </div>
                   </div>
                 </div>
@@ -541,7 +542,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -551,12 +552,12 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
               {isSubmitting ? (
                 <>
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  <span>Creating...</span>
+                  <span>{t('goals.creating')}</span>
                 </>
               ) : (
                 <>
                   <Target className="h-4 w-4" />
-                  <span>Create Goal</span>
+                  <span>{t('goals.createGoalButton')}</span>
                 </>
               )}
             </button>

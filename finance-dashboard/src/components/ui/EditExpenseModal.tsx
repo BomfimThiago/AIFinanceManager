@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 
-import { useCategoryTranslation } from '../../contexts/LanguageContext';
+import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { Category, Expense } from '../../types';
+import CategoryDisplay from './CategoryDisplay';
 
 interface EditExpenseModalProps {
   isOpen: boolean;
@@ -23,6 +25,10 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
   isLoading = false,
 }) => {
   const { tCategory } = useCategoryTranslation(categories);
+  const { t } = useTranslation();
+  const { sessionCurrency } = useCurrency();
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     date: '',
     amount: '',
@@ -62,6 +68,23 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
     }
   }, [expense, isOpen]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    if (showCategoryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCategoryDropdown]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -78,6 +101,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
       type: formData.type,
       source: formData.source,
       items: formData.items,
+      original_currency: sessionCurrency,
     });
   };
 
@@ -95,7 +119,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">
-            {expense ? 'Edit Expense' : 'Add New Expense'}
+            {expense ? t('expenses.editExpense') : t('expenses.addExpense')}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="h-6 w-6" />
@@ -105,7 +129,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.date')}</label>
             <input
               type="date"
               value={formData.date}
@@ -117,7 +141,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.amount')}</label>
             <input
               type="number"
               step="0.01"
@@ -131,58 +155,83 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
           </div>
 
           {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <select
-              value={formData.category}
-              onChange={e => handleInputChange('category', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
+          <div className="relative" ref={dropdownRef}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.category')}</label>
+            <button
+              type="button"
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between bg-white"
             >
-              <option value="">Select category</option>
-              {categories.map(cat => (
-                <option key={cat.name} value={cat.name}>
-                  {tCategory(cat.name)}
-                </option>
-              ))}
-            </select>
+              {formData.category ? (
+                <CategoryDisplay
+                  category={categories.find(c => c.name === formData.category)!}
+                  variant="inline"
+                  allCategories={categories}
+                />
+              ) : (
+                <span className="text-gray-500">{t('common.select')} {t('expenses.category').toLowerCase()}</span>
+              )}
+              <ChevronDown className="h-4 w-4 text-gray-400" />
+            </button>
+            
+            {showCategoryDropdown && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {categories.map(cat => (
+                  <button
+                    key={cat.name}
+                    type="button"
+                    onClick={() => {
+                      handleInputChange('category', cat.name);
+                      setShowCategoryDropdown(false);
+                    }}
+                    className="w-full text-left hover:bg-gray-50 p-2"
+                  >
+                    <CategoryDisplay
+                      category={cat}
+                      variant="compact"
+                      allCategories={categories}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.description')}</label>
             <input
               type="text"
               value={formData.description}
               onChange={e => handleInputChange('description', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter description"
+              placeholder={t('expenses.description')}
               required
             />
           </div>
 
           {/* Merchant */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Merchant</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.merchant')}</label>
             <input
               type="text"
               value={formData.merchant}
               onChange={e => handleInputChange('merchant', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter merchant name"
+              placeholder={`${t('common.add')} ${t('expenses.merchant').toLowerCase()}`}
             />
           </div>
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.type')}</label>
             <select
               value={formData.type}
               onChange={e => handleInputChange('type', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
+              <option value="expense">{t('common.expense')}</option>
+              <option value="income">{t('common.income')}</option>
             </select>
           </div>
 
@@ -193,14 +242,14 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Saving...' : expense ? 'Save Changes' : 'Add Expense'}
+              {isLoading ? t('common.saving') : expense ? t('common.save') + ' ' + t('common.changes') : t('expenses.addExpense')}
             </button>
           </div>
         </form>

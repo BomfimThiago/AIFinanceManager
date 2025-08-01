@@ -1,5 +1,3 @@
-import { LucideIcon } from 'lucide-react';
-
 export interface Expense {
   id: number;
   date: string;
@@ -124,9 +122,18 @@ export interface BudgetSummary {
 }
 
 export interface Category {
+  id?: number;
   name: string;
-  icon: LucideIcon;
+  description?: string;
+  icon: string; // Icon name as string (e.g., 'utensils', 'car', 'shopping-bag')
   color: string;
+  is_default?: boolean;
+  is_active?: boolean;
+  user_id?: number;
+  translations?: {
+    name?: Record<string, string>;
+    description?: Record<string, string>;
+  };
 }
 
 export interface AIInsight {

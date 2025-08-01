@@ -4,6 +4,7 @@ import Chart from 'react-apexcharts';
 
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { Expense } from '../../types';
 import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
 
@@ -18,8 +19,14 @@ const InteractiveSpendingTimeline: React.FC<InteractiveSpendingTimelineProps> = 
 }) => {
   const { formatAmount, convertAmount, sessionCurrency } = useCurrency();
   const { updateFilter } = useGlobalFilters();
+  const { formatMonthYear } = useDateFormatter();
 
   const chartData = useMemo(() => {
+    // Safety check for expenses prop
+    if (!expenses || !Array.isArray(expenses)) {
+      return { series: [], categories: [] };
+    }
+
     // Group expenses by month
     const monthlyData = expenses.reduce(
       (acc, expense) => {
@@ -49,10 +56,7 @@ const InteractiveSpendingTimeline: React.FC<InteractiveSpendingTimelineProps> = 
     return {
       categories: sortedData.map(item => {
         const [year, month] = item.date.split('-');
-        return new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', {
-          month: 'short',
-          year: 'numeric',
-        });
+        return formatMonthYear(new Date(parseInt(year), parseInt(month) - 1));
       }),
       series: [
         {

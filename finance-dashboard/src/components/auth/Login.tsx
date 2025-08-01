@@ -4,7 +4,7 @@ import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useAppNotifications } from '../../hooks/useAppNotifications';
 import { LoginCredentials } from '../../types';
 import { getUserFriendlyError } from '../../utils/errorMessages';
 import Logo from '../ui/Logo';
@@ -15,7 +15,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onToggleMode }) => {
   const { login, isLoading } = useAuth();
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError } = useAppNotifications();
   const { t } = useTranslation();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',

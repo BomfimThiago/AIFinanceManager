@@ -1,49 +1,5 @@
-import {
-  Book,
-  Car,
-  CreditCard,
-  DollarSign,
-  Dumbbell,
-  Film,
-  Gift,
-  Heart,
-  Home,
-  Laptop,
-  MoreHorizontal,
-  Plane,
-  Shirt,
-  ShoppingBag,
-  Tag,
-  Utensils,
-  Zap,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-
 import type { Category as APICategory } from '../services/apiService';
 import type { Category as FrontendCategory } from '../types';
-
-// Map icon strings to Lucide components
-const iconMap: Record<string, LucideIcon> = {
-  utensils: Utensils,
-  car: Car,
-  'shopping-bag': ShoppingBag,
-  film: Film,
-  zap: Zap,
-  heart: Heart,
-  book: Book,
-  home: Home,
-  shirt: Shirt,
-  laptop: Laptop,
-  dumbbell: Dumbbell,
-  plane: Plane,
-  gift: Gift,
-  'more-horizontal': MoreHorizontal,
-  tag: Tag,
-  'dollar-sign': DollarSign,
-  // Fallback icons
-  dollar: DollarSign,
-  'credit-card': CreditCard,
-};
 
 // Default colors for categories that don't have one
 const defaultColors = [
@@ -68,16 +24,19 @@ const defaultColors = [
  * Convert an API category to a frontend category
  */
 export function convertAPICategory(apiCategory: APICategory, index: number = 0): FrontendCategory {
-  // Get icon component, fallback to Tag if not found
-  const iconComponent = apiCategory.icon ? iconMap[apiCategory.icon] || Tag : Tag;
-
   // Use provided color or fallback to default color
   const color = apiCategory.color || defaultColors[index % defaultColors.length];
 
   return {
+    id: apiCategory.id,
     name: apiCategory.name,
-    icon: iconComponent,
+    description: apiCategory.description,
+    icon: apiCategory.icon || 'tag', // Keep the icon as a string name
     color: color,
+    is_default: apiCategory.is_default,
+    is_active: apiCategory.is_active,
+    user_id: apiCategory.user_id,
+    translations: apiCategory.translations,
   };
 }
 

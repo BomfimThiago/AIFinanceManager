@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { AlertCircle, Building, ExternalLink, Shield, User, X } from 'lucide-react';
 
-import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useAppNotifications } from '../../hooks/useAppNotifications';
 import { useConsentManagement } from '../../hooks/useConsentManagement';
 
 interface ConsentManagementModalProps {
@@ -32,7 +32,7 @@ export const ConsentManagementModal: React.FC<ConsentManagementModalProps> = ({
   });
 
   const { openConsentManagement, openConsentRenewal, isLoading, error } = useConsentManagement();
-  const { showError, showSuccess } = useNotificationContext();
+  const { showError, showSuccess } = useAppNotifications();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

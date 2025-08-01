@@ -1,15 +1,19 @@
-import React, { useMemo, useState } from 'react';
+/**
+ * Refactored Expenses Component - Pure UI presentation
+ * Separates business logic from presentation using hooks
+ */
 
-import { DollarSign, Edit2, Plus, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import React from 'react';
+import { DollarSign, Edit2, Plus, Trash2, TrendingDown, TrendingUp, Tag } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-import { useCurrency } from '../../contexts/CurrencyContext';
-import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
-import { useCreateExpense, useDeleteExpense, useUpdateExpense } from '../../hooks/queries';
-import { Category, Expense } from '../../types';
-import { getExpenseAmountInCurrency } from '../../utils/currencyHelpers';
-import { getUserFriendlyError } from '../../utils/errorMessages';
-import { formatDate } from '../../utils/formatters';
+import { useExpensesData } from '../../hooks/useExpensesData';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
+import { useCategoryTranslation } from '../../contexts/LanguageContext';
+import type { Category, Expense } from '../../types';
+import { CategoryIcon } from '../../utils/categoryIcons';
+
+// UI Components
 import ConfirmationModal from '../ui/ConfirmationModal';
 import EditExpenseModal from '../ui/EditExpenseModal';
 
@@ -19,341 +23,294 @@ interface ExpensesProps {
   hideAmounts: boolean;
 }
 
-const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }) => {
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-
-  const { t } = useTranslation();
-  const { formatAmount: formatCurrencyAmount, convertAmount, sessionCurrency } = useCurrency();
+// Expense Row Component
+const ExpenseRow: React.FC<{
+  expense: Expense;
+  categories: Category[];
+  formatAmount: (expense: Expense) => string;
+  onEdit: (expense: Expense) => void;
+  onDelete: (expense: Expense) => void;
+}> = ({ expense, categories, formatAmount, onEdit, onDelete }) => {
+  const { formatShortDate } = useDateFormatter();
   const { tCategory } = useCategoryTranslation(categories);
-
-  const createExpenseMutation = useCreateExpense();
-  const updateExpenseMutation = useUpdateExpense();
-  const deleteExpenseMutation = useDeleteExpense();
-  const { showSuccess, showError } = useNotificationContext();
-
-  const handleAddClick = () => {
-    setEditingExpense(null); // null means create mode
-    setIsEditModalOpen(true);
-  };
-
-  const handleEditClick = (expense: Expense) => {
-    setEditingExpense(expense);
-    setIsEditModalOpen(true);
-  };
-
-  const handleDeleteClick = (expense: Expense) => {
-    setExpenseToDelete(expense);
-    setIsConfirmModalOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (!expenseToDelete) return;
-
-    deleteExpenseMutation.mutate(expenseToDelete.id, {
-      onSuccess: () => {
-        showSuccess(t('expenses.expenseDeleted'), t('expenses.expenseDeletedMessage'));
-        setIsConfirmModalOpen(false);
-        setExpenseToDelete(null);
-      },
-      onError: (error: any) => {
-        console.error('Delete expense error:', error);
-        const friendlyError = getUserFriendlyError(error);
-        showError(friendlyError.title, friendlyError.message);
-        setIsConfirmModalOpen(false);
-        setExpenseToDelete(null);
-      },
-    });
-  };
-
-  const handleCancelDelete = () => {
-    setIsConfirmModalOpen(false);
-    setExpenseToDelete(null);
-  };
-
-  const handleSaveExpense = (expenseData: Omit<Expense, 'id'>) => {
-    if (editingExpense) {
-      // Update existing expense
-      updateExpenseMutation.mutate(
-        { expenseId: editingExpense.id, expense: expenseData },
-        {
-          onSuccess: () => {
-            showSuccess(t('expenses.expenseUpdated'), t('expenses.expenseUpdatedMessage'));
-            setIsEditModalOpen(false);
-            setEditingExpense(null);
-          },
-          onError: (error: any) => {
-            console.error('Update expense error:', error);
-            const friendlyError = getUserFriendlyError(error);
-            showError(friendlyError.title, friendlyError.message);
-          },
-        }
-      );
-    } else {
-      // Create new expense
-      createExpenseMutation.mutate(expenseData, {
-        onSuccess: () => {
-          showSuccess(t('expenses.expenseCreated'), t('expenses.expenseCreatedMessage'));
-          setIsEditModalOpen(false);
-          setEditingExpense(null);
-        },
-        onError: (error: any) => {
-          console.error('Create expense error:', error);
-          const friendlyError = getUserFriendlyError(error);
-          showError(friendlyError.title, friendlyError.message);
-        },
-      });
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsEditModalOpen(false);
-    setEditingExpense(null);
-  };
-
-  // Calculate totals for visible expenses with currency conversion
-  const expenseTotals = useMemo(() => {
-    const getConvertedAmount = (expense: Expense) => {
-      return getExpenseAmountInCurrency(expense, sessionCurrency, convertAmount);
-    };
-
-    const totalExpenses = expenses
-      .filter(expense => expense.type === 'expense')
-      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
-
-    const totalIncome = expenses
-      .filter(expense => expense.type === 'income')
-      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
-
-    const netAmount = totalIncome - totalExpenses;
-
+  
+  // Find category details for icon and color
+  const getCategoryDetails = (categoryName: string) => {
+    const category = categories.find(cat => cat.name === categoryName);
     return {
-      totalExpenses,
-      totalIncome,
-      netAmount,
-      totalTransactions: expenses.length,
+      icon: category?.icon || 'tag',
+      color: category?.color || '#6B7280',
+      translatedName: tCategory(categoryName)
     };
-  }, [expenses, sessionCurrency, convertAmount]);
+  };
+  
+  const getTypeIcon = (type: string) => {
+    return type === 'income' ? (
+      <TrendingUp className="w-4 h-4 text-green-600" />
+    ) : (
+      <TrendingDown className="w-4 h-4 text-red-600" />
+    );
+  };
+
+  const getTypeColor = (type: string) => {
+    return type === 'income' ? 'text-green-600' : 'text-red-600';
+  };
 
   return (
+    <tr className="hover:bg-gray-50 border-b border-gray-200">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          {getTypeIcon(expense.type)}
+          <span className="ml-2 text-sm font-medium text-gray-900">
+            {formatShortDate(expense.date)}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="text-sm text-gray-900">{expense.description}</div>
+        {expense.merchant && (
+          <div className="text-sm text-gray-500">{expense.merchant}</div>
+        )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        {(() => {
+          const categoryDetails = getCategoryDetails(expense.category);
+          return (
+            <div className="flex items-center space-x-2">
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${categoryDetails.color}20` }}
+              >
+                <CategoryIcon
+                  iconName={categoryDetails.icon}
+                  className="w-4 h-4"
+                  color={categoryDetails.color}
+                />
+              </div>
+              <span 
+                className="text-sm font-medium capitalize"
+                style={{ color: categoryDetails.color }}
+              >
+                {categoryDetails.translatedName}
+              </span>
+            </div>
+          );
+        })()} 
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`text-sm font-medium ${getTypeColor(expense.type)}`}>
+          {formatAmount(expense)}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <button
+          onClick={() => onEdit(expense)}
+          className="text-indigo-600 hover:text-indigo-900 mr-3 p-1 rounded hover:bg-indigo-50"
+          title="Edit expense"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(expense)}
+          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+          title="Delete expense"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </td>
+    </tr>
+  );
+};
+
+// Summary Stats Component
+const ExpensesSummary: React.FC<{
+  calculations: {
+    totalAmount: number;
+    totalIncome: number;
+    totalExpenses: number;
+    expenseCount: number;
+  };
+  hideAmounts: boolean;
+  currency: string;
+}> = ({ calculations, hideAmounts, currency }) => {
+  const formatAmount = (amount: number) => {
+    if (hideAmounts) return '••••';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center">
+          <DollarSign className="w-5 h-5 text-gray-400" />
+          <h3 className="ml-2 text-sm font-medium text-gray-500">Total</h3>
+        </div>
+        <p className="mt-2 text-2xl font-semibold text-gray-900">
+          {formatAmount(calculations.totalAmount)}
+        </p>
+      </div>
+      
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center">
+          <TrendingUp className="w-5 h-5 text-green-500" />
+          <h3 className="ml-2 text-sm font-medium text-gray-500">Income</h3>
+        </div>
+        <p className="mt-2 text-2xl font-semibold text-green-600">
+          {formatAmount(calculations.totalIncome)}
+        </p>
+      </div>
+      
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center">
+          <TrendingDown className="w-5 h-5 text-red-500" />
+          <h3 className="ml-2 text-sm font-medium text-gray-500">Expenses</h3>
+        </div>
+        <p className="mt-2 text-2xl font-semibold text-red-600">
+          {formatAmount(calculations.totalExpenses)}
+        </p>
+      </div>
+      
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center">
+          <span className="text-gray-400">#</span>
+          <h3 className="ml-2 text-sm font-medium text-gray-500">Count</h3>
+        </div>
+        <p className="mt-2 text-2xl font-semibold text-gray-900">
+          {calculations.expenseCount}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Empty State Component
+const EmptyState: React.FC<{ onAddClick: () => void }> = ({ onAddClick }) => (
+  <div className="text-center py-12">
+    <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
+    <h3 className="mt-2 text-sm font-medium text-gray-900">No expenses</h3>
+    <p className="mt-1 text-sm text-gray-500">Get started by creating a new expense.</p>
+    <div className="mt-6">
+      <button
+        onClick={onAddClick}
+        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Expense
+      </button>
+    </div>
+  </div>
+);
+
+// Main Expenses Component
+const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }) => {
+  const {
+    modalState,
+    calculations,
+    handleAddClick,
+    handleEditClick,
+    handleDeleteClick,
+    handleCloseModals,
+    handleSaveExpense,
+    handleConfirmDelete,
+    formatExpenseAmount,
+    isCreating,
+    isUpdating,
+    isDeleting,
+  } = useExpensesData(expenses, categories);
+
+  // Early return for empty state
+  if (expenses.length === 0) {
+    return <EmptyState onAddClick={handleAddClick} />;
+  }
+
+  // Pure JSX - only UI rendering
+  return (
     <div className="space-y-6">
+      {/* Header with Add Button */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">{t('expenses.recentTransactions')}</h2>
+        <h1 className="text-2xl font-bold text-gray-900">Expenses</h1>
         <button
           onClick={handleAddClick}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center space-x-2 font-medium"
+          disabled={isCreating}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" />
-          <span>{t('expenses.addExpense')}</span>
+          <Plus className="w-4 h-4 mr-2" />
+          {isCreating ? 'Adding...' : 'Add Expense'}
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">{t('expenses.totalExpenses')}</p>
-              <p className="text-2xl font-bold text-red-600">
-                {hideAmounts ? '***' : formatCurrencyAmount(expenseTotals.totalExpenses)}
-              </p>
-            </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <TrendingDown className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-        </div>
+      {/* Summary Stats */}
+      <ExpensesSummary
+        calculations={calculations}
+        hideAmounts={hideAmounts}
+        currency="USD" // TODO: Get from user preferences
+      />
 
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">{t('expenses.totalIncome')}</p>
-              <p className="text-2xl font-bold text-green-600">
-                {hideAmounts ? '***' : formatCurrencyAmount(expenseTotals.totalIncome)}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <TrendingUp className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">{t('expenses.netAmount')}</p>
-              <p
-                className={`text-2xl font-bold ${
-                  expenseTotals.netAmount >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {hideAmounts
-                  ? '***'
-                  : `${expenseTotals.netAmount >= 0 ? '+' : ''}${formatCurrencyAmount(Math.abs(expenseTotals.netAmount))}`}
-              </p>
-            </div>
-            <div
-              className={`p-3 rounded-full ${
-                expenseTotals.netAmount >= 0 ? 'bg-green-100' : 'bg-red-100'
-              }`}
-            >
-              {expenseTotals.netAmount >= 0 ? (
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              ) : (
-                <TrendingDown className="h-6 w-6 text-red-600" />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">{t('expenses.transactions')}</p>
-              <p className="text-2xl font-bold text-gray-900">{expenseTotals.totalTransactions}</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <DollarSign className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('expenses.date')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('expenses.description')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('expenses.category')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('expenses.merchant')}
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('expenses.amount')}
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('expenses.actions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {expenses.map(expense => {
-                const CategoryIcon =
-                  categories.find(cat => cat.name === expense.category)?.icon || DollarSign;
-                const categoryColor =
-                  categories.find(cat => cat.name === expense.category)?.color || '#6B7280';
-
-                return (
-                  <tr key={expense.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(expense.date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className="p-2 rounded-lg"
-                          style={{ backgroundColor: `${categoryColor}20` }}
-                        >
-                          <CategoryIcon className="h-4 w-4" style={{ color: categoryColor }} />
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {expense.description}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                        style={{ backgroundColor: `${categoryColor}20`, color: categoryColor }}
-                      >
-                        {tCategory(expense.category)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {expense.merchant}
-                    </td>
-                    <td
-                      className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${
-                        expense.type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}
-                    >
-                      {(() => {
-                        if (hideAmounts) return '***';
-
-                        // Get converted amount
-                        const convertedAmount = getExpenseAmountInCurrency(
-                          expense,
-                          sessionCurrency,
-                          convertAmount
-                        );
-
-                        return `${expense.type === 'income' ? '+' : '-'}${formatCurrencyAmount(convertedAmount)}`;
-                      })()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleEditClick(expense)}
-                          className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
-                          title={t('expenses.editExpenseTitle')}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(expense)}
-                          disabled={deleteExpenseMutation.isPending}
-                          className="p-1 text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
-                          title={t('expenses.deleteExpenseTitle')}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      {/* Expenses Table */}
+      <div className="bg-white shadow-sm border rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Amount
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {expenses.map((expense) => (
+              <ExpenseRow
+                key={expense.id}
+                expense={expense}
+                categories={categories}
+                formatAmount={formatExpenseAmount}
+                onEdit={handleEditClick}
+                onDelete={handleDeleteClick}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Edit Modal */}
-      <EditExpenseModal
-        isOpen={isEditModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveExpense}
-        expense={editingExpense}
-        categories={categories}
-        isLoading={
-          editingExpense ? updateExpenseMutation.isPending : createExpenseMutation.isPending
-        }
-      />
+      {modalState.isEditModalOpen && (
+        <EditExpenseModal
+          isOpen={modalState.isEditModalOpen}
+          onClose={handleCloseModals}
+          expense={modalState.editingExpense}
+          categories={categories}
+          onSave={handleSaveExpense}
+          isLoading={isCreating || isUpdating}
+        />
+      )}
 
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-        title={t('expenses.confirmDeleteTitle')}
-        message={t('expenses.deleteConfirmMessage').replace(
-          '{description}',
-          expenseToDelete?.description || ''
-        )}
-        confirmText={t('common.delete')}
-        cancelText={t('common.cancel')}
-        variant="danger"
-        isLoading={deleteExpenseMutation.isPending}
-      />
+      {/* Delete Confirmation Modal */}
+      {modalState.isConfirmModalOpen && modalState.expenseToDelete && (
+        <ConfirmationModal
+          isOpen={modalState.isConfirmModalOpen}
+          onClose={handleCloseModals}
+          onConfirm={handleConfirmDelete}
+          title="Delete Expense"
+          message={`Are you sure you want to delete "${modalState.expenseToDelete.description}"? This action cannot be undone.`}
+          confirmButtonText="Delete"
+          variant="danger"
+          isLoading={isDeleting}
+        />
+      )}
     </div>
   );
 };

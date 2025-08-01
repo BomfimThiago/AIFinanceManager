@@ -76,7 +76,8 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 import { useCategoryTranslation } from '../../contexts/LanguageContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useAppNotifications } from '../../hooks/useAppNotifications';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import {
   useCategories,
   useCreateCategory,
@@ -429,7 +430,15 @@ const CategoryIcon: React.FC<{ iconName: string; className?: string; color?: str
 };
 
 const CategoryManagement: React.FC<CategoryManagementProps> = () => {
-  const { addNotification } = useNotificationContext();
+  const { showSuccess, showError } = useAppNotifications();
+  const { 
+    formatShortDate, 
+    formatLongDate, 
+    formatDateTime, 
+    formatRelativeDate, 
+    formatMonthYear,
+    getLocale 
+  } = useDateFormatter();
 
   // React Query hooks
   const { data: categoriesData, isLoading, error } = useCategories(true);
@@ -456,9 +465,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
   // Handle error state
   React.useEffect(() => {
     if (error) {
-      addNotification('error', t('common.error'), t('categories.failedToLoad'));
+      showError(t('common.error'), t('categories.failedToLoad'));
     }
-  }, [error, addNotification]);
+  }, [error, showError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -469,16 +478,16 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
           id: editingCategory.id,
           data: formData,
         });
-        addNotification('success', t('common.success'), t('categories.updateSuccess'));
+        showSuccess(t('common.success'), t('categories.updateSuccess'));
       } else {
         await createCategoryMutation.mutateAsync(formData);
-        addNotification('success', t('common.success'), t('categories.createSuccess'));
+        showSuccess(t('common.success'), t('categories.createSuccess'));
       }
       resetForm();
     } catch (error: any) {
       console.error('Save category error:', error);
       const friendlyError = getUserFriendlyError(error);
-      addNotification('error', friendlyError.title, friendlyError.message);
+      showError(friendlyError.title, friendlyError.message);
     }
   };
 
@@ -496,11 +505,11 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
   const handleDelete = async (category: Category) => {
     try {
       await deleteCategoryMutation.mutateAsync(category.id);
-      addNotification('success', t('common.success'), t('categories.deleteSuccess'));
+      showSuccess(t('common.success'), t('categories.deleteSuccess'));
     } catch (error: any) {
       console.error('Delete category error:', error);
       const friendlyError = getUserFriendlyError(error);
-      addNotification('error', friendlyError.title, friendlyError.message);
+      showError(friendlyError.title, friendlyError.message);
     }
 
     setDeleteModal({ show: false, category: null });

@@ -20,6 +20,13 @@ interface LanguageContextType {
   translations: Record<string, any>;
   availableLanguages: Record<string, string>;
   isLoading: boolean;
+  // Date formatting functions
+  formatDate: (date: Date | string, options?: Intl.DateTimeFormatOptions) => string;
+  formatShortDate: (date: Date | string) => string;
+  formatLongDate: (date: Date | string) => string;
+  formatDateTime: (date: Date | string) => string;
+  formatRelativeDate: (date: Date | string) => string;
+  getLocale: () => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -73,6 +80,107 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 
   const translations = translationData?.translations || {};
 
+  // Locale mapping for date formatting
+  const getLocale = (): string => {
+    switch (sessionLanguage) {
+      case 'en': return 'en-US';
+      case 'es': return 'es-ES';
+      case 'pt': return 'pt-BR'; // Brazilian Portuguese
+      default: return 'en-US';
+    }
+  };
+
+  // Helper to parse date strings or Date objects
+  const parseDate = (date: Date | string): Date => {
+    if (date instanceof Date) return date;
+    return new Date(date);
+  };
+
+  // Format date with custom options
+  const formatDate = (date: Date | string, options?: Intl.DateTimeFormatOptions): string => {
+    try {
+      const dateObj = parseDate(date);
+      const locale = getLocale();
+      return dateObj.toLocaleDateString(locale, options);
+    } catch (error) {
+      console.warn('Date formatting error:', error);
+      return String(date);
+    }
+  };
+
+  // Short date format (e.g., 12/31/2023, 31/12/2023, 31/12/2023)
+  const formatShortDate = (date: Date | string): string => {
+    return formatDate(date, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+
+  // Long date format (e.g., December 31, 2023, 31 de dezembro de 2023)
+  const formatLongDate = (date: Date | string): string => {
+    return formatDate(date, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  // Date and time format
+  const formatDateTime = (date: Date | string): string => {
+    try {
+      const dateObj = parseDate(date);
+      const locale = getLocale();
+      return dateObj.toLocaleString(locale, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.warn('DateTime formatting error:', error);
+      return String(date);
+    }
+  };
+
+  // Relative date format (e.g., "2 days ago", "hace 2 días")
+  const formatRelativeDate = (date: Date | string): string => {
+    try {
+      const dateObj = parseDate(date);
+      const locale = getLocale();
+      const now = new Date();
+      const diffInMs = now.getTime() - dateObj.getTime();
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+      // Use Intl.RelativeTimeFormat for proper localization
+      const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+      if (diffInDays === 0) {
+        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+        if (diffInHours === 0) {
+          const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+          return rtf.format(-diffInMinutes, 'minute');
+        }
+        return rtf.format(-diffInHours, 'hour');
+      } else if (diffInDays < 7) {
+        return rtf.format(-diffInDays, 'day');
+      } else if (diffInDays < 30) {
+        const diffInWeeks = Math.floor(diffInDays / 7);
+        return rtf.format(-diffInWeeks, 'week');
+      } else if (diffInDays < 365) {
+        const diffInMonths = Math.floor(diffInDays / 30);
+        return rtf.format(-diffInMonths, 'month');
+      } else {
+        const diffInYears = Math.floor(diffInDays / 365);
+        return rtf.format(-diffInYears, 'year');
+      }
+    } catch (error) {
+      console.warn('Relative date formatting error:', error);
+      return formatShortDate(date);
+    }
+  };
+
   // Translation function with dot notation support
   const t = (key: string, fallback?: string): string => {
     try {
@@ -104,21 +212,69 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   // Helper function to translate category names from database
   const tCategory = (categoryName: string, categories?: Category[]): string => {
     try {
-      // First, try to find database translations from category object
+      // Don't translate empty or null names
+      if (!categoryName || categoryName.trim() === '') {
+        return categoryName;
+      }
+
+      // BULLETPROOF APPROACH: If we have categories context, check if this is a system category
       if (categories) {
         const category = categories.find(cat => cat.name === categoryName);
-        if (category?.translations?.name && category.translations.name[sessionLanguage]) {
-          return category.translations.name[sessionLanguage];
+        
+        if (category) {
+          // For system categories (is_default = true), always try translations
+          if (category.is_default) {
+            // First try database translations
+            if (category.translations?.name && category.translations.name[sessionLanguage]) {
+              return category.translations.name[sessionLanguage];
+            }
+            
+            // Then try static translations
+            const categoryTranslation = translations?.categoryNames?.[categoryName];
+            if (categoryTranslation && typeof categoryTranslation === 'string') {
+              return categoryTranslation;
+            }
+            
+            // If no translation found, return original name
+            return categoryName;
+          }
+          
+          // For custom categories (is_default = false), check if they have database translations
+          if (!category.is_default) {
+            // First try database translations from the category itself
+            if (category.translations?.name && category.translations.name[sessionLanguage]) {
+              return category.translations.name[sessionLanguage];
+            }
+            
+            // For custom categories, also check if the name matches any static translations
+            // This allows users who create categories like "Food", "Transport" to get translations
+            const categoryTranslation = translations?.categoryNames?.[categoryName];
+            if (categoryTranslation && typeof categoryTranslation === 'string') {
+              return categoryTranslation;
+            }
+            
+            // If no translation found, return original name (user's custom name)
+            return categoryName;
+          }
         }
       }
 
-      // Fallback to static translation in categoryNames section
-      const categoryTranslation = translations?.categoryNames?.[categoryName];
-      if (categoryTranslation && typeof categoryTranslation === 'string') {
-        return categoryTranslation;
+      // Fallback logic when we don't have categories context (should rarely happen)
+      // Only translate known system categories
+      const knownSystemCategories = [
+        'Food', 'Transport', 'Shopping', 'Entertainment', 'Utilities', 
+        'Healthcare', 'Education', 'Home', 'Clothing', 'Technology', 
+        'Fitness', 'Travel', 'Gifts', 'Pets', 'Other'
+      ];
+
+      if (knownSystemCategories.includes(categoryName)) {
+        const categoryTranslation = translations?.categoryNames?.[categoryName];
+        if (categoryTranslation && typeof categoryTranslation === 'string') {
+          return categoryTranslation;
+        }
       }
 
-      // Final fallback to original category name
+      // For everything else, return the raw name
       return categoryName;
     } catch (error) {
       console.warn(`Category translation error for "${categoryName}":`, error);
@@ -134,7 +290,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   ): string => {
     try {
       // Don't translate if no description provided
-      if (!categoryDescription) {
+      if (!categoryDescription || categoryDescription.trim() === '') {
         return categoryDescription;
       }
 
@@ -145,11 +301,21 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
           category?.translations?.description &&
           category.translations.description[sessionLanguage]
         ) {
-          return category.translations.description[sessionLanguage];
+          const translatedDescription = category.translations.description[sessionLanguage];
+          // Don't use translation if it would result in generic fallbacks
+          if (translatedDescription && 
+              translatedDescription.toLowerCase() !== 'uncategorized' && 
+              translatedDescription.toLowerCase() !== 'sin categoría' && 
+              translatedDescription.toLowerCase() !== 'sem categoria' &&
+              translatedDescription.toLowerCase() !== 'no description' &&
+              translatedDescription.toLowerCase() !== 'sin descripción' &&
+              translatedDescription.toLowerCase() !== 'sem descrição') {
+            return translatedDescription;
+          }
         }
       }
 
-      // Fallback to original description (no static translations for descriptions)
+      // Fallback to original description (always prefer raw description over generic fallbacks)
       return categoryDescription;
     } catch (error) {
       console.warn(`Category description translation error for "${categoryDescription}":`, error);
@@ -168,6 +334,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     translations,
     availableLanguages,
     isLoading,
+    // Date formatting functions
+    formatDate,
+    formatShortDate,
+    formatLongDate,
+    formatDateTime,
+    formatRelativeDate,
+    getLocale,
   };
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
@@ -183,8 +356,30 @@ export const useLanguage = (): LanguageContextType => {
 
 // Hook for easy translation access
 export const useTranslation = () => {
-  const { t, tCategory, tCategoryDescription, isLoading } = useLanguage();
-  return { t, tCategory, tCategoryDescription, isLoading };
+  const { 
+    t, 
+    tCategory, 
+    tCategoryDescription, 
+    isLoading, 
+    formatDate, 
+    formatShortDate, 
+    formatLongDate, 
+    formatDateTime, 
+    formatRelativeDate,
+    getLocale
+  } = useLanguage();
+  return { 
+    t, 
+    tCategory, 
+    tCategoryDescription, 
+    isLoading, 
+    formatDate, 
+    formatShortDate, 
+    formatLongDate, 
+    formatDateTime, 
+    formatRelativeDate,
+    getLocale
+  };
 };
 
 // Hook for translation with categories context

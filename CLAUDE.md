@@ -356,3 +356,92 @@ This is a full-stack application with a React TypeScript frontend and FastAPI Py
 12. ✅ Auto-capitalized category names for consistency
 13. ✅ User-aware AI processing with preference learning
 14. ✅ Database-backed preference storage with proper isolation
+
+### Frontend Coding Standards & Best Practices (React 19 + TypeScript)
+
+#### Modern Component Architecture
+- **Function Components Only**: Use function components exclusively over class components for better hooks integration and simpler code
+- **Component Responsibility**: Components should only render elements based on data and trigger events - business logic belongs elsewhere
+- **Small & Reusable**: Keep components small, focused, and reusable across the application
+- **Single Responsibility**: Each component should have one clear purpose and render based on props/state
+
+#### State Management Principles
+- **State Colocation**: Keep state as close to the components that use it - avoid lifting state higher than necessary
+- **Granular State**: Manage dependencies granularly - split large objects into specific state pieces to minimize re-renders
+- **Single Source of Truth**: Same data should never exist in multiple state management solutions (Context + Redux, etc.)
+- **Context for Global State**: Use Context API for application-wide state (theme, auth, locale) with React 19's `use()` API
+
+#### Custom Hooks & Logic Separation
+- **Custom Hooks as Ports**: Use custom hooks as abstraction layers between business logic and UI components
+- **Logic Extraction**: Extract complex stateful logic into reusable custom hooks following the DRY principle
+- **Business Logic Isolation**: Keep business logic separate from React-specific code for better testability
+- **Hexagonal-Inspired Architecture**: Decouple domain logic from UI rendering using custom hooks as adapters
+
+#### TypeScript Integration
+- **Type-Safe Components**: Define clear interfaces for all component props with proper TypeScript typing
+- **Generic Components**: Use TypeScript generics for highly reusable components that work with different data types
+- **Type-Safe Hooks**: Implement custom hooks with proper generic typing and return type definitions
+- **Strict Type Checking**: Enable strict TypeScript mode and avoid `any` types - use union types and proper interfaces
+
+#### Performance Optimization
+- **Monitor First, Optimize Later**: Use React Profiler, Core Web Vitals, and React Scan before optimizing
+- **Strategic Memoization**: Use `React.memo`, `useCallback`, and `useMemo` only after identifying performance bottlenecks
+- **React 19 Compiler**: Leverage React 19's automatic memoization when available
+- **Key Optimization**: Always use unique, stable keys when rendering lists to prevent unnecessary re-renders
+
+#### Data Fetching & Rendering Strategies
+- **"Don't Make Me Wait" Philosophy**: Prioritize fast user interactions and perceived performance
+- **Hybrid Rendering**: Combine different rendering strategies (SSR, SSG, CSR, ISR) based on content requirements
+- **Server Components**: Use React Server Components for data-heavy, non-interactive content
+- **Client Components**: Mark interactive components with `"use client"` directive
+- **Streaming with Suspense**: Implement loading states with Suspense boundaries and skeleton components
+- **SWR Pattern**: Use stale-while-revalidate for dynamic content that needs periodic updates
+
+#### React 19 Modern Patterns
+- **New Hooks**: Utilize `useActionState`, `useFormStatus`, `useOptimistic`, and `use()` API for better UX
+- **Server Actions**: Implement server-side functions for form submissions and data mutations
+- **Optimistic Updates**: Use `useOptimistic` for immediate UI feedback before server confirmation
+- **Form Enhancement**: Leverage `useFormStatus` and `useActionState` for better form handling
+
+#### Code Quality & Structure
+- **Absolute Imports**: Use absolute imports with path mapping (e.g., `@/components/Button`)
+- **Consistent Naming**: Follow consistent naming conventions (PascalCase for components, camelCase for functions)
+- **Component Organization**: Group related components, hooks, and utilities in feature-based folders
+- **Barrel Exports**: Use index.ts files for clean component exports from folders
+
+#### Error Handling & Resilience
+- **Error Boundaries**: Implement Error Boundaries to catch and handle component errors gracefully
+- **Fallback UI**: Provide meaningful fallback components for error states and loading states
+- **Graceful Degradation**: Ensure app functionality degrades gracefully when features fail
+- **User Feedback**: Display clear error messages and loading indicators to users
+
+#### Security Best Practices
+- **XSS Prevention**: Always sanitize user input and avoid `dangerouslySetInnerHTML`
+- **Environment Variables**: Use environment variables for API keys and sensitive configuration
+- **Dependency Updates**: Keep npm packages updated to patch security vulnerabilities
+- **CSP Headers**: Implement Content Security Policy headers for additional protection
+
+#### Accessibility Standards
+- **Semantic HTML**: Use proper HTML elements for their intended purpose
+- **ARIA Attributes**: Implement ARIA attributes correctly without redundancy
+- **Keyboard Navigation**: Ensure all interactive elements are keyboard accessible
+- **Screen Reader Support**: Test with screen readers and provide proper labels
+- **AA Compliance**: Target WCAG 2.1 AA accessibility standards minimum
+
+#### Testing Strategy
+- **Comprehensive Testing**: Include unit tests, integration tests, E2E tests, and accessibility tests
+- **80%+ Coverage**: Maintain test coverage above 80% for critical application paths
+- **User-Focused Tests**: Write tests that reflect real user interactions and workflows
+- **Component Testing**: Test components in isolation and integration with their dependencies
+
+#### Performance Monitoring
+- **Core Web Vitals**: Monitor LCP (Largest Contentful Paint), INP (Interaction to Next Paint), CLS (Cumulative Layout Shift)
+- **Bundle Analysis**: Regularly analyze and optimize JavaScript bundle sizes
+- **Image Optimization**: Use Next.js `<Image/>` component with proper sizing and lazy loading
+- **Code Splitting**: Implement dynamic imports and route-based code splitting
+
+#### Development Workflow
+- **Linting**: Use ESLint with React-specific rules and accessibility plugins
+- **Formatting**: Implement Prettier for consistent code formatting
+- **Type Checking**: Run TypeScript checks in CI/CD pipeline
+- **Documentation**: Document components with JSDoc and maintain up-to-date README files

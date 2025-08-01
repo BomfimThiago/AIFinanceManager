@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { useNotificationContext } from '../contexts/NotificationContext';
+import { useAppNotifications } from './useAppNotifications';
 
 export interface ConnectedIntegration {
   id: number;
@@ -96,7 +96,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
     variant: 'danger',
     isLoading: false,
   });
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError } = useAppNotifications();
 
   const fetchConnectedIntegrations = useCallback(async () => {
     try {

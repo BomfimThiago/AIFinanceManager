@@ -17,7 +17,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: './index.html'
+        main: './index.html',
+        refactored: './index-refactored.html'
       }
     },
     // Copy additional files

@@ -4,7 +4,7 @@ import { AlertCircle, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useAppNotifications } from '../../hooks/useAppNotifications';
 import { SignupCredentials } from '../../types';
 import { formatValidationErrors, getUserFriendlyError } from '../../utils/errorMessages';
 import Logo from '../ui/Logo';
@@ -15,7 +15,7 @@ interface SignupProps {
 
 const Signup: React.FC<SignupProps> = ({ onToggleMode }) => {
   const { signup, isLoading } = useAuth();
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError } = useAppNotifications();
   const { t } = useTranslation();
   const [credentials, setCredentials] = useState<SignupCredentials>({
     email: '',

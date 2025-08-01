@@ -1,7 +1,13 @@
+/**
+ * Refactored App Component - Simplified with global state management
+ * Uses the new AppStateProvider instead of multiple contexts
+ */
+
 import React from 'react';
 
 import FinanceManager from './components/FinanceManager';
 import AuthPage from './components/auth/AuthPage';
+import NotificationContainer from './components/ui/NotificationContainer';
 import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
@@ -21,11 +27,21 @@ const App: React.FC = () => {
 
   // Show authentication page if not authenticated
   if (!isAuthenticated) {
-    return <AuthPage />;
+    return (
+      <>
+        <AuthPage />
+        <NotificationContainer />
+      </>
+    );
   }
 
   // Show main finance manager if authenticated
-  return <FinanceManager />;
+  return (
+    <>
+      <FinanceManager />
+      <NotificationContainer />
+    </>
+  );
 };
 
 export default App;

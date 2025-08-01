@@ -25,6 +25,7 @@ export function useExpenses(filters?: {
   year?: number;
   type?: string;
   category?: string;
+  categories?: string[];
   startDate?: string;
   endDate?: string;
   search?: string;
@@ -33,11 +34,22 @@ export function useExpenses(filters?: {
     month: filters?.month && filters.month > 0 ? filters.month : undefined,
     year: filters?.year && filters.year > 0 ? filters.year : undefined,
     type: filters?.type || undefined,
+    categories: filters?.categories && filters.categories.length > 0 ? filters.categories : undefined,
     category: filters?.category || undefined,
     start_date: filters?.startDate || undefined,
     end_date: filters?.endDate || undefined,
     search: filters?.search || undefined,
   };
+
+  // Debug logging
+  console.log('🔍 API Query:', {
+    filters: filters,
+    normalizedFilters: normalizedFilters,
+    queryParams: Object.entries(normalizedFilters)
+      .filter(([_, value]) => value !== undefined)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&')
+  });
 
   return useQuery({
     queryKey: expenseKeys.list(normalizedFilters),

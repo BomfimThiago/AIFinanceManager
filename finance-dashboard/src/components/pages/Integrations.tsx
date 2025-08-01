@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useAppNotifications } from '../../hooks/useAppNotifications';
 import { useBelvoSDK } from '../../hooks/useBelvoSDK';
 import { useIntegrations } from '../../hooks/useIntegrations';
 import AvailableIntegrations from '../integrations/AvailableIntegrations';
@@ -16,7 +16,7 @@ const Integrations: React.FC = () => {
   const [showConnectedIntegrationsModal, setShowConnectedIntegrationsModal] = useState(false);
   const [showConsentManagementModal, setShowConsentManagementModal] = useState(false);
   // Removed unused state - consent option is managed in the modal
-  const { showSuccess, showError, showWarning, showInfo } = useNotificationContext();
+  const { showSuccess, showError, showWarning, showInfo } = useAppNotifications();
   const { isSDKLoaded, isLoading: belvoLoading, openBelvoWidget } = useBelvoSDK();
   const {
     connectedIntegrations,

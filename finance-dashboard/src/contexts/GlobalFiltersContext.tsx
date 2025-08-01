@@ -1,7 +1,7 @@
 import React, { ReactNode, createContext, useCallback, useContext, useState } from 'react';
 
 export interface GlobalFilters {
-  category?: string;
+  categories?: string[];
   type?: 'income' | 'expense';
   startDate?: string;
   endDate?: string;
@@ -44,9 +44,12 @@ export const GlobalFiltersProvider: React.FC<GlobalFiltersProviderProps> = ({ ch
       setFiltersState(prev => {
         if (value === undefined || value === '' || value === null) {
           const { [key]: _, ...rest } = prev;
+          console.log('🗑️ Clearing filter:', key, 'New state:', rest);
           return rest;
         }
-        return { ...prev, [key]: value };
+        const newState = { ...prev, [key]: value };
+        console.log('🔄 Updating filter:', key, 'Value:', value, 'New state:', newState);
+        return newState;
       });
     },
     []

@@ -20,6 +20,11 @@ const InteractiveExpenseFlow: React.FC<InteractiveExpenseFlowProps> = ({
   const { updateFilter } = useGlobalFilters();
 
   const chartData = useMemo(() => {
+    // Safety check for expenses prop
+    if (!expenses || !Array.isArray(expenses)) {
+      return { categories: [], data: [] };
+    }
+
     // Group expenses by category and calculate totals
     const categoryData = expenses
       .filter(expense => expense.type === 'expense')

@@ -5,7 +5,8 @@ import {
 } from 'lucide-react';
 
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { useCategoryTranslation } from '../../contexts/LanguageContext';
+import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { Category, Goal, GoalType, TimeHorizon, GoalRecurrence, GoalStatus, GoalUpdate } from '../../types';
 
 interface EditGoalModalProps {
@@ -36,6 +37,8 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 }) => {
   const { sessionCurrency, formatAmount } = useCurrency();
   const { tCategory } = useCategoryTranslation(categories);
+  const { formatShortDate, formatForInput } = useDateFormatter();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState<GoalFormData>({
     title: '',
@@ -72,19 +75,19 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
   const goalTypes = [
     {
       value: 'spending' as GoalType,
-      label: 'Spending Budget',
+      label: t('goals.spendingBudget'),
       icon: DollarSign,
       color: 'text-green-600 bg-green-100',
     },
     {
       value: 'saving' as GoalType,
-      label: 'Savings Goal',
+      label: t('goals.savingsGoal'),
       icon: PiggyBank,
       color: 'text-purple-600 bg-purple-100',
     },
     {
       value: 'debt' as GoalType,
-      label: 'Debt Payoff',
+      label: t('goals.debtPayoff'),
       icon: CreditCard,
       color: 'text-red-600 bg-red-100',
     },
@@ -93,35 +96,35 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
   const timeHorizons = [
     {
       value: 'short' as TimeHorizon,
-      label: 'Short-term',
-      description: '1-6 months',
+      label: t('goals.shortTerm'),
+      description: t('goals.shortTermDescription'),
       icon: Clock,
     },
     {
       value: 'medium' as TimeHorizon,
-      label: 'Medium-term',
-      description: '6 months - 2 years',
+      label: t('goals.mediumTerm'),
+      description: t('goals.mediumTermDescription'),
       icon: Calendar,
     },
     {
       value: 'long' as TimeHorizon,
-      label: 'Long-term',
-      description: '2+ years',
+      label: t('goals.longTerm'),
+      description: t('goals.longTermDescription'),
       icon: TrendingUp,
     },
   ];
 
   const statusOptions = [
-    { value: 'active' as GoalStatus, label: 'Active', color: 'text-green-600' },
-    { value: 'completed' as GoalStatus, label: 'Completed', color: 'text-blue-600' },
-    { value: 'paused' as GoalStatus, label: 'Paused', color: 'text-yellow-600' },
-    { value: 'cancelled' as GoalStatus, label: 'Cancelled', color: 'text-gray-600' },
+    { value: 'active' as GoalStatus, label: t('goals.active'), color: 'text-green-600' },
+    { value: 'completed' as GoalStatus, label: t('goals.completed'), color: 'text-blue-600' },
+    { value: 'paused' as GoalStatus, label: t('goals.paused'), color: 'text-yellow-600' },
+    { value: 'cancelled' as GoalStatus, label: t('goals.cancelled'), color: 'text-gray-600' },
   ];
 
   const priorityOptions = [
-    { value: 1 as const, label: 'High Priority', color: 'text-red-600' },
-    { value: 2 as const, label: 'Medium Priority', color: 'text-yellow-600' },
-    { value: 3 as const, label: 'Low Priority', color: 'text-green-600' },
+    { value: 1 as const, label: t('goals.highPriority'), color: 'text-red-600' },
+    { value: 2 as const, label: t('goals.mediumPriority'), color: 'text-yellow-600' },
+    { value: 3 as const, label: t('goals.lowPriority'), color: 'text-green-600' },
   ];
 
   const selectedGoalType = goalTypes.find(type => type.value === goal.goal_type);
@@ -140,15 +143,15 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
     const newErrors: Partial<GoalFormData> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('goals.titleRequired');
     }
 
     if (!formData.target_amount || parseFloat(formData.target_amount) <= 0) {
-      newErrors.target_amount = 'Please enter a valid amount';
+      newErrors.target_amount = t('goals.validAmountRequired');
     }
 
     if (formData.current_amount && parseFloat(formData.current_amount) < 0) {
-      newErrors.current_amount = 'Current amount cannot be negative';
+      newErrors.current_amount = t('goals.currentAmountNegative');
     }
 
     setErrors(newErrors);
@@ -196,8 +199,8 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Edit Goal</h2>
-              <p className="text-gray-600 text-sm mt-1">Update your goal settings and progress</p>
+              <h2 className="text-xl font-semibold text-gray-900">{t('goals.editGoal')}</h2>
+              <p className="text-gray-600 text-sm mt-1">{t('goals.editGoalSubtitle')}</p>
             </div>
             <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X className="h-5 w-5" />
@@ -207,7 +210,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
           <div className="p-6 space-y-6">
             {/* Goal Type Display (Read-only) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Goal Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-3">{t('goals.goalType')}</label>
               <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
                 {selectedGoalType && (
                   <>
@@ -217,7 +220,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
                     <div>
                       <div className="font-medium text-gray-900">{selectedGoalType.label}</div>
                       <div className="text-sm text-gray-600">
-                        {goal.time_horizon}-term • {goal.recurrence}
+                        {t(`goals.${goal.time_horizon}`)} • {goal.recurrence}
                         {goal.category && ` • ${tCategory(goal.category)}`}
                       </div>
                     </div>
@@ -229,7 +232,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Goal Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.goalTitle')}</label>
                 <input
                   type="text"
                   value={formData.title}
@@ -247,7 +250,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.status')}</label>
                 <select
                   value={formData.status}
                   onChange={(e) => handleInputChange('status', e.target.value as GoalStatus)}
@@ -265,14 +268,14 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description (Optional)
+                {t('goals.descriptionOptional')}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 rows={2}
-                placeholder="Brief description of your goal..."
+                placeholder={t('goals.descriptionPlaceholder')}
               />
             </div>
 
@@ -280,7 +283,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Target Amount ({sessionCurrency})
+                  {t('goals.targetAmount')} ({sessionCurrency})
                 </label>
                 <input
                   type="number"
@@ -302,7 +305,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Amount ({sessionCurrency})
+                  {t('goals.currentAmount')} ({sessionCurrency})
                 </label>
                 <input
                   type="number"
@@ -323,7 +326,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
                 )}
                 {formData.auto_calculate && (
                   <p className="text-blue-600 text-sm mt-1">
-                    Auto-calculated from expenses
+                    {t('goals.autoCalculatedFromExpenses')}
                   </p>
                 )}
               </div>
@@ -332,7 +335,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Progress Bar */}
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-700">Progress</span>
+                <span className="text-gray-700">{t('goals.progress')}</span>
                 <span className="font-medium">{progressPercentage.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
@@ -352,12 +355,12 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Target Date */}
             {(goal.goal_type === 'saving' || goal.goal_type === 'debt') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Target Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.targetDate')}</label>
                 <input
                   type="date"
                   value={formData.target_date}
                   onChange={(e) => handleInputChange('target_date', e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={formatForInput(new Date())}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
@@ -366,7 +369,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Priority and Settings */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.priority')}</label>
                 <select
                   value={formData.priority}
                   onChange={(e) => handleInputChange('priority', parseInt(e.target.value) as 1 | 2 | 3)}
@@ -389,37 +392,37 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
                 <label htmlFor="auto_calculate_edit" className="text-sm text-gray-700">
-                  Auto-calculate progress from expenses
+                  {t('goals.autoCalculateProgress')}
                 </label>
               </div>
             </div>
 
             {/* Goal Details */}
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">Goal Details</h4>
+              <h4 className="font-medium text-gray-900 mb-3">{t('goals.goalDetails')}</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-600">Created:</span>
+                  <span className="text-gray-600">{t('goals.created')}:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(goal.created_at).toLocaleDateString()}
+                    {formatShortDate(goal.created_at)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Last Updated:</span>
+                  <span className="text-gray-600">{t('goals.lastUpdated')}:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(goal.updated_at).toLocaleDateString()}
+                    {formatShortDate(goal.updated_at)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Remaining:</span>
+                  <span className="text-gray-600">{t('goals.remaining')}:</span>
                   <span className="ml-2 font-medium">
                     {formatAmount(Math.max(0, parseFloat(formData.target_amount) - parseFloat(formData.current_amount)))}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Start Date:</span>
+                  <span className="text-gray-600">{t('goals.startDate')}:</span>
                   <span className="ml-2 font-medium">
-                    {new Date(goal.start_date).toLocaleDateString()}
+                    {formatShortDate(goal.start_date)}
                   </span>
                 </div>
               </div>
@@ -434,7 +437,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -444,12 +447,12 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
               {isSubmitting ? (
                 <>
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  <span>Updating...</span>
+                  <span>{t('goals.updating')}</span>
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  <span>Save Changes</span>
+                  <span>{t('goals.saveChanges')}</span>
                 </>
               )}
             </button>
