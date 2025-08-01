@@ -1,0 +1,8 @@
+# Netlify redirects file
+# This file handles client-side routing for the React SPA
+
+# API proxy (if needed) - currently using direct API calls
+# /api/*  https://api.getkonta.app/api/:splat  200
+
+# SPA fallback - all routes go to index.html
+/*    /index.html   200

@@ -11,5 +11,16 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  // Copy Netlify configuration files to dist during build
+  publicDir: 'public',
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html'
+      }
+    },
+    // Copy additional files
+    copyPublicDir: true
   }
 })
