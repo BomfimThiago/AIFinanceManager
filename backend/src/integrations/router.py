@@ -20,9 +20,6 @@ from src.expenses.repository import ExpenseRepository
 from src.expenses.schemas import ExpenseUpdate
 from src.integrations.dependencies import (
     get_current_user_id,
-    get_integration_service,
-    get_user_integrations_service,
-    valid_connected_integration,
     valid_owned_integration,
 )
 from src.integrations.institution_repository import BelvoInstitutionRepository
@@ -34,9 +31,7 @@ from src.integrations.schemas import (
     ConsentRenewalRequest,
     IntegrationCreate,
     IntegrationFilter,
-    SyncRequest,
 )
-from src.integrations.service import IntegrationService
 from src.services.ai_service import AIService
 from src.services.belvo_service import belvo_service, create_belvo_service
 from src.services.webhook_logger import webhook_logger
@@ -52,7 +47,6 @@ from src.shared.models import (
     IntegrationListResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
-    SyncResponse,
     UnauthorizedResponse,
     ValidationErrorResponse,
     WebhookResponse,
@@ -228,7 +222,8 @@ async def save_belvo_connection(
                         f"Available institutions: {[inst.name for inst in available_institutions[:5]]}..."
                     )
 
-        # Create integration data using the working pattern
+        # Create integration data with PENDING status initially
+        # Status will change to CONNECTED when first webhook is received
         integration_data = IntegrationCreate(
             user_id=user_id,  # Include user_id in the data
             provider=IntegrationProvider.BELVO,  # Use enum instead of string
@@ -240,7 +235,7 @@ async def save_belvo_connection(
             institution_website=institution_website,  # Use looked up website
             institution_country=institution_country,  # Use looked up country
             connection_name=f"{institution_name} Connection",
-            status=IntegrationStatus.CONNECTED,  # Use enum instead of string
+            status=IntegrationStatus.PENDING,  # Start as PENDING, changes to CONNECTED on first webhook
             auto_sync_enabled=True,
             sync_data_types=["accounts", "transactions"],
             webhook_enabled=True,
@@ -434,29 +429,16 @@ async def belvo_webhook(request: Request, db: Annotated[AsyncSession, Depends(ge
     },
 )
 async def get_belvo_integrations(
-    user_service: Annotated[
-        tuple[int, IntegrationService], Depends(get_user_integrations_service)
-    ],
+    user_id: Annotated[int, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Get all Belvo bank integrations for the current user with institution metadata."""
     try:
-        user_id, service = user_service
-        filters = IntegrationFilter(
-            provider="belvo",
-            status=None,
-            institution_id=None,
-            institution_country=None,
-            sync_frequency=None,
-            auto_sync_enabled=None,
-            webhook_enabled=None,
-            has_errors=None,
-            last_sync_before=None,
-            last_sync_after=None,
-            created_after=None,
-            created_before=None,
-        )
-        integrations = await service.get_user_integrations(user_id, filters)
+        # Get integrations directly from repository
+        repo = IntegrationRepository(db)
+        # Filter for Belvo integrations only
+        filters = IntegrationFilter(provider="belvo")
+        integrations, _ = await repo.get_user_integrations(user_id, filters)
         institution_repo = BelvoInstitutionRepository(db)
 
         # Format integrations with institution metadata like the old API
@@ -526,33 +508,6 @@ async def get_belvo_integrations(
         ) from e
 
 
-@router.post(
-    "/belvo/sync/{integration_id}",
-    response_model=SyncResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Sync Belvo integration data",
-    description="Manually trigger synchronization of transactions and account data from Belvo",
-    responses={
-        status.HTTP_401_UNAUTHORIZED: {"model": UnauthorizedResponse},
-        status.HTTP_403_FORBIDDEN: {"model": ForbiddenResponse},
-        status.HTTP_404_NOT_FOUND: {"model": NotFoundResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": InternalServerErrorResponse},
-    },
-)
-async def sync_belvo_integration(
-    integration: Annotated[Integration, Depends(valid_connected_integration)],
-    service: Annotated[IntegrationService, Depends(get_integration_service)],
-):
-    """Manually trigger synchronization of transactions and account data from Belvo integration."""
-    try:
-        result = await service.sync_integration(integration.id, integration.user_id)
-        return result.model_dump()
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Sync failed: {e!s}",
-        ) from e
 
 
 @router.delete(
@@ -570,17 +525,14 @@ async def sync_belvo_integration(
 )
 async def delete_belvo_integration(
     integration: Annotated[Integration, Depends(valid_owned_integration)],
-    service: Annotated[IntegrationService, Depends(get_integration_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Remove a Belvo bank integration and disconnect the associated bank account."""
     try:
-        success = await service.delete_integration(integration.id, integration.user_id)
-
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete integration",
-            )
+        # Delete integration directly using repository
+        repo = IntegrationRepository(db)
+        await repo.delete(integration.id)
+        await db.commit()
 
         return DeleteResponse(
             message=f"Integration {integration.institution_name} deleted successfully",
@@ -596,38 +548,6 @@ async def delete_belvo_integration(
         ) from e
 
 
-@router.post(
-    "/belvo/integrations/{integration_id}/sync-transactions",
-    response_model=SyncResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Sync Belvo transactions",
-    description="Synchronize transactions from a specific Belvo integration",
-    responses={
-        status.HTTP_401_UNAUTHORIZED: {"model": UnauthorizedResponse},
-        status.HTTP_403_FORBIDDEN: {"model": ForbiddenResponse},
-        status.HTTP_404_NOT_FOUND: {"model": NotFoundResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": InternalServerErrorResponse},
-    },
-)
-async def sync_belvo_transactions(
-    integration: Annotated[Integration, Depends(valid_connected_integration)],
-    service: Annotated[IntegrationService, Depends(get_integration_service)],
-):
-    """Synchronize transaction data from a specific Belvo bank integration."""
-    try:
-        # Using SyncRequest imported at module level
-
-        sync_request = SyncRequest(sync_type="incremental", data_types=["transactions"])
-        result = await service.sync_integration(
-            integration.id, integration.user_id, sync_request
-        )
-        return result.model_dump()
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Transaction sync failed for {integration.institution_name}: {e!s}",
-        ) from e
 
 
 @router.post(
@@ -836,9 +756,21 @@ async def handle_historical_update_webhook(
                 webhook_type, "historical_update", link_id, processing_result
             )
 
-            # Update integration last sync time
-            integration.last_sync_at = datetime.now(UTC)
-            integration.last_successful_sync_at = datetime.now(UTC)
+            # Update integration status and sync time
+            # First webhook changes status from PENDING to CONNECTED
+            current_time = datetime.now(UTC)
+
+            if integration.status == IntegrationStatus.PENDING:
+                logger.info(f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED")
+                integration.status = IntegrationStatus.CONNECTED
+                integration.connected_at = current_time
+
+            # Always update last sync time when transactions are processed
+            integration.last_sync_at = current_time
+            integration.last_successful_sync_at = current_time
+            integration.sync_status = "success"
+            integration.sync_error_message = None
+
             db.add(integration)
             await db.commit()
 
@@ -945,9 +877,21 @@ async def handle_new_transactions_webhook(
                 webhook_type, "new_transactions_available", link_id, processing_result
             )
 
-            # Update integration last sync time
-            integration.last_sync_at = datetime.now(UTC)
-            integration.last_successful_sync_at = datetime.now(UTC)
+            # Update integration status and sync time
+            # First webhook changes status from PENDING to CONNECTED
+            current_time = datetime.now(UTC)
+
+            if integration.status == IntegrationStatus.PENDING:
+                logger.info(f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED")
+                integration.status = IntegrationStatus.CONNECTED
+                integration.connected_at = current_time
+
+            # Always update last sync time when transactions are processed
+            integration.last_sync_at = current_time
+            integration.last_successful_sync_at = current_time
+            integration.sync_status = "success"
+            integration.sync_error_message = None
+
             db.add(integration)
             await db.commit()
 
@@ -1074,6 +1018,24 @@ async def handle_transactions_updated_webhook(
             webhook_logger.log_webhook_processed(
                 webhook_type, "transactions_updated", link_id, processing_result
             )
+
+            # Update integration status and sync time
+            # First webhook changes status from PENDING to CONNECTED
+            current_time = datetime.now(UTC)
+
+            if integration.status == IntegrationStatus.PENDING:
+                logger.info(f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED")
+                integration.status = IntegrationStatus.CONNECTED
+                integration.connected_at = current_time
+
+            # Always update last sync time when transactions are processed
+            integration.last_sync_at = current_time
+            integration.last_successful_sync_at = current_time
+            integration.sync_status = "success"
+            integration.sync_error_message = None
+
+            db.add(integration)
+            await db.commit()
 
             logger.info(
                 f"✅ Transaction updates processed: {updated_count} expenses updated, {created_count} expenses created, {error_count} errors"

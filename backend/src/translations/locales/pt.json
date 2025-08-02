@@ -42,6 +42,8 @@
     "clear": "Limpar",
     "refresh": "Atualizar",
     "update": "Atualizar",
+    "hide": "Ocultar",
+    "showDetails": "Mostrar Detalhes",
     "create": "Criar",
     "select": "Selecionar",
     "all": "Todos",
@@ -333,7 +335,15 @@
     "connecting": "Conectando...",
     "loadingSDK": "Carregando SDK...",
     "viewIntegrations": "Ver Integrações",
-    "connectionError": "Erro de Conexão"
+    "connectionError": "Erro de Conexão",
+    "pending": "Pendente",
+    "error": "Erro",
+    "expired": "Expirado",
+    "integrationSettings": "Configurações de Integração",
+    "integrationDetails": "Detalhes da Integração",
+    "connectMoreAccounts": "Conectar Mais Contas",
+    "connectedOn": "Conectado em",
+    "disconnect": "Desconectar"
   },
   "filters": {
     "title": "Filtros",
