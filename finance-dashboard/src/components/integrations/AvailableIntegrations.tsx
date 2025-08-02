@@ -41,7 +41,6 @@ interface AvailableIntegrationsProps {
   belvoLoading: boolean;
   isSDKLoaded: boolean;
   onConnect: (integrationId: string) => void;
-  onShowSettings: () => void;
 }
 
 const getIntegrations = (connectedIntegrations: ConnectedIntegration[]): Integration[] => {
@@ -68,16 +67,12 @@ const getIntegrations = (connectedIntegrations: ConnectedIntegration[]): Integra
     {
       id: 'belvo',
       name: 'Belvo',
-      description: 'Connect Latin American banks including Mexico, Brazil, Colombia, and Argentina',
+      description: 'Connect Latin American banks in Mexico and Brazil',
       icon: BelvoIcon,
       status: belvoConnected ? 'connected' : 'disconnected',
       supportedCountries: [
         '🇲🇽 Mexico',
         '🇧🇷 Brazil',
-        '🇨🇴 Colombia',
-        '🇦🇷 Argentina',
-        '🇨🇱 Chile',
-        '🇵🇪 Peru',
       ],
       provider: 'belvo',
       lastSync: belvoConnected
@@ -168,7 +163,6 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
   belvoLoading,
   isSDKLoaded,
   onConnect,
-  onShowSettings,
 }) => {
   const { t } = useTranslation();
   const { formatDateTime } = useDateFormatter();
@@ -206,14 +200,6 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
                   </div>
                 </div>
 
-                {integration.status === 'connected' && (
-                  <button
-                    onClick={onShowSettings}
-                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </button>
-                )}
               </div>
 
               <div className="flex-1">
@@ -256,13 +242,21 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
               <div className="flex space-x-2 mt-auto">
                 {integration.status === 'connected' ? (
                   <button
-                    onClick={onShowSettings}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium flex items-center justify-center space-x-2"
+                    onClick={() => onConnect(integration.id)}
+                    disabled={isConnecting || isBelvoLoading}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Settings className="h-4 w-4" />
-                    <span>
-                      {t('integrations.manageBanks')} ({connectedIntegrations.length})
-                    </span>
+                    {isConnecting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>{t('integrations.connecting')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        <span>{t('integrations.connectMoreAccounts')}</span>
+                      </>
+                    )}
                   </button>
                 ) : (
                   <button

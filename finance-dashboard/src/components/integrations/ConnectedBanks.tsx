@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CheckCircle, ExternalLink, Settings } from 'lucide-react';
+import { CheckCircle, Clock, Trash2, AlertCircle, Calendar, Globe, Settings } from 'lucide-react';
 
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useDateFormatter } from '../../hooks/useDateFormatter';
@@ -8,14 +8,12 @@ import type { ConnectedIntegration } from '../../hooks/useIntegrations';
 
 interface ConnectedBanksProps {
   integrations: ConnectedIntegration[];
-  onGetTransactions: (integrationId: number) => void;
-  onShowSettings: () => void;
+  onDelete: (integrationId: number) => void;
 }
 
 const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
   integrations,
-  onGetTransactions,
-  onShowSettings,
+  onDelete,
 }) => {
   const { t } = useTranslation();
   const { formatShortDate } = useDateFormatter();
@@ -47,35 +45,66 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
           const countryCode = integration.metadata?.country_code || 'BR';
           const countryFlag = countryCode === 'BR' ? '🇧🇷' : countryCode === 'MX' ? '🇲🇽' : '🌎';
 
+          // Get status icon and color based on integration status
+          const getStatusIcon = () => {
+            switch (integration.status) {
+              case 'connected':
+                return <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />;
+              case 'pending':
+                return <Clock className="h-4 w-4 text-yellow-500 flex-shrink-0" />;
+              case 'error':
+              case 'expired':
+                return <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />;
+              default:
+                return <AlertCircle className="h-4 w-4 text-gray-400 flex-shrink-0" />;
+            }
+          };
+
+          const getStatusText = () => {
+            switch (integration.status) {
+              case 'connected':
+                return t('integrations.connected');
+              case 'pending':
+                return t('integrations.connecting');
+              case 'error':
+                return t('integrations.error');
+              case 'expired':
+                return t('integrations.expired');
+              default:
+                return integration.status;
+            }
+          };
+
           return (
             <div
               key={integration.id}
               className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+              style={{
+                borderLeftWidth: '4px',
+                borderLeftColor: primaryColor,
+                backgroundColor: `${primaryColor}08`, // Very subtle background tint (5% opacity)
+              }}
             >
               <div className="flex items-center space-x-3 mb-3">
                 {logo ? (
-                  <img
-                    src={logo}
-                    alt={`${bankName} logo`}
-                    className="h-10 w-10 rounded-lg object-contain border border-gray-200 bg-white p-1"
-                    onError={e => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
+                  <div
+                    className="h-16 w-16 bg-contain bg-center bg-no-repeat flex-shrink-0"
+                    style={{ backgroundImage: `url(${logo})` }}
+                    role="img"
+                    aria-label={`${bankName} logo`}
                   />
-                ) : null}
-                <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold text-sm ${!logo ? '' : 'hidden'}`}
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {bankName.charAt(0).toUpperCase()}
-                </div>
+                ) : (
+                  <div
+                    className="h-16 w-16 rounded-lg flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {bankName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <h4 className="font-semibold text-gray-900 text-sm truncate">{bankName}</h4>
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    {getStatusIcon()}
                   </div>
                   <div className="flex items-center space-x-2 mt-1">
                     <span className="text-xs text-gray-500">
@@ -83,27 +112,44 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
                     </span>
                     <span className="text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-500">
-                      {integration.last_sync
-                        ? `${t('integrations.synced')} ${formatShortDate(integration.last_sync)}`
-                        : t('integrations.neverSynced')}
+                      {getStatusText()}
                     </span>
+                    {integration.status === 'connected' && integration.last_sync && (
+                      <>
+                        <span className="text-xs text-gray-400">•</span>
+                        <span className="text-xs text-gray-500">
+                          {t('integrations.synced')} {formatShortDate(integration.last_sync)}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex space-x-2">
+              {/* Integration Details */}
+              <div className="space-y-2 mb-3 text-xs text-gray-600">
+                {integration.created_at && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-3 w-3 text-gray-400" />
+                    <span>{t('integrations.connectedOn')}: {formatShortDate(integration.created_at)}</span>
+                  </div>
+                )}
+                {integration.last_sync && integration.status === 'connected' && (
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-3 w-3 text-gray-400" />
+                    <span>{t('integrations.lastSync')}: {formatShortDate(integration.last_sync)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end">
                 <button
-                  onClick={() => onGetTransactions(integration.id)}
-                  className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-xs font-medium flex items-center justify-center space-x-1"
+                  onClick={() => onDelete(integration.id)}
+                  className="px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-xs flex items-center space-x-1"
                 >
-                  <ExternalLink className="h-3 w-3" />
-                  <span>{t('integrations.sync')}</span>
-                </button>
-                <button
-                  onClick={onShowSettings}
-                  className="px-3 py-2 bg-gray-50 text-gray-600 rounded-md hover:bg-gray-100 transition-colors text-xs"
-                >
-                  <Settings className="h-3 w-3" />
+                  <Trash2 className="h-3 w-3" />
+                  <span>{t('integrations.disconnect')}</span>
                 </button>
               </div>
             </div>

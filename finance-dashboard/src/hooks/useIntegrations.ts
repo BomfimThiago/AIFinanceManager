@@ -58,7 +58,7 @@ export interface ConnectedIntegration {
 
 interface ConfirmationState {
   isOpen: boolean;
-  type: 'delete' | 'sync' | null;
+  type: 'delete' | null;
   integrationId: number | null;
   bankName: string;
   title: string;
@@ -74,9 +74,7 @@ interface UseIntegrationsReturn {
   error: string | null;
   confirmationState: ConfirmationState;
   fetchConnectedIntegrations: () => Promise<void>;
-  syncIntegration: (integrationId: number) => Promise<void>;
   requestDeleteIntegration: (integrationId: number) => void;
-  requestGetTransactions: (integrationId: number) => void;
   handleConfirmation: () => Promise<void>;
   closeConfirmation: () => void;
 }
@@ -112,43 +110,21 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         setConnectedIntegrations(data.integrations || []);
       } else {
         const errorText = await response.text();
-        setError(`Failed to fetch integrations: ${errorText}`);
         console.error('Failed to fetch integrations:', errorText);
+        // Show user-friendly error message
+        setError('Unable to load your connected banks. Please try refreshing the page.');
+        showError('Connection Error', 'Unable to load your connected banks. Please try refreshing the page.');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(`Error fetching integrations: ${errorMessage}`);
       console.error('Error fetching integrations:', err);
+      // Show user-friendly error message
+      setError('Unable to connect to the server. Please check your internet connection.');
+      showError('Network Error', 'Unable to connect to the server. Please check your internet connection.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
-  const syncIntegration = useCallback(
-    async (integrationId: number) => {
-      try {
-        const response = await fetch(`/api/integrations/belvo/sync/${integrationId}`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        });
-
-        if (response.ok) {
-          showSuccess('Sync Complete!', 'Bank transactions have been synchronized successfully.');
-          await fetchConnectedIntegrations();
-        } else {
-          const errorData = await response.text();
-          console.error('Sync failed:', errorData);
-          showError('Sync Failed', 'Failed to synchronize transactions. Please try again.');
-        }
-      } catch (err) {
-        console.error('Error syncing integration:', err);
-        showError('Sync Error', 'Failed to sync. Please check your connection and try again.');
-      }
-    },
-    [fetchConnectedIntegrations, showSuccess, showError]
-  );
 
   const performDeleteIntegration = useCallback(
     async (integrationId: number) => {
@@ -176,14 +152,14 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         } else {
           const errorData = await response.text();
           console.error('Delete failed:', errorData);
-          showError('Disconnect Failed', 'Failed to disconnect bank. Please try again.');
+          showError('Unable to Disconnect', 'We couldn\'t disconnect your bank right now. Please try again later.');
           setConfirmationState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (err) {
         console.error('Error deleting integration:', err);
         showError(
-          'Disconnect Error',
-          'Failed to disconnect bank. Please check your connection and try again.'
+          'Connection Problem',
+          'Unable to complete this action. Please check your internet connection and try again.'
         );
         setConfirmationState(prev => ({ ...prev, isLoading: false }));
       }
@@ -215,110 +191,14 @@ export const useIntegrations = (): UseIntegrationsReturn => {
     [connectedIntegrations]
   );
 
-  const performGetTransactions = useCallback(
-    async (integrationId: number) => {
-      try {
-        setConfirmationState(prev => ({ ...prev, isLoading: true }));
-
-        const response = await fetch(
-          `/api/integrations/belvo/integrations/${integrationId}/sync-transactions`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const { transactions_fetched, expenses_created, errors = 0 } = data;
-
-          const integration = connectedIntegrations.find(int => int.id === integrationId);
-          const bankName =
-            integration?.metadata?.display_name ||
-            integration?.metadata?.institution?.display_name ||
-            integration?.institution_name ||
-            'Unknown Bank';
-
-          let message = `Successfully processed transactions from ${bankName}:\n`;
-          message += `• ${transactions_fetched} transactions fetched\n`;
-          message += `• ${expenses_created} expenses created`;
-          if (errors > 0) {
-            message += `\n• ${errors} transactions failed to process`;
-          }
-
-          showSuccess('Transactions Processed!', message);
-          await fetchConnectedIntegrations();
-          setConfirmationState(prev => ({ ...prev, isOpen: false, isLoading: false }));
-        } else {
-          const errorData = await response.text();
-          console.error('Get transactions failed:', errorData);
-          const integration = connectedIntegrations.find(int => int.id === integrationId);
-          const bankName =
-            integration?.metadata?.display_name ||
-            integration?.metadata?.institution?.display_name ||
-            integration?.institution_name ||
-            'Unknown Bank';
-
-          showError(
-            'Fetch Failed',
-            `Failed to fetch transactions from ${bankName}. Please try again.`
-          );
-          setConfirmationState(prev => ({ ...prev, isLoading: false }));
-        }
-      } catch (err) {
-        console.error('Error getting transactions:', err);
-        const integration = connectedIntegrations.find(int => int.id === integrationId);
-        const bankName =
-          integration?.metadata?.display_name ||
-          integration?.metadata?.institution?.display_name ||
-          integration?.institution_name ||
-          'Unknown Bank';
-
-        showError(
-          'Fetch Error',
-          `Failed to fetch transactions from ${bankName}. Please check your connection and try again.`
-        );
-        setConfirmationState(prev => ({ ...prev, isLoading: false }));
-      }
-    },
-    [connectedIntegrations, fetchConnectedIntegrations, showSuccess, showError]
-  );
-
-  const requestGetTransactions = useCallback(
-    (integrationId: number) => {
-      const integration = connectedIntegrations.find(int => int.id === integrationId);
-      const bankName =
-        integration?.metadata?.display_name ||
-        integration?.metadata?.institution?.display_name ||
-        integration?.institution_name ||
-        'Unknown Bank';
-
-      setConfirmationState({
-        isOpen: true,
-        type: 'sync',
-        integrationId,
-        bankName,
-        title: 'Fetch Transactions?',
-        message: `Fetch all transactions from ${bankName} and convert to expenses? This may take a few moments for banks with many transactions.`,
-        confirmText: 'Fetch Transactions',
-        variant: 'info',
-        isLoading: false,
-      });
-    },
-    [connectedIntegrations]
-  );
 
   const handleConfirmation = useCallback(async () => {
     if (!confirmationState.integrationId) return;
 
     if (confirmationState.type === 'delete') {
       await performDeleteIntegration(confirmationState.integrationId);
-    } else if (confirmationState.type === 'sync') {
-      await performGetTransactions(confirmationState.integrationId);
     }
-  }, [confirmationState, performDeleteIntegration, performGetTransactions]);
+  }, [confirmationState, performDeleteIntegration]);
 
   const closeConfirmation = useCallback(() => {
     setConfirmationState(prev => ({ ...prev, isOpen: false, isLoading: false }));
@@ -334,9 +214,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
     error,
     confirmationState,
     fetchConnectedIntegrations,
-    syncIntegration,
     requestDeleteIntegration,
-    requestGetTransactions,
     handleConfirmation,
     closeConfirmation,
   };

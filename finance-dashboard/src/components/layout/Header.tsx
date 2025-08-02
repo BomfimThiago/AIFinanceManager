@@ -44,38 +44,39 @@ const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Logo size="md" />
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          <Logo size="sm" className="sm:size-md" />
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={onTogglePrivacy}
-              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+              className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 transition-colors"
               title={hideAmounts ? t('header.showAmounts') : t('header.hideAmounts')}
             >
-              {hideAmounts ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+              {hideAmounts ? <Eye className="h-4 w-4 sm:h-5 sm:w-5" /> : <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" />}
             </button>
 
-            {/* Temporary Currency & Language Selectors */}
-            <CurrencySelector />
-
-            <LanguageSelector />
+            {/* Currency & Language Selectors - Hidden on mobile */}
+            <div className="hidden sm:flex items-center space-x-4">
+              <CurrencySelector />
+              <LanguageSelector />
+            </div>
 
             {/* User dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center space-x-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+                className="flex items-center space-x-1 sm:space-x-2 p-1.5 sm:p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
               >
-                <div className="bg-blue-100 p-1.5 rounded-full">
-                  <User className="h-4 w-4 text-blue-600" />
+                <div className="bg-blue-100 p-1 sm:p-1.5 rounded-full">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                 </div>
-                <div className="text-left">
+                <div className="text-left hidden sm:block">
                   <div className="text-sm font-medium">{user?.full_name}</div>
                   <div className="text-xs text-gray-500">@{user?.username}</div>
                 </div>
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 

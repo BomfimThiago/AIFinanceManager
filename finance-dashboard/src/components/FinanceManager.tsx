@@ -148,7 +148,7 @@ const FinanceManager: React.FC = () => {
     }
   };
 
-  // Clean JSX - only UI rendering logic
+  // Clean JSX - only UI rendering logic using responsive pattern
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onTogglePrivacy={togglePrivacyMode} hideAmounts={hideAmounts} />
@@ -158,13 +158,15 @@ const FinanceManager: React.FC = () => {
         onTabChange={setActiveTab}
       />
 
-      <div className="flex h-[calc(100vh-120px)]">
+      {/* Responsive layout - sidebar doesn't affect content positioning below lg */}
+      <div className="relative flex lg:flex-row">
         <GlobalFiltersSidebar
           isVisible={sidebarVisible}
           onToggle={toggleSidebar}
         />
         
-        <main className="flex-1 overflow-y-auto">
+        {/* Main content area - full width below lg, adjusted above lg */}
+        <main className="flex-1 min-h-0 lg:overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {renderTabContent()}
           </div>
