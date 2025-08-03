@@ -2,12 +2,12 @@
  * Dashboard Data Hook - Business logic for dashboard operations
  * Separates data processing and calculations from UI components
  */
+import { useCallback, useMemo, useState } from 'react';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
+import type { Budgets, Expense } from '../types';
 import { useCategoryChartData, useExpenseSummary, useMonthlyChartData } from './queries';
 import { useUserPreferences } from './useUserPreferences';
-import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
-import type { Expense, Budgets } from '../types';
 
 interface DashboardInteractionState {
   selectedCategory: string | null;
@@ -27,23 +27,23 @@ interface DashboardDataResult {
   calculations: DashboardCalculations;
   categoryData: any[];
   monthlyData: any[];
-  
+
   // Loading states
   isLoading: boolean;
   hasError: boolean;
   errorMessage: string | null;
-  
+
   // Interaction state
   interactionState: DashboardInteractionState;
   hasActiveFilters: boolean;
   hasActiveDashboardState: boolean;
-  
+
   // Actions
   handleCategoryClick: (category: string) => void;
   handleTimeRangeSelect: (startDate: string, endDate: string) => void;
   handleDateClick: (date: string) => void;
   resetDashboardFilters: () => void;
-  
+
   // Utility functions
   getConvertedAmount: (expense: Expense) => number;
   getConversionRateDisplay: () => string | null;
@@ -105,11 +105,14 @@ export function useDashboardData(expenses: Expense[], budgets: Budgets): Dashboa
   }, [clearFilters]);
 
   // Currency conversion utilities
-  const getConvertedAmount = useCallback((expense: Expense) => {
-    // TODO: Implement currency conversion logic
-    // For now, return the amount as-is
-    return expense.amount;
-  }, [currency]);
+  const getConvertedAmount = useCallback(
+    (expense: Expense) => {
+      // TODO: Implement currency conversion logic
+      // For now, return the amount as-is
+      return expense.amount;
+    },
+    [currency]
+  );
 
   const getConversionRateDisplay = useCallback(() => {
     // TODO: Implement conversion rate display logic
@@ -161,23 +164,23 @@ export function useDashboardData(expenses: Expense[], budgets: Budgets): Dashboa
     calculations,
     categoryData,
     monthlyData,
-    
+
     // Loading states
     isLoading,
     hasError,
     errorMessage,
-    
+
     // Interaction state
     interactionState,
     hasActiveFilters,
     hasActiveDashboardState,
-    
+
     // Actions
     handleCategoryClick,
     handleTimeRangeSelect,
     handleDateClick,
     resetDashboardFilters,
-    
+
     // Utility functions
     getConvertedAmount,
     getConversionRateDisplay,

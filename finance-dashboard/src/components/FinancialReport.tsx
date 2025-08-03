@@ -59,7 +59,9 @@ const ReportLoading: React.FC = () => (
 const ReportError: React.FC<{ error: Error }> = ({ error }) => (
   <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border text-center">
     <AlertTriangle className="h-8 w-8 sm:h-12 sm:w-12 text-red-500 mx-auto mb-3 sm:mb-4" />
-    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Failed to Load Financial Report</h3>
+    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+      Failed to Load Financial Report
+    </h3>
     <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
       {error.message || 'An error occurred while generating your financial report.'}
     </p>
@@ -141,11 +143,17 @@ const CategoryAnalysis: React.FC<{ categories: any[] }> = ({ categories }) => {
                   backgroundColor: `hsl(${(index * 360) / categories.length}, 70%, 50%)`,
                 }}
               />
-              <span className="font-medium text-gray-900 text-sm sm:text-base truncate">{category.category}</span>
+              <span className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                {category.category}
+              </span>
             </div>
             <div className="text-right flex-shrink-0 ml-2">
-              <div className="font-semibold text-gray-900 text-sm sm:text-base">{formatAmount(category.amount)}</div>
-              <div className="text-xs sm:text-sm text-gray-500">{category.percentage.toFixed(1)}%</div>
+              <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                {formatAmount(category.amount)}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-500">
+                {category.percentage.toFixed(1)}%
+              </div>
             </div>
           </div>
         ))}
@@ -390,7 +398,9 @@ export const FinancialReport: React.FC<{
             <div className="text-base sm:text-lg font-semibold text-green-800 mb-1">
               Potential Monthly Savings: {formatAmount(action_plan.monthly_savings_potential)}
             </div>
-            <div className="text-xs sm:text-sm text-green-700">If you follow these recommendations</div>
+            <div className="text-xs sm:text-sm text-green-700">
+              If you follow these recommendations
+            </div>
           </div>
 
           <div>

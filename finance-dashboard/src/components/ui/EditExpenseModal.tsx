@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { X, ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 
-import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
+import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
 import { Category, Expense } from '../../types';
 import CategoryDisplay from './CategoryDisplay';
 
@@ -129,7 +129,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.date')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('expenses.date')}
+            </label>
             <input
               type="date"
               value={formData.date}
@@ -141,7 +143,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.amount')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('expenses.amount')}
+            </label>
             <input
               type="number"
               step="0.01"
@@ -156,7 +160,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
           {/* Category */}
           <div className="relative" ref={dropdownRef}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.category')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('expenses.category')}
+            </label>
             <button
               type="button"
               onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -169,11 +175,13 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
                   allCategories={categories}
                 />
               ) : (
-                <span className="text-gray-500">{t('common.select')} {t('expenses.category').toLowerCase()}</span>
+                <span className="text-gray-500">
+                  {t('common.select')} {t('expenses.category').toLowerCase()}
+                </span>
               )}
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </button>
-            
+
             {showCategoryDropdown && (
               <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                 {categories.map(cat => (
@@ -186,11 +194,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
                     }}
                     className="w-full text-left hover:bg-gray-50 p-2"
                   >
-                    <CategoryDisplay
-                      category={cat}
-                      variant="compact"
-                      allCategories={categories}
-                    />
+                    <CategoryDisplay category={cat} variant="compact" allCategories={categories} />
                   </button>
                 ))}
               </div>
@@ -199,7 +203,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.description')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('expenses.description')}
+            </label>
             <input
               type="text"
               value={formData.description}
@@ -212,7 +218,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
           {/* Merchant */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('expenses.merchant')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('expenses.merchant')}
+            </label>
             <input
               type="text"
               value={formData.merchant}
@@ -224,7 +232,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
           {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.type')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('common.type')}
+            </label>
             <select
               value={formData.type}
               onChange={e => handleInputChange('type', e.target.value)}
@@ -249,7 +259,11 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               disabled={isLoading}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? t('common.saving') : expense ? t('common.save') + ' ' + t('common.changes') : t('expenses.addExpense')}
+              {isLoading
+                ? t('common.saving')
+                : expense
+                  ? t('common.save') + ' ' + t('common.changes')
+                  : t('expenses.addExpense')}
             </button>
           </div>
         </form>

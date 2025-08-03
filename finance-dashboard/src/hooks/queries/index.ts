@@ -24,6 +24,7 @@ export {
 
 // Insights
 export { useGenerateInsights, insightKeys } from './useInsightsQuery';
+export { useFinancialReport, financialReportKeys } from './useFinancialReportQuery';
 
 // Upload History
 export {

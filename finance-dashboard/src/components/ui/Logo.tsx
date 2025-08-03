@@ -38,12 +38,10 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', className = '' }) => {
 
   return (
     <div className={`flex items-center ${config.spacing} ${className}`}>
-      <img 
-        src="/konta-icon.svg" 
-        alt="Konta" 
-        className={config.icon}
-      />
-      <h1 className={`font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent ${config.text}`}>
+      <img src="/konta-icon.svg" alt="Konta" className={config.icon} />
+      <h1
+        className={`font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent ${config.text}`}
+      >
         Konta
       </h1>
     </div>

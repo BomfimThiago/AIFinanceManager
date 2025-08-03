@@ -72,12 +72,12 @@ export const useCreateGoal = () => {
 
   return useMutation({
     mutationFn: (goal: GoalCreate) => goalsApi.create(goal),
-    onSuccess: (newGoal) => {
+    onSuccess: newGoal => {
       // Invalidate and refetch goals lists
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
       queryClient.invalidateQueries({ queryKey: goalKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalKeys.summary() });
-      
+
       // Invalidate by type if goal has a type
       if (newGoal.goal_type) {
         queryClient.invalidateQueries({ queryKey: goalKeys.byType(newGoal.goal_type) });
@@ -86,7 +86,7 @@ export const useCreateGoal = () => {
       // Add the new goal to the cache
       queryClient.setQueryData(goalKeys.detail(newGoal.id), newGoal);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to create goal:', error);
       throw error;
     },
@@ -97,23 +97,22 @@ export const useUpdateGoal = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, goal }: { id: number; goal: GoalUpdate }) =>
-      goalsApi.update(id, goal),
-    onSuccess: (updatedGoal) => {
+    mutationFn: ({ id, goal }: { id: number; goal: GoalUpdate }) => goalsApi.update(id, goal),
+    onSuccess: updatedGoal => {
       // Update the specific goal in cache
       queryClient.setQueryData(goalKeys.detail(updatedGoal.id), updatedGoal);
-      
+
       // Invalidate and refetch goals lists
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
       queryClient.invalidateQueries({ queryKey: goalKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalKeys.summary() });
-      
+
       // Invalidate by type if goal has a type
       if (updatedGoal.goal_type) {
         queryClient.invalidateQueries({ queryKey: goalKeys.byType(updatedGoal.goal_type) });
       }
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update goal:', error);
       throw error;
     },
@@ -128,16 +127,16 @@ export const useDeleteGoal = () => {
     onSuccess: (_, deletedId) => {
       // Remove the goal from cache
       queryClient.removeQueries({ queryKey: goalKeys.detail(deletedId) });
-      
+
       // Invalidate and refetch all goal lists
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
       queryClient.invalidateQueries({ queryKey: goalKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalKeys.summary() });
-      
+
       // Invalidate all type-based queries
       queryClient.invalidateQueries({ queryKey: [...goalKeys.all, 'type'] });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to delete goal:', error);
       throw error;
     },
@@ -148,28 +147,28 @@ export const useUpdateGoalProgress = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      id, 
-      progress 
-    }: { 
-      id: number; 
-      progress: { amount: number; date?: string; notes?: string } 
+    mutationFn: ({
+      id,
+      progress,
+    }: {
+      id: number;
+      progress: { amount: number; date?: string; notes?: string };
     }) => goalsApi.updateProgress(id, progress),
-    onSuccess: (updatedGoal) => {
+    onSuccess: updatedGoal => {
       // Update the specific goal in cache
       queryClient.setQueryData(goalKeys.detail(updatedGoal.id), updatedGoal);
-      
+
       // Invalidate and refetch goals lists to update progress everywhere
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
       queryClient.invalidateQueries({ queryKey: goalKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalKeys.summary() });
-      
+
       // Invalidate by type if goal has a type
       if (updatedGoal.goal_type) {
         queryClient.invalidateQueries({ queryKey: goalKeys.byType(updatedGoal.goal_type) });
       }
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update goal progress:', error);
       throw error;
     },
@@ -182,21 +181,21 @@ export const useSetGoalProgress = () => {
   return useMutation({
     mutationFn: ({ id, amount }: { id: number; amount: number }) =>
       goalsApi.setProgress(id, amount),
-    onSuccess: (updatedGoal) => {
+    onSuccess: updatedGoal => {
       // Update the specific goal in cache
       queryClient.setQueryData(goalKeys.detail(updatedGoal.id), updatedGoal);
-      
+
       // Invalidate and refetch goals lists to update progress everywhere
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
       queryClient.invalidateQueries({ queryKey: goalKeys.active() });
       queryClient.invalidateQueries({ queryKey: goalKeys.summary() });
-      
+
       // Invalidate by type if goal has a type
       if (updatedGoal.goal_type) {
         queryClient.invalidateQueries({ queryKey: goalKeys.byType(updatedGoal.goal_type) });
       }
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to set goal progress:', error);
       throw error;
     },

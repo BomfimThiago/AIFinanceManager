@@ -2,15 +2,16 @@
  * Insights Data Hook - Business logic for AI insights management
  * Handles insight generation, financial health calculations
  */
+import { useCallback, useMemo, useState } from 'react';
 
-import { useState, useCallback, useMemo } from 'react';
-import { AlertCircle, Brain, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { useAppNotifications } from './useAppNotifications';
-import { useUserPreferences } from './useUserPreferences';
-import { useTranslation } from '../contexts/LanguageContext';  
+import { AlertCircle, Brain, DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
+
+import { useTranslation } from '../contexts/LanguageContext';
+import type { AIInsight, Expense } from '../types';
 import { calculateNetAmount } from '../utils/calculations';
 import { getUserFriendlyError } from '../utils/errorMessages';
-import type { AIInsight, Expense } from '../types';
+import { useAppNotifications } from './useAppNotifications';
+import { useUserPreferences } from './useUserPreferences';
 
 interface FinancialHealthScore {
   score: number;
@@ -25,13 +26,13 @@ interface InsightsDataResult {
   netAmount: number;
   financialHealthScore: FinancialHealthScore;
   hasInsights: boolean;
-  
+
   // UI state
   isGenerating: boolean;
-  
+
   // Actions
   handleGenerateInsights: () => Promise<void>;
-  
+
   // Utilities
   getInsightIcon: (type: string) => any;
   getInsightStyles: (type: string) => {
@@ -49,7 +50,7 @@ export function useInsightsData(
   expenses: Expense[],
   isGeneratingInsights: boolean
 ): InsightsDataResult {
-  const { } = useUserPreferences();
+  const {} = useUserPreferences();
   const { showSuccess, showError } = useAppNotifications();
   const { t } = useTranslation();
 
@@ -64,13 +65,13 @@ export function useInsightsData(
     const totalIncome = expenses
       .filter(e => e.type === 'income')
       .reduce((sum, e) => sum + e.amount, 0);
-    
+
     const totalExpenses = expenses
       .filter(e => e.type === 'expense')
       .reduce((sum, e) => sum + e.amount, 0);
 
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
-    
+
     let score: number;
     let status: FinancialHealthScore['status'];
     let statusText: string;
@@ -117,7 +118,7 @@ export function useInsightsData(
     setIsGenerating(true);
     try {
       await onGenerateInsights();
-      showSuccess('AI Insights Generated', 'Fresh insights have been generated based on your financial data');
+      showSuccess(t('insights.insightsGenerated'), t('insights.insightsGeneratedMessage'));
     } catch (error: any) {
       console.error('Generate insights error:', error);
       const friendlyError = getUserFriendlyError(error);
@@ -125,18 +126,25 @@ export function useInsightsData(
     } finally {
       setIsGenerating(false);
     }
-  }, [onGenerateInsights, showSuccess, showError]);
+  }, [onGenerateInsights, showSuccess, showError, t]);
 
   // Utility functions
   const getInsightIcon = useCallback((type: string) => {
     switch (type) {
-      case 'warning': return AlertCircle;
-      case 'success': return TrendingUp;
-      case 'info': return Brain;
-      case 'spending': return DollarSign;
-      case 'saving': return TrendingUp;
-      case 'debt': return TrendingDown;
-      default: return Brain;
+      case 'warning':
+        return AlertCircle;
+      case 'success':
+        return TrendingUp;
+      case 'info':
+        return Brain;
+      case 'spending':
+        return DollarSign;
+      case 'saving':
+        return TrendingUp;
+      case 'debt':
+        return TrendingDown;
+      default:
+        return Brain;
     }
   }, []);
 
@@ -167,17 +175,27 @@ export function useInsightsData(
     }
   }, []);
 
-  const formatInsightType = useCallback((type: string) => {
-    switch (type) {
-      case 'warning': return 'Warning';
-      case 'success': return 'Success';
-      case 'info': return 'Insight';
-      case 'spending': return 'Spending';
-      case 'saving': return 'Saving';
-      case 'debt': return 'Debt';
-      default: return 'Insight';
-    }
-  }, []);
+  const formatInsightType = useCallback(
+    (type: string) => {
+      switch (type) {
+        case 'warning':
+          return t('common.warning');
+        case 'success':
+          return t('common.success');
+        case 'info':
+          return t('insights.analysis');
+        case 'spending':
+          return t('insights.spendingPatterns');
+        case 'saving':
+          return t('categories.savings');
+        case 'debt':
+          return t('categories.bills');
+        default:
+          return t('insights.analysis');
+      }
+    },
+    [t]
+  );
 
   const hasInsights = aiInsights.length > 0;
   const isGeneratingState = isGeneratingInsights || isGenerating;
@@ -187,13 +205,13 @@ export function useInsightsData(
     netAmount,
     financialHealthScore,
     hasInsights,
-    
+
     // UI state
     isGenerating: isGeneratingState,
-    
+
     // Actions
     handleGenerateInsights,
-    
+
     // Utilities
     getInsightIcon,
     getInsightStyles,

@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://ai_finance_user:ai_finance_password@localhost:5433/ai_finance_db"
+      ],
+      "name": "AI Finance Manager Database",
+      "description": "Direct access to the finance database for development"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/thiagosantos/Documents/AIFinanceManager"
+      ],
+      "name": "Project Filesystem",
+      "description": "Advanced file operations for the AI Finance Manager project"
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-fetch"],
+      "name": "API Testing Server",
+      "description": "Test external APIs like Belvo, Frankfurter, and your own endpoints"
+    }
+  }
+}

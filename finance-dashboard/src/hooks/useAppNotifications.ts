@@ -2,61 +2,76 @@
  * Notifications Hook - Unified notification management
  * Replaces multiple toast/notification contexts
  */
-
 import { useCallback } from 'react';
+
 import { useAppState } from '../store/AppStateManager';
 
 export function useAppNotifications() {
   try {
     const { state, dispatch } = useAppState();
 
-  const showSuccess = useCallback((message: string, title?: string) => {
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        message: title ? `${title}: ${message}` : message,
-        type: 'success',
+    const showSuccess = useCallback(
+      (message: string, title?: string) => {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            message: title ? `${title}: ${message}` : message,
+            type: 'success',
+          },
+        });
       },
-    });
-  }, [dispatch]);
+      [dispatch]
+    );
 
-  const showError = useCallback((title: string, message: string) => {
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        message: `${title}: ${message}`,
-        type: 'error',
+    const showError = useCallback(
+      (title: string, message: string) => {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            message: `${title}: ${message}`,
+            type: 'error',
+          },
+        });
       },
-    });
-  }, [dispatch]);
+      [dispatch]
+    );
 
-  const showInfo = useCallback((message: string) => {
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        message,
-        type: 'info',
+    const showInfo = useCallback(
+      (message: string) => {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            message,
+            type: 'info',
+          },
+        });
       },
-    });
-  }, [dispatch]);
+      [dispatch]
+    );
 
-  const showWarning = useCallback((message: string) => {
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        message,
-        type: 'warning',
+    const showWarning = useCallback(
+      (message: string) => {
+        dispatch({
+          type: 'ADD_NOTIFICATION',
+          payload: {
+            message,
+            type: 'warning',
+          },
+        });
       },
-    });
-  }, [dispatch]);
+      [dispatch]
+    );
 
-  const removeNotification = useCallback((id: string) => {
-    dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
-  }, [dispatch]);
+    const removeNotification = useCallback(
+      (id: string) => {
+        dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
+      },
+      [dispatch]
+    );
 
-  const clearNotifications = useCallback(() => {
-    dispatch({ type: 'CLEAR_NOTIFICATIONS' });
-  }, [dispatch]);
+    const clearNotifications = useCallback(() => {
+      dispatch({ type: 'CLEAR_NOTIFICATIONS' });
+    }, [dispatch]);
 
     return {
       notifications: state.notifications,

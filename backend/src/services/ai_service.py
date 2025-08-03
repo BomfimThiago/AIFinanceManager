@@ -546,15 +546,247 @@ class AIService:
             return "Other"
 
     async def generate_insights(self, expenses, budgets_dict) -> list:
-        """Generate AI insights based on expenses and budgets.
+        """Generate comprehensive AI insights based on expenses and budgets using Haiku model."""
+        try:
+            from collections import defaultdict
+            from datetime import datetime
 
-        Note: This is a placeholder method. Full implementation would analyze
-        expenses and budgets to generate meaningful financial insights.
-        """
-        logger.info(
-            "generate_insights called - returning empty list (method not implemented)"
-        )
-        return []
+            # Prepare expense data for analysis
+            logger.info(f"🔍 Starting insights generation - Expenses count: {len(expenses) if expenses else 0}")
+            logger.info(f"🔍 Budgets dict: {budgets_dict}")
+
+            if not expenses:
+                logger.info("No expenses to analyze - returning onboarding insights")
+                # Return helpful onboarding insights when no data exists
+                from src.insights.schemas import AIInsight
+                return [
+                    AIInsight(
+                        title="Welcome to Your Finance Dashboard!",
+                        message="Start by uploading receipts or adding expenses manually to begin tracking your finances.",
+                        type="info",
+                        actionable="Click the 'Upload' tab to add your first receipt, or go to 'Expenses' to add transactions manually."
+                    ),
+                    AIInsight(
+                        title="Set Up Your First Budget",
+                        message="Creating budgets helps you control spending and reach your financial goals.",
+                        type="info",
+                        actionable="Navigate to the 'Budgets' tab to set spending limits for different categories."
+                    ),
+                    AIInsight(
+                        title="Track Different Currencies",
+                        message="This app supports multiple currencies (USD, EUR, BRL) with automatic conversion.",
+                        type="info",
+                        actionable="Use the currency selector in the top navigation to switch between currencies."
+                    )
+                ]
+
+            # Group expenses by month and category
+            monthly_data = defaultdict(lambda: {"income": 0, "expenses": 0, "by_category": defaultdict(float)})
+            category_totals = defaultdict(float)
+            merchant_frequency = defaultdict(int)
+
+            for expense in expenses:
+                # Parse date
+                expense_date = datetime.fromisoformat(expense.date)
+                month_key = f"{expense_date.year}-{expense_date.month:02d}"
+
+                if expense.type == "income":
+                    monthly_data[month_key]["income"] += expense.amount
+                else:
+                    monthly_data[month_key]["expenses"] += expense.amount
+                    monthly_data[month_key]["by_category"][expense.category] += expense.amount
+                    category_totals[expense.category] += expense.amount
+                    if expense.merchant:
+                        merchant_frequency[expense.merchant] += 1
+
+            # Calculate insights data
+            sorted_months = sorted(monthly_data.keys())
+            latest_month = sorted_months[-1] if sorted_months else None
+
+            # Find highest and lowest spending months
+            highest_spending_month = max(monthly_data.items(), key=lambda x: x[1]["expenses"]) if monthly_data else None
+            lowest_spending_month = min(monthly_data.items(), key=lambda x: x[1]["expenses"]) if monthly_data else None
+
+            # Get top spending categories
+            sorted_categories = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
+            top_categories = sorted_categories[:5] if sorted_categories else []
+
+            # Get most frequent merchants
+            sorted_merchants = sorted(merchant_frequency.items(), key=lambda x: x[1], reverse=True)
+            top_merchants = sorted_merchants[:5] if sorted_merchants else []
+
+            # Format spending month data
+            highest_month_str = "N/A"
+            highest_amount_str = "$0.00"
+            if highest_spending_month:
+                highest_month_str = highest_spending_month[0]
+                highest_amount_str = f"${highest_spending_month[1]['expenses']:.2f}"
+
+            lowest_month_str = "N/A"
+            lowest_amount_str = "$0.00"
+            if lowest_spending_month:
+                lowest_month_str = lowest_spending_month[0]
+                lowest_amount_str = f"${lowest_spending_month[1]['expenses']:.2f}"
+
+            # Prepare the AI prompt
+            analysis_prompt = f"""Analyze this financial data and provide comprehensive insights:
+
+MONTHLY OVERVIEW:
+{self._format_monthly_data(monthly_data, sorted_months)}
+
+CATEGORY BREAKDOWN (Total spending by category):
+{self._format_category_data(top_categories, category_totals)}
+
+TOP MERCHANTS (by frequency):
+{self._format_merchant_data(top_merchants)}
+
+BUDGET ANALYSIS:
+{self._format_budget_data(budgets_dict, monthly_data[latest_month]["by_category"] if latest_month else {})}
+
+HIGHEST SPENDING MONTH: {highest_month_str} - {highest_amount_str}
+LOWEST SPENDING MONTH: {lowest_month_str} - {lowest_amount_str}
+
+Generate 4-6 personalized financial insights. For each insight, provide:
+1. A brief title (max 50 chars)
+2. A detailed message explaining the insight (2-3 sentences)
+3. A specific actionable recommendation
+4. Type: "warning" (overspending/issues), "success" (good patterns), or "info" (neutral observations)
+
+Focus on:
+- Spending patterns and trends across months
+- Category analysis (what they're spending most on)
+- Budget alignment (are they meeting their goals?)
+- Income vs expenses balance
+- Savings opportunities
+- Unusual spending patterns
+- Recommendations for financial improvement
+
+Return ONLY a JSON array with this format:
+[
+  {{
+    "title": "High Food Spending Detected",
+    "message": "Your food expenses have increased 35% over the last 3 months. This category now represents 40% of your total spending.",
+    "actionable": "Consider meal planning and cooking at home more often. Set a weekly food budget of $150 to reduce spending by 20%.",
+    "type": "warning"
+  }}
+]
+
+Be specific with numbers and percentages. Make insights actionable and personalized based on the actual data."""
+
+            # Call AI with Haiku model for cost-effective analysis
+            logger.info("🤖 Calling AI with analysis prompt")
+            logger.info(f"📝 Prompt length: {len(analysis_prompt)} characters")
+            message = self.client.messages.create(
+                model="claude-3-5-haiku-20241022",
+                max_tokens=2000,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": analysis_prompt,
+                    }
+                ],
+            )
+            logger.info("✅ AI call completed successfully")
+
+            # Parse the AI response
+            ai_response = message.content[0].text.strip()
+            logger.info(f"AI response received, length: {len(ai_response)}")
+            insights_data = self._parse_insights_response(ai_response)
+
+            if not insights_data:
+                logger.error("Failed to parse AI insights response")
+                return []
+
+            # Convert to AIInsight objects
+            from src.insights.schemas import AIInsight
+            insights = []
+
+            for insight_data in insights_data:
+                try:
+                    insight = AIInsight(
+                        title=insight_data.get("title", "Financial Insight"),
+                        message=insight_data.get("message", ""),
+                        type=insight_data.get("type", "info"),
+                        actionable=insight_data.get("actionable", ""),
+                    )
+                    insights.append(insight)
+                except Exception as e:
+                    logger.error(f"Error creating insight object: {e}")
+                    continue
+
+            logger.info(f"🎯 Generated {len(insights)} AI insights")
+            for i, insight in enumerate(insights):
+                logger.info(f"  Insight {i+1}: {insight.title} ({insight.type})")
+            return insights
+
+        except Exception as error:
+            logger.error(f"Error generating AI insights: {error}", exc_info=True)
+            return []
+
+    def _format_monthly_data(self, monthly_data, sorted_months):
+        """Format monthly data for AI prompt."""
+        lines = []
+        for month in sorted_months[-6:]:  # Last 6 months
+            data = monthly_data[month]
+            net = data["income"] - data["expenses"]
+            lines.append(f"{month}: Income ${data['income']:.2f}, Expenses ${data['expenses']:.2f}, Net ${net:.2f}")
+        return "\n".join(lines)
+
+    def _format_category_data(self, top_categories, category_totals):
+        """Format category data for AI prompt."""
+        lines = []
+        total_spending = sum(category_totals.values())
+        for category, amount in top_categories:
+            percentage = (amount / total_spending * 100) if total_spending > 0 else 0
+            lines.append(f"{category}: ${amount:.2f} ({percentage:.1f}%)")
+        return "\n".join(lines)
+
+    def _format_merchant_data(self, top_merchants):
+        """Format merchant data for AI prompt."""
+        lines = []
+        for merchant, count in top_merchants:
+            lines.append(f"{merchant}: {count} transactions")
+        return "\n".join(lines) if lines else "No merchant data available"
+
+    def _format_budget_data(self, budgets_dict, current_month_spending):
+        """Format budget data for AI prompt."""
+        lines = []
+        for category, budget_info in budgets_dict.items():
+            limit = budget_info.get("limit", 0)
+            spent = current_month_spending.get(category, 0)
+            percentage = (spent / limit * 100) if limit > 0 else 0
+            status = "🔴 OVER" if spent > limit else "✅ OK"
+            lines.append(f"{category}: ${spent:.2f} / ${limit:.2f} ({percentage:.1f}%) {status}")
+        return "\n".join(lines) if lines else "No budgets set"
+
+    def _parse_insights_response(self, response_text):
+        """Parse AI insights response into structured data."""
+        try:
+            # Clean the response
+            response_text = self._clean_ai_response(response_text)
+
+            # Parse JSON
+            insights_data = json.loads(response_text)
+
+            if not isinstance(insights_data, list):
+                insights_data = [insights_data]
+
+            # Validate insights
+            valid_insights = []
+            valid_types = ["warning", "success", "info"]
+
+            for insight in insights_data:
+                if isinstance(insight, dict) and "title" in insight and "message" in insight:
+                    # Ensure type is valid
+                    if insight.get("type") not in valid_types:
+                        insight["type"] = "info"
+                    valid_insights.append(insight)
+
+            return valid_insights
+
+        except Exception as e:
+            logger.error(f"Error parsing insights response: {e}")
+            return []
 
 
 # Note: AIService instances should be created with category_service dependency

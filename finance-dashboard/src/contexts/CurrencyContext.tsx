@@ -1,6 +1,6 @@
 import React, { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-import { getCurrencies, getExchangeRates, getAuthToken } from '../services/apiService';
+import { getAuthToken, getCurrencies, getExchangeRates } from '../services/apiService';
 import type { Currency } from '../types';
 
 interface CurrencyContextType {
@@ -44,7 +44,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   useEffect(() => {
     const loadCurrencyData = async () => {
       const isAuthenticated = !!getAuthToken();
-      
+
       try {
         setIsLoading(true);
 

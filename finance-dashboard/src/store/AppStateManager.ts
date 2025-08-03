@@ -2,7 +2,6 @@
  * Global State Manager - Consolidates multiple contexts into unified state management
  * Following hexagonal architecture principles with separation of concerns
  */
-
 import { createContext, useContext } from 'react';
 
 // Domain Types
@@ -32,16 +31,16 @@ export interface AppState {
   // Global UI State
   activeTab: string;
   sidebarVisible: boolean;
-  
+
   // Data Filters
   filters: GlobalFilters;
-  
+
   // User Settings
   preferences: UserPreferences;
-  
+
   // Notifications
   notifications: NotificationState[];
-  
+
   // Authentication
   isAuthenticated: boolean;
   user: any | null;
@@ -86,28 +85,28 @@ export function appStateReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTab: action.payload };
-      
+
     case 'TOGGLE_SIDEBAR':
       return { ...state, sidebarVisible: !state.sidebarVisible };
-      
+
     case 'SET_FILTERS':
       return {
         ...state,
         filters: { ...state.filters, ...action.payload },
       };
-      
+
     case 'RESET_FILTERS':
       return {
         ...state,
         filters: initialAppState.filters,
       };
-      
+
     case 'SET_PREFERENCES':
       return {
         ...state,
         preferences: { ...state.preferences, ...action.payload },
       };
-      
+
     case 'ADD_NOTIFICATION':
       const newNotification: NotificationState = {
         ...action.payload,
@@ -118,26 +117,26 @@ export function appStateReducer(state: AppState, action: AppAction): AppState {
         ...state,
         notifications: [...state.notifications, newNotification],
       };
-      
+
     case 'REMOVE_NOTIFICATION':
       return {
         ...state,
         notifications: state.notifications.filter(n => n.id !== action.payload),
       };
-      
+
     case 'CLEAR_NOTIFICATIONS':
       return {
         ...state,
         notifications: [],
       };
-      
+
     case 'SET_AUTH':
       return {
         ...state,
         isAuthenticated: action.payload.isAuthenticated,
         user: action.payload.user,
       };
-      
+
     default:
       return state;
   }

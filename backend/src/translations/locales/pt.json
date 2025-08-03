@@ -45,6 +45,7 @@
     "hide": "Ocultar",
     "showDetails": "Mostrar Detalhes",
     "create": "Criar",
+    "warning": "Aviso",
     "select": "Selecionar",
     "all": "Todos",
     "none": "Nenhum",
@@ -219,7 +220,11 @@
     "spendingPatterns": "Padrões de Gastos",
     "recommendations": "Recomendações",
     "trends": "Tendências",
-    "analysis": "Análise"
+    "analysis": "Análise",
+    "excellent": "Excelente",
+    "fair": "Regular",
+    "insightsGenerated": "Análise de IA Gerada",
+    "insightsGeneratedMessage": "Novas análises foram geradas com base em seus dados financeiros"
   },
   "categories": {
     "title": "Categorias",

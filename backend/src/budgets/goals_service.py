@@ -49,6 +49,8 @@ class GoalsService:
             start_date=goal_model.start_date.isoformat() if goal_model.start_date else None,
             priority=goal_model.priority,
             auto_calculate=goal_model.auto_calculate,
+            color=goal_model.color,
+            icon=goal_model.icon,
             created_at=goal_model.created_at,
             updated_at=goal_model.updated_at,
         )

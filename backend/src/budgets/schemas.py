@@ -32,6 +32,8 @@ class GoalBase(BaseModel):
     target_date: str | None = Field(default=None, description="Target completion date (YYYY-MM-DD)")
     priority: int = Field(1, ge=1, le=3, description="Priority (1=high, 2=medium, 3=low)")
     auto_calculate: bool = Field(True, description="Auto-calculate progress from expenses")
+    color: str | None = Field(default=None, description="Hex color code for visual identification")
+    icon: str | None = Field(default=None, description="Icon name for visual identification")
 
 
 class GoalCreate(GoalBase):
@@ -60,6 +62,8 @@ class GoalUpdate(BaseModel):
     priority: int | None = Field(default=None, ge=1, le=3)
     status: GoalStatus | None = Field(default=None)
     auto_calculate: bool | None = Field(default=None)
+    color: str | None = Field(default=None, description="Hex color code for visual identification")
+    icon: str | None = Field(default=None, description="Icon name for visual identification")
 
 
 class Goal(GoalBase):

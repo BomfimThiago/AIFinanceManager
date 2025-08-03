@@ -45,6 +45,7 @@
     "hide": "Hide",
     "showDetails": "Show Details",
     "create": "Create",
+    "warning": "Warning",
     "select": "Select",
     "all": "All",
     "none": "None",
@@ -219,7 +220,11 @@
     "spendingPatterns": "Spending Patterns",
     "recommendations": "Recommendations",
     "trends": "Trends",
-    "analysis": "Analysis"
+    "analysis": "Analysis",
+    "excellent": "Excellent",
+    "fair": "Fair",
+    "insightsGenerated": "AI Insights Generated",
+    "insightsGeneratedMessage": "Fresh insights have been generated based on your financial data"
   },
   "categories": {
     "title": "Category Management",

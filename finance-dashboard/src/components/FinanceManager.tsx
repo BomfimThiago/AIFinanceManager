@@ -2,25 +2,23 @@
  * Refactored Finance Manager - Clean component following React 19 best practices
  * Separates UI rendering from business logic using hexagonal architecture
  */
-
 import React from 'react';
 
 // Business logic hooks (ports to domain layer)
 import { useAppNavigation } from '../hooks/useAppNavigation';
-import { useUserPreferences } from '../hooks/useUserPreferences';
 import { useFinanceOperations } from '../hooks/useFinanceOperations';
-
+import { useUserPreferences } from '../hooks/useUserPreferences';
 // UI Components
 import GlobalFiltersSidebar from './layout/GlobalFiltersSidebar';
 import Header from './layout/Header';
 import Navigation from './layout/Navigation';
+import CategoryManagement from './pages/CategoryManagement';
 import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
-import Upload from './pages/Upload';
 import Goals from './pages/Goals';
 import Insights from './pages/Insights';
 import Integrations from './pages/Integrations';
-import CategoryManagement from './pages/CategoryManagement';
+import Upload from './pages/Upload';
 
 // Types
 
@@ -77,22 +75,10 @@ const FinanceManager: React.FC = () => {
   const renderTabContent = (): React.JSX.Element => {
     switch (activeTab) {
       case 'dashboard':
-        return (
-          <Dashboard
-            expenses={expenses}
-            budgets={budgets}
-            hideAmounts={hideAmounts}
-          />
-        );
+        return <Dashboard expenses={expenses} budgets={budgets} hideAmounts={hideAmounts} />;
 
       case 'expenses':
-        return (
-          <Expenses
-            expenses={expenses}
-            categories={categories}
-            hideAmounts={hideAmounts}
-          />
-        );
+        return <Expenses expenses={expenses} categories={categories} hideAmounts={hideAmounts} />;
 
       case 'upload':
         return (
@@ -140,9 +126,7 @@ const FinanceManager: React.FC = () => {
       default:
         return (
           <div className="p-8 text-center">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Page not found
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-800">Page not found</h2>
           </div>
         );
     }
@@ -152,24 +136,16 @@ const FinanceManager: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onTogglePrivacy={togglePrivacyMode} hideAmounts={hideAmounts} />
-      
-      <Navigation 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-      />
+
+      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Responsive layout - sidebar doesn't affect content positioning below lg */}
       <div className="relative flex lg:flex-row">
-        <GlobalFiltersSidebar
-          isVisible={sidebarVisible}
-          onToggle={toggleSidebar}
-        />
-        
+        <GlobalFiltersSidebar isVisible={sidebarVisible} onToggle={toggleSidebar} />
+
         {/* Main content area - full width below lg, adjusted above lg */}
         <main className="flex-1 min-h-0 lg:overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {renderTabContent()}
-          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{renderTabContent()}</div>
         </main>
       </div>
     </div>

@@ -1,13 +1,114 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, DollarSign, PiggyBank, CreditCard, Calendar, 
-  Clock, TrendingUp, Target, AlertCircle, Save 
+import React, { useEffect, useState } from 'react';
+
+import {
+  Activity,
+  AlertCircle,
+  Award,
+  BarChart3,
+  Bike,
+  Book,
+  Briefcase,
+  Building,
+  Calendar,
+  Camera,
+  Car,
+  ChartLine,
+  Clock,
+  Coffee,
+  Coins,
+  CreditCard,
+  DollarSign,
+  Dumbbell,
+  Flag,
+  Gift,
+  GraduationCap,
+  Handshake,
+  Heart,
+  Home,
+  Laptop,
+  Medal,
+  Mountain,
+  Music,
+  PieChart,
+  PiggyBank,
+  Plane,
+  Rocket,
+  Save,
+  Star,
+  Target,
+  Timer,
+  TrendingUp,
+  Trophy,
+  Wallet,
+  X,
+  Zap,
 } from 'lucide-react';
 
+import { GOAL_COLORS, GOAL_ICONS, getDefaultGoalVisual } from '../../constants/goalVisuals';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { useCategoryTranslation, useTranslation } from '../../contexts/LanguageContext';
 import { useDateFormatter } from '../../hooks/useDateFormatter';
-import { Category, Goal, GoalType, TimeHorizon, GoalRecurrence, GoalStatus, GoalUpdate } from '../../types';
+import {
+  Category,
+  Goal,
+  GoalRecurrence,
+  GoalStatus,
+  GoalType,
+  GoalUpdate,
+  TimeHorizon,
+} from '../../types';
+
+// Icon mapping for goal icons
+const iconMap: Record<string, React.ElementType> = {
+  'piggy-bank': PiggyBank,
+  'dollar-sign': DollarSign,
+  coins: Coins,
+  'credit-card': CreditCard,
+  wallet: Wallet,
+  building: Building, // Using building instead of bank
+  target: Target,
+  trophy: Trophy,
+  award: Award,
+  star: Star,
+  medal: Medal,
+  flag: Flag,
+  'trending-up': TrendingUp,
+  'bar-chart': BarChart3, // Using BarChart3 instead of BarChart
+  'pie-chart': PieChart,
+  activity: Activity,
+  zap: Zap,
+  rocket: Rocket,
+  calendar: Calendar,
+  clock: Clock,
+  timer: Timer,
+  home: Home,
+  car: Car,
+  plane: Plane,
+  heart: Heart,
+  gift: Gift,
+  book: Book,
+  briefcase: Briefcase,
+  laptop: Laptop,
+  'graduation-cap': GraduationCap,
+  'chart-line': ChartLine,
+  handshake: Handshake,
+  dumbbell: Dumbbell,
+  bike: Bike,
+  mountain: Mountain,
+  coffee: Coffee,
+  camera: Camera,
+  music: Music,
+};
+
+// Component to render goal icon
+const GoalIcon: React.FC<{ iconName: string; className?: string; color?: string }> = ({
+  iconName,
+  className = 'w-5 h-5',
+  color,
+}) => {
+  const IconComponent = iconMap[iconName] || Target;
+  return <IconComponent className={className} style={color ? { color } : undefined} />;
+};
 
 interface EditGoalModalProps {
   isOpen: boolean;
@@ -26,6 +127,8 @@ interface GoalFormData {
   priority: 1 | 2 | 3;
   status: GoalStatus;
   auto_calculate: boolean;
+  color: string;
+  icon: string;
 }
 
 const EditGoalModal: React.FC<EditGoalModalProps> = ({
@@ -49,6 +152,8 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
     priority: 2,
     status: 'active',
     auto_calculate: true,
+    color: GOAL_COLORS[0],
+    icon: GOAL_ICONS[0],
   });
 
   const [errors, setErrors] = useState<Partial<GoalFormData>>({});
@@ -57,6 +162,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
   // Populate form when goal changes
   useEffect(() => {
     if (goal) {
+      const defaultVisual = getDefaultGoalVisual(goal.goal_type);
       setFormData({
         title: goal.title,
         description: goal.description || '',
@@ -66,6 +172,8 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
         priority: goal.priority,
         status: goal.status,
         auto_calculate: goal.auto_calculate,
+        color: goal.color || defaultVisual.color,
+        icon: goal.icon || defaultVisual.icon,
       });
     }
   }, [goal]);
@@ -132,7 +240,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 
   const handleInputChange = (field: keyof GoalFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -160,11 +268,11 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const goalData: GoalUpdate = {
         title: formData.title.trim(),
@@ -175,10 +283,12 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
         priority: formData.priority,
         status: formData.status,
         auto_calculate: formData.auto_calculate,
+        color: formData.color,
+        icon: formData.icon,
       };
 
       await onUpdateGoal(goal.id, goalData);
-      
+
       onClose();
     } catch (error) {
       console.error('Error updating goal:', error);
@@ -188,7 +298,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
   };
 
   const progressPercentage = Math.min(
-    (parseFloat(formData.current_amount) || 0) / (parseFloat(formData.target_amount) || 1) * 100, 
+    ((parseFloat(formData.current_amount) || 0) / (parseFloat(formData.target_amount) || 1)) * 100,
     100
   );
 
@@ -208,35 +318,38 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Goal Type Display (Read-only) */}
+            {/* Goal Type Display with Selected Color/Icon */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">{t('goals.goalType')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                {t('goals.goalType')}
+              </label>
               <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                {selectedGoalType && (
-                  <>
-                    <div className={`p-2 rounded-lg ${selectedGoalType.color}`}>
-                      <selectedGoalType.icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{selectedGoalType.label}</div>
-                      <div className="text-sm text-gray-600">
-                        {t(`goals.${goal.time_horizon}`)} • {goal.recurrence}
-                        {goal.category && ` • ${tCategory(goal.category)}`}
-                      </div>
-                    </div>
-                  </>
-                )}
+                <div
+                  className="p-2 rounded-lg shadow-sm"
+                  style={{ backgroundColor: formData.color }}
+                >
+                  <GoalIcon iconName={formData.icon} className="w-4 h-4" color="white" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{selectedGoalType?.label}</div>
+                  <div className="text-sm text-gray-600">
+                    {t(`goals.${goal.time_horizon}`)} • {goal.recurrence}
+                    {goal.category && ` • ${tCategory(goal.category)}`}
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.goalTitle')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('goals.goalTitle')}
+                </label>
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  onChange={e => handleInputChange('title', e.target.value)}
                   className={`w-full border rounded-lg px-3 py-2 ${
                     errors.title ? 'border-red-300' : 'border-gray-300'
                   }`}
@@ -250,10 +363,12 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.status')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('common.status')}
+                </label>
                 <select
                   value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as GoalStatus)}
+                  onChange={e => handleInputChange('status', e.target.value as GoalStatus)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 >
                   {statusOptions.map(option => (
@@ -272,7 +387,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                onChange={e => handleInputChange('description', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 rows={2}
                 placeholder={t('goals.descriptionPlaceholder')}
@@ -290,7 +405,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
                   step="0.01"
                   min="0"
                   value={formData.target_amount}
-                  onChange={(e) => handleInputChange('target_amount', e.target.value)}
+                  onChange={e => handleInputChange('target_amount', e.target.value)}
                   className={`w-full border rounded-lg px-3 py-2 ${
                     errors.target_amount ? 'border-red-300' : 'border-gray-300'
                   }`}
@@ -312,7 +427,7 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
                   step="0.01"
                   min="0"
                   value={formData.current_amount}
-                  onChange={(e) => handleInputChange('current_amount', e.target.value)}
+                  onChange={e => handleInputChange('current_amount', e.target.value)}
                   className={`w-full border rounded-lg px-3 py-2 ${
                     errors.current_amount ? 'border-red-300' : 'border-gray-300'
                   }`}
@@ -355,11 +470,13 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Target Date */}
             {(goal.goal_type === 'saving' || goal.goal_type === 'debt') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.targetDate')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('goals.targetDate')}
+                </label>
                 <input
                   type="date"
                   value={formData.target_date}
-                  onChange={(e) => handleInputChange('target_date', e.target.value)}
+                  onChange={e => handleInputChange('target_date', e.target.value)}
                   min={formatForInput(new Date())}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
@@ -369,10 +486,14 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
             {/* Priority and Settings */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('goals.priority')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('goals.priority')}
+                </label>
                 <select
                   value={formData.priority}
-                  onChange={(e) => handleInputChange('priority', parseInt(e.target.value) as 1 | 2 | 3)}
+                  onChange={e =>
+                    handleInputChange('priority', parseInt(e.target.value) as 1 | 2 | 3)
+                  }
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 >
                   {priorityOptions.map(option => (
@@ -388,12 +509,76 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
                   type="checkbox"
                   id="auto_calculate_edit"
                   checked={formData.auto_calculate}
-                  onChange={(e) => handleInputChange('auto_calculate', e.target.checked)}
+                  onChange={e => handleInputChange('auto_calculate', e.target.checked)}
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
                 <label htmlFor="auto_calculate_edit" className="text-sm text-gray-700">
                   {t('goals.autoCalculateProgress')}
                 </label>
+              </div>
+            </div>
+
+            {/* Visual Identification - Color and Icon Selection */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Visual Identification</h4>
+
+              {/* Preview */}
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="p-2 rounded-lg shadow-sm"
+                    style={{ backgroundColor: formData.color }}
+                  >
+                    <GoalIcon iconName={formData.icon} className="w-5 h-5" color="white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Preview</p>
+                    <p className="text-sm text-gray-600">This is how your goal will appear</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Color Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
+                  {GOAL_COLORS.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => handleInputChange('color', color)}
+                      className={`w-8 h-8 rounded-lg transition-all hover:scale-110 ${
+                        formData.color === color
+                          ? 'ring-2 ring-blue-500 ring-offset-2'
+                          : 'hover:ring-2 hover:ring-gray-300'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      aria-label={`Select color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Icon Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Icon</label>
+                <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                  {GOAL_ICONS.map(iconName => (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => handleInputChange('icon', iconName)}
+                      className={`p-2 rounded-lg border transition-all hover:bg-gray-50 ${
+                        formData.icon === iconName
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200'
+                      }`}
+                      aria-label={`Select icon ${iconName}`}
+                    >
+                      <GoalIcon iconName={iconName} className="w-5 h-5 text-gray-700" />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -403,27 +588,26 @@ const EditGoalModal: React.FC<EditGoalModalProps> = ({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">{t('goals.created')}:</span>
-                  <span className="ml-2 font-medium">
-                    {formatShortDate(goal.created_at)}
-                  </span>
+                  <span className="ml-2 font-medium">{formatShortDate(goal.created_at)}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">{t('goals.lastUpdated')}:</span>
-                  <span className="ml-2 font-medium">
-                    {formatShortDate(goal.updated_at)}
-                  </span>
+                  <span className="ml-2 font-medium">{formatShortDate(goal.updated_at)}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">{t('goals.remaining')}:</span>
                   <span className="ml-2 font-medium">
-                    {formatAmount(Math.max(0, parseFloat(formData.target_amount) - parseFloat(formData.current_amount)))}
+                    {formatAmount(
+                      Math.max(
+                        0,
+                        parseFloat(formData.target_amount) - parseFloat(formData.current_amount)
+                      )
+                    )}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">{t('goals.startDate')}:</span>
-                  <span className="ml-2 font-medium">
-                    {formatShortDate(goal.start_date)}
-                  </span>
+                  <span className="ml-2 font-medium">{formatShortDate(goal.start_date)}</span>
                 </div>
               </div>
             </div>

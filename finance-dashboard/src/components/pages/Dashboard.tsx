@@ -2,14 +2,13 @@
  * Refactored Dashboard Component - Pure UI presentation
  * Follows Container/Presenter pattern with separated business logic
  */
-
 import React from 'react';
+
 import { CreditCard, RefreshCw, Target, TrendingUp, Wallet } from 'lucide-react';
 
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import type { Budgets, Expense } from '../../types';
-
 // UI Components
 import InteractiveExpenseFlow from '../charts/InteractiveExpenseFlow';
 import InteractiveSpendingTimeline from '../charts/InteractiveSpendingTimeline';
@@ -130,13 +129,19 @@ const SummaryCards: React.FC<{
         title="Net Amount"
         value={formatAmount(calculations.netAmount)}
         icon={Wallet}
-        trend={calculations.netAmount > 0 ? 'positive' : calculations.netAmount < 0 ? 'negative' : 'neutral'}
+        trend={
+          calculations.netAmount > 0
+            ? 'positive'
+            : calculations.netAmount < 0
+              ? 'negative'
+              : 'neutral'
+        }
         className={
           calculations.netAmount > 0
             ? 'bg-green-50 border-green-200'
             : calculations.netAmount < 0
-            ? 'bg-red-50 border-red-200'
-            : 'bg-gray-50 border-gray-200'
+              ? 'bg-red-50 border-red-200'
+              : 'bg-gray-50 border-gray-200'
         }
       />
       <SummaryCard
@@ -189,28 +194,17 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
       />
 
       {/* Summary Cards */}
-      <SummaryCards
-        calculations={calculations}
-        hideAmounts={hideAmounts}
-        currency={currency}
-      />
+      <SummaryCards calculations={calculations} hideAmounts={hideAmounts} currency={currency} />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Spending by Category
-          </h3>
-          <InteractiveExpenseFlow
-            expenses={expenses || []}
-            onCategoryClick={handleCategoryClick}
-          />
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Spending by Category</h3>
+          <InteractiveExpenseFlow expenses={expenses || []} onCategoryClick={handleCategoryClick} />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Monthly Trends
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Trends</h3>
           <InteractiveSpendingTimeline
             expenses={expenses || []}
             onTimeRangeSelect={handleTimeRangeSelect}
@@ -220,9 +214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
 
       {/* Spending Heatmap */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Spending Heatmap
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Spending Heatmap</h3>
         <SpendingHeatmap
           expenses={expenses || []}
           onDateClick={handleDateClick}

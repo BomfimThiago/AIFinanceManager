@@ -1,7 +1,8 @@
 import React from 'react';
-import { CategoryIcon } from '../../utils/categoryIcons';
+
 import { useCategoryTranslation } from '../../contexts/LanguageContext';
 import type { Category } from '../../types';
+import { CategoryIcon } from '../../utils/categoryIcons';
 
 interface CategoryDisplayProps {
   category: Category;
@@ -66,9 +67,7 @@ const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
               />
             </div>
           )}
-          {showName && (
-            <span className="text-sm text-gray-700">{translatedName}</span>
-          )}
+          {showName && <span className="text-sm text-gray-700">{translatedName}</span>}
         </div>
       );
 
@@ -83,18 +82,11 @@ const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
               className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: `${category.color}20` }}
             >
-              <CategoryIcon
-                iconName={category.icon}
-                className="w-4 h-4"
-                color={category.color}
-              />
+              <CategoryIcon iconName={category.icon} className="w-4 h-4" color={category.color} />
             </div>
           )}
           {showName && (
-            <span 
-              className="text-sm font-medium"
-              style={{ color: category.color }}
-            >
+            <span className="text-sm font-medium" style={{ color: category.color }}>
               {translatedName}
             </span>
           )}
@@ -109,15 +101,9 @@ const CategoryDisplay: React.FC<CategoryDisplayProps> = ({
           onClick={onClick}
         >
           {showIcon && (
-            <CategoryIcon
-              iconName={category.icon}
-              className="w-4 h-4"
-              color={category.color}
-            />
+            <CategoryIcon iconName={category.icon} className="w-4 h-4" color={category.color} />
           )}
-          {showName && (
-            <span className="text-sm">{translatedName}</span>
-          )}
+          {showName && <span className="text-sm">{translatedName}</span>}
         </div>
       );
   }

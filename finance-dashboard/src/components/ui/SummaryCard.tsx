@@ -24,19 +24,19 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         return {
           textColor: 'text-green-600',
           bgColor: 'bg-green-100',
-          iconColor: 'text-green-600'
+          iconColor: 'text-green-600',
         };
       case 'negative':
         return {
           textColor: 'text-red-600',
           bgColor: 'bg-red-100',
-          iconColor: 'text-red-600'
+          iconColor: 'text-red-600',
         };
       default:
         return {
           textColor: 'text-gray-900',
           bgColor: 'bg-gray-100',
-          iconColor: 'text-gray-600'
+          iconColor: 'text-gray-600',
         };
     }
   };

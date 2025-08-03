@@ -2,7 +2,6 @@
  * Refactored App Component - Simplified with global state management
  * Uses the new AppStateProvider instead of multiple contexts
  */
-
 import React from 'react';
 
 import FinanceManager from './components/FinanceManager';

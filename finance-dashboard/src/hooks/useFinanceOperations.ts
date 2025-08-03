@@ -3,32 +3,27 @@
  * Replaces business logic from FinanceManager component
  * Follows hexagonal architecture with service layer separation
  */
-
-import { useState, useMemo } from 'react';
-
-// TanStack Query hooks
-import { useExpenses, useCreateBulkExpenses } from './queries';
-import { useBudgets, useUpdateBudgetSpent } from './queries';
-import { useCategories } from './queries';
-import { useGenerateInsights } from './queries';
-import { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from './queries';
+import { useMemo, useState } from 'react';
 
 // Custom hooks
 import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
-import { useAppNotifications } from './useAppNotifications';
-import { useFileUpload } from './useFileUpload';
-
+import { ExpensesService } from '../services/expensesService';
 // Services
 import { GoalsService } from '../services/goalsService';
-import { ExpensesService } from '../services/expensesService';
-
+// Types
+import type { AIInsight } from '../types';
+import { transformApiBudgetsToBudgets } from '../utils/budgetHelpers';
 // Utils
 import { convertAPICategoriesList } from '../utils/categoryMapper';
 import { getUserFriendlyError } from '../utils/errorMessages';
-import { transformApiBudgetsToBudgets } from '../utils/budgetHelpers';
-
-// Types
-import type { AIInsight } from '../types';
+// TanStack Query hooks
+import { useCreateBulkExpenses, useExpenses } from './queries';
+import { useBudgets, useUpdateBudgetSpent } from './queries';
+import { useCategories } from './queries';
+import { useGenerateInsights } from './queries';
+import { useCreateGoal, useDeleteGoal, useGoals, useUpdateGoal } from './queries';
+import { useAppNotifications } from './useAppNotifications';
+import { useFileUpload } from './useFileUpload';
 
 export function useFinanceOperations() {
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
@@ -39,25 +34,26 @@ export function useFinanceOperations() {
 
   // Handle multiple vs single category filtering
   const hasMultipleCategories = filters.categories && filters.categories.length > 1;
-  
+
   // For multiple categories, don't send category filter to backend (we'll filter client-side)
   // For single category, send it to backend for better performance
   const queryFilters = {
     type: filters.type,
-    category: !hasMultipleCategories && filters.categories && filters.categories.length === 1 
-      ? filters.categories[0] 
-      : undefined,
+    category:
+      !hasMultipleCategories && filters.categories && filters.categories.length === 1
+        ? filters.categories[0]
+        : undefined,
     startDate: filters.startDate,
     endDate: filters.endDate,
     search: filters.search,
   };
-  
+
   // Debug current filters state
   console.log('🔍 useFinanceOperations filters:', {
     globalFilters: filters,
     queryFilters: queryFilters,
     hasMultipleCategories: hasMultipleCategories,
-    willFilterClientSide: hasMultipleCategories
+    willFilterClientSide: hasMultipleCategories,
   });
   const {
     data: rawExpenses = [],
@@ -67,33 +63,31 @@ export function useFinanceOperations() {
     ...queryFilters,
     type: queryFilters.type || undefined,
   });
-  
+
   // Apply client-side category filtering for multiple categories
   const expenses = useMemo(() => {
     if (!hasMultipleCategories || !filters.categories) {
       return rawExpenses;
     }
-    
+
     // Filter expenses to show ANY of the selected categories (OR operation)
-    const filtered = rawExpenses.filter(expense => 
-      filters.categories!.includes(expense.category)
-    );
-    
+    const filtered = rawExpenses.filter(expense => filters.categories!.includes(expense.category));
+
     console.log('📊 Client-side category filtering:', {
       selectedCategories: filters.categories,
       totalExpenses: rawExpenses.length,
       filteredCount: filtered.length,
-      filteredExpenses: filtered.map(e => ({ id: e.id, category: e.category, description: e.description }))
+      filteredExpenses: filtered.map(e => ({
+        id: e.id,
+        category: e.category,
+        description: e.description,
+      })),
     });
-    
+
     return filtered;
   }, [rawExpenses, hasMultipleCategories, filters.categories]);
 
-  const { 
-    data: budgetsData, 
-    isLoading: budgetsLoading, 
-    error: budgetsError 
-  } = useBudgets();
+  const { data: budgetsData, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
 
   const {
     data: categoriesData,
@@ -101,11 +95,7 @@ export function useFinanceOperations() {
     error: categoriesError,
   } = useCategories(true);
 
-  const { 
-    data: goals = [], 
-    isLoading: goalsLoading, 
-    error: goalsError 
-  } = useGoals();
+  const { data: goals = [], isLoading: goalsLoading, error: goalsError } = useGoals();
 
   // Mutations
   const createBulkExpensesMutation = useCreateBulkExpenses();
@@ -162,6 +152,7 @@ export function useFinanceOperations() {
   const generateInsights = async (): Promise<void> => {
     try {
       const result = await generateInsightsMutation.mutateAsync();
+
       if (result) {
         setAiInsights(result);
         showSuccess('AI insights generated successfully', 'Insights Generated');
@@ -192,7 +183,7 @@ export function useFinanceOperations() {
   const categories = categoriesData?.categories
     ? convertAPICategoriesList(categoriesData.categories)
     : [];
-  
+
   const budgets = budgetsData ? transformApiBudgetsToBudgets(budgetsData) : {};
 
   // Loading states
@@ -215,7 +206,7 @@ export function useFinanceOperations() {
     addExpenses,
     updateBudgetSpent,
     generateInsights,
-    
+
     // Goals operations
     createGoal: goalsService.createGoal.bind(goalsService),
     updateGoal: goalsService.updateGoal.bind(goalsService),

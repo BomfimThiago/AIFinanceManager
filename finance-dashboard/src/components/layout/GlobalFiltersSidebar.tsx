@@ -1,28 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import './calendar-custom.css';
 
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Filter, 
-  Search, 
-  X, 
+import {
   Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Filter,
+  Search,
   Sliders,
   Tag,
-  DollarSign,
+  TrendingDown,
   TrendingUp,
-  TrendingDown
+  X,
 } from 'lucide-react';
+
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { useCategories } from '../../hooks/queries';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { convertAPICategoriesList } from '../../utils/categoryMapper';
 import CategoryDisplay from '../ui/CategoryDisplay';
+import './calendar-custom.css';
 
 type DateRange = [Date | null, Date | null];
 
@@ -181,9 +182,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center space-x-2 mb-3">
               <Search className="h-4 w-4 text-gray-500" />
-              <label className="text-sm font-semibold text-gray-900">
-                Search Transactions
-              </label>
+              <label className="text-sm font-semibold text-gray-900">Search Transactions</label>
             </div>
             <div className="relative">
               <input
@@ -219,7 +218,10 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
           </div>
 
           {/* Modern Date Range Filter */}
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100" ref={datePickerRef}>
+          <div
+            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+            ref={datePickerRef}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
                 <CalendarIcon className="h-4 w-4 text-gray-500" />
@@ -234,14 +236,15 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
                 </button>
               )}
             </div>
-            
+
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-all duration-200 text-left"
             >
               {dateRange[0] && dateRange[1] ? (
                 <span className="text-gray-900 font-medium">
-                  {formatShortDate(dateRange[0].toISOString().split('T')[0])} - {formatShortDate(dateRange[1].toISOString().split('T')[0])}
+                  {formatShortDate(dateRange[0].toISOString().split('T')[0])} -{' '}
+                  {formatShortDate(dateRange[1].toISOString().split('T')[0])}
                 </span>
               ) : dateRange[0] ? (
                 <span className="text-gray-900 font-medium">
@@ -277,17 +280,20 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
               {categories.map(category => {
                 const isSelected = filters.categories?.includes(category.name) || false;
                 return (
-                  <label key={category.name} className={`flex items-center cursor-pointer p-3 rounded-xl transition-all duration-200 ${
-                    isSelected 
-                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200' 
-                      : 'hover:bg-gray-50 border border-transparent'
-                  }`}>
+                  <label
+                    key={category.name}
+                    className={`flex items-center cursor-pointer p-3 rounded-xl transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200'
+                        : 'hover:bg-gray-50 border border-transparent'
+                    }`}
+                  >
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={(e) => {
+                      onChange={e => {
                         const currentCategories = filters.categories || [];
-                        
+
                         if (e.target.checked) {
                           // Add category
                           const newCategories = [...currentCategories, category.name];
@@ -295,13 +301,16 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
                         } else {
                           // Remove category
                           const newCategories = currentCategories.filter(c => c !== category.name);
-                          updateFilter('categories', newCategories.length > 0 ? newCategories : undefined);
+                          updateFilter(
+                            'categories',
+                            newCategories.length > 0 ? newCategories : undefined
+                          );
                         }
                       }}
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 mr-3 flex-shrink-0"
                     />
-                    <CategoryDisplay 
-                      category={category} 
+                    <CategoryDisplay
+                      category={category}
                       variant="compact"
                       className="flex-1"
                       allCategories={categories}
@@ -314,7 +323,8 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
               <div className="mt-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-600">
-                    {filters.categories.length} {filters.categories.length === 1 ? 'category' : 'categories'} selected
+                    {filters.categories.length}{' '}
+                    {filters.categories.length === 1 ? 'category' : 'categories'} selected
                   </span>
                   <button
                     onClick={() => clearFilter('categories')}
@@ -327,7 +337,7 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
                   {filters.categories.map(categoryName => {
                     const categoryObj = categories.find(c => c.name === categoryName);
                     if (!categoryObj) return null;
-                    
+
                     return (
                       <div key={categoryName} className="inline-flex items-center">
                         <CategoryDisplay
@@ -337,8 +347,13 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
                         />
                         <button
                           onClick={() => {
-                            const newCategories = filters.categories!.filter(c => c !== categoryName);
-                            updateFilter('categories', newCategories.length > 0 ? newCategories : undefined);
+                            const newCategories = filters.categories!.filter(
+                              c => c !== categoryName
+                            );
+                            updateFilter(
+                              'categories',
+                              newCategories.length > 0 ? newCategories : undefined
+                            );
                           }}
                           className="ml-1 text-gray-500 hover:text-gray-700"
                         >
@@ -396,15 +411,23 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
             </div>
             {filters.type && (
               <div className="mt-3 flex items-center justify-between">
-                <div className={`inline-flex items-center px-3 py-1.5 text-sm rounded-lg border ${
-                  filters.type === 'income'
-                    ? 'bg-green-50 text-green-700 border-green-200'
-                    : 'bg-red-50 text-red-700 border-red-200'
-                }`}>
+                <div
+                  className={`inline-flex items-center px-3 py-1.5 text-sm rounded-lg border ${
+                    filters.type === 'income'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : 'bg-red-50 text-red-700 border-red-200'
+                  }`}
+                >
                   {filters.type === 'income' ? (
-                    <><TrendingUp className="h-3 w-3 mr-2" />Income</>
+                    <>
+                      <TrendingUp className="h-3 w-3 mr-2" />
+                      Income
+                    </>
                   ) : (
-                    <><TrendingDown className="h-3 w-3 mr-2" />Expense</>
+                    <>
+                      <TrendingDown className="h-3 w-3 mr-2" />
+                      Expense
+                    </>
                   )}
                 </div>
                 <button
@@ -416,7 +439,6 @@ const GlobalFiltersSidebar: React.FC<GlobalFiltersSidebarProps> = ({ isVisible, 
               </div>
             )}
           </div>
-
 
           {/* Modern Active Filters Summary */}
           {hasActiveFilters && (

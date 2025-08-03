@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import { Check, DollarSign, Globe, X } from 'lucide-react';
 
-import { useUserPreferencesContext } from '../../contexts/UserPreferencesContext';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useUserPreferencesContext } from '../../contexts/UserPreferencesContext';
 import { UserPreferencesUpdate } from '../../services/apiService';
 
 interface PreferencesModalProps {
@@ -144,9 +144,7 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
                   <DollarSign className="h-4 w-4 mr-2" />
                   {t('preferences.defaultCurrency')}
                 </label>
-                <p className="text-xs text-gray-500 mb-3">
-                  {t('preferences.defaultCurrencyHelp')}
-                </p>
+                <p className="text-xs text-gray-500 mb-3">{t('preferences.defaultCurrencyHelp')}</p>
                 <div className="space-y-2">
                   {availableCurrencies.map(currency => (
                     <button
@@ -177,9 +175,7 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
                   <Globe className="h-4 w-4 mr-2" />
                   {t('preferences.defaultLanguage')}
                 </label>
-                <p className="text-xs text-gray-500 mb-3">
-                  {t('preferences.defaultLanguageHelp')}
-                </p>
+                <p className="text-xs text-gray-500 mb-3">{t('preferences.defaultLanguageHelp')}</p>
                 <div className="space-y-2">
                   {availableLanguages.map(language => (
                     <button
@@ -192,7 +188,9 @@ const PreferencesModal: React.FC<PreferencesModalProps> = ({ isOpen, onClose }) 
                       }`}
                     >
                       <div className="text-left">
-                        <div className="font-medium text-gray-900 text-sm">{getLanguageName(language.code)}</div>
+                        <div className="font-medium text-gray-900 text-sm">
+                          {getLanguageName(language.code)}
+                        </div>
                         <div className="text-xs text-gray-500">{language.native_label}</div>
                       </div>
                       {selectedLanguage === language.code && (

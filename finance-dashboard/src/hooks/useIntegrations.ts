@@ -113,18 +113,23 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         console.error('Failed to fetch integrations:', errorText);
         // Show user-friendly error message
         setError('Unable to load your connected banks. Please try refreshing the page.');
-        showError('Connection Error', 'Unable to load your connected banks. Please try refreshing the page.');
+        showError(
+          'Connection Error',
+          'Unable to load your connected banks. Please try refreshing the page.'
+        );
       }
     } catch (err) {
       console.error('Error fetching integrations:', err);
       // Show user-friendly error message
       setError('Unable to connect to the server. Please check your internet connection.');
-      showError('Network Error', 'Unable to connect to the server. Please check your internet connection.');
+      showError(
+        'Network Error',
+        'Unable to connect to the server. Please check your internet connection.'
+      );
     } finally {
       setLoading(false);
     }
   }, [showError]);
-
 
   const performDeleteIntegration = useCallback(
     async (integrationId: number) => {
@@ -152,7 +157,10 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         } else {
           const errorData = await response.text();
           console.error('Delete failed:', errorData);
-          showError('Unable to Disconnect', 'We couldn\'t disconnect your bank right now. Please try again later.');
+          showError(
+            'Unable to Disconnect',
+            "We couldn't disconnect your bank right now. Please try again later."
+          );
           setConfirmationState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (err) {
@@ -190,7 +198,6 @@ export const useIntegrations = (): UseIntegrationsReturn => {
     },
     [connectedIntegrations]
   );
-
 
   const handleConfirmation = useCallback(async () => {
     if (!confirmationState.integrationId) return;

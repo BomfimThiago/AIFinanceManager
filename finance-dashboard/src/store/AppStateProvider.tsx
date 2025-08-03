@@ -2,8 +2,8 @@
  * Global State Provider - Replaces multiple context providers
  * Implements centralized state management following React 19 best practices
  */
+import React, { ReactNode, useEffect, useReducer } from 'react';
 
-import React, { useReducer, useEffect, ReactNode } from 'react';
 import { AppStateContext, appStateReducer, initialAppState } from './AppStateManager';
 
 interface AppStateProviderProps {
@@ -42,7 +42,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
 
-    state.notifications.forEach((notification) => {
+    state.notifications.forEach(notification => {
       const timeoutId = setTimeout(() => {
         dispatch({ type: 'REMOVE_NOTIFICATION', payload: notification.id });
       }, 5000);
@@ -55,8 +55,6 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
   }, [state.notifications]);
 
   return (
-    <AppStateContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AppStateContext.Provider>
+    <AppStateContext.Provider value={{ state, dispatch }}>{children}</AppStateContext.Provider>
   );
 }

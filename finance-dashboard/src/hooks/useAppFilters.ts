@@ -2,36 +2,51 @@
  * Filters Hook - Manages global data filtering state
  * Provides clean interface for filter operations
  */
-
 import { useCallback } from 'react';
-import { useAppState, GlobalFilters } from '../store/AppStateManager';
+
+import { GlobalFilters, useAppState } from '../store/AppStateManager';
 
 export function useAppFilters() {
   const { state, dispatch } = useAppState();
 
-  const setFilters = useCallback((filters: Partial<GlobalFilters>) => {
-    dispatch({ type: 'SET_FILTERS', payload: filters });
-  }, [dispatch]);
+  const setFilters = useCallback(
+    (filters: Partial<GlobalFilters>) => {
+      dispatch({ type: 'SET_FILTERS', payload: filters });
+    },
+    [dispatch]
+  );
 
   const resetFilters = useCallback(() => {
     dispatch({ type: 'RESET_FILTERS' });
   }, [dispatch]);
 
-  const setSearchFilter = useCallback((search: string | null) => {
-    dispatch({ type: 'SET_FILTERS', payload: { search } });
-  }, [dispatch]);
+  const setSearchFilter = useCallback(
+    (search: string | null) => {
+      dispatch({ type: 'SET_FILTERS', payload: { search } });
+    },
+    [dispatch]
+  );
 
-  const setCategoryFilter = useCallback((category: string | null) => {
-    dispatch({ type: 'SET_FILTERS', payload: { category } });
-  }, [dispatch]);
+  const setCategoryFilter = useCallback(
+    (category: string | null) => {
+      dispatch({ type: 'SET_FILTERS', payload: { category } });
+    },
+    [dispatch]
+  );
 
-  const setTypeFilter = useCallback((type: 'income' | 'expense' | null) => {
-    dispatch({ type: 'SET_FILTERS', payload: { type } });
-  }, [dispatch]);
+  const setTypeFilter = useCallback(
+    (type: 'income' | 'expense' | null) => {
+      dispatch({ type: 'SET_FILTERS', payload: { type } });
+    },
+    [dispatch]
+  );
 
-  const setDateRange = useCallback((startDate: string | null, endDate: string | null) => {
-    dispatch({ type: 'SET_FILTERS', payload: { startDate, endDate } });
-  }, [dispatch]);
+  const setDateRange = useCallback(
+    (startDate: string | null, endDate: string | null) => {
+      dispatch({ type: 'SET_FILTERS', payload: { startDate, endDate } });
+    },
+    [dispatch]
+  );
 
   return {
     filters: state.filters,

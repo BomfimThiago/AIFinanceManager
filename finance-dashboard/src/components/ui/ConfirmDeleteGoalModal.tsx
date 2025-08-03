@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 import { useCurrency } from '../../contexts/CurrencyContext';
@@ -27,10 +28,14 @@ const ConfirmDeleteGoalModal: React.FC<ConfirmDeleteGoalModalProps> = ({
 
   const getGoalTypeLabel = (type: string) => {
     switch (type) {
-      case 'spending': return t('goals.spendingBudget');
-      case 'saving': return t('goals.savingsGoal');
-      case 'debt': return t('goals.debtPayoff');
-      default: return t('common.goal');
+      case 'spending':
+        return t('goals.spendingBudget');
+      case 'saving':
+        return t('goals.savingsGoal');
+      case 'debt':
+        return t('goals.debtPayoff');
+      default:
+        return t('common.goal');
     }
   };
 
@@ -45,8 +50,8 @@ const ConfirmDeleteGoalModal: React.FC<ConfirmDeleteGoalModalProps> = ({
             </div>
             <h2 className="text-lg font-semibold text-gray-900">{t('goals.deleteGoal')}</h2>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
             disabled={isDeleting}
           >
@@ -55,9 +60,7 @@ const ConfirmDeleteGoalModal: React.FC<ConfirmDeleteGoalModalProps> = ({
         </div>
 
         <div className="p-6">
-          <p className="text-gray-600 mb-4">
-            {t('goals.deleteGoalConfirm')}
-          </p>
+          <p className="text-gray-600 mb-4">{t('goals.deleteGoalConfirm')}</p>
 
           {/* Goal Details */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">

@@ -2,21 +2,22 @@
  * Refactored Main Entry Point - Consolidated state management
  * Replaces multiple context providers with unified AppStateProvider
  */
-
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import ReactDOM from 'react-dom/client';
+
 import App from './App';
-import { AppStateProvider } from './store/AppStateProvider';
 import { AuthProvider } from './contexts/AuthContext';
-import { GlobalFiltersProvider } from './contexts/GlobalFiltersContext';
+import { CategoriesProvider } from './contexts/CategoriesContext';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { GlobalFiltersProvider } from './contexts/GlobalFiltersContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
-import { CategoriesProvider } from './contexts/CategoriesContext';
 import './index.css';
+import { AppStateProvider } from './store/AppStateProvider';
 
 // Create TanStack Query client with optimized defaults
 const queryClient = new QueryClient({
@@ -34,23 +35,23 @@ const queryClient = new QueryClient({
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <LanguageProvider>
-            <CurrencyProvider>
-              <CategoriesProvider>  
-                <UserPreferencesProvider>
-                  <GlobalFiltersProvider>
-                    <AppStateProvider>
-                      <App />
-                    </AppStateProvider>
-                  </GlobalFiltersProvider>
-                </UserPreferencesProvider>
-              </CategoriesProvider>
-            </CurrencyProvider>
-          </LanguageProvider>
-        </ToastProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <ToastProvider>
+        <LanguageProvider>
+          <CurrencyProvider>
+            <CategoriesProvider>
+              <UserPreferencesProvider>
+                <GlobalFiltersProvider>
+                  <AppStateProvider>
+                    <App />
+                  </AppStateProvider>
+                </GlobalFiltersProvider>
+              </UserPreferencesProvider>
+            </CategoriesProvider>
+          </CurrencyProvider>
+        </LanguageProvider>
+      </ToastProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );

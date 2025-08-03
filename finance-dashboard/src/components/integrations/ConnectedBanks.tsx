@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CheckCircle, Clock, Trash2, AlertCircle, Calendar, Globe, Settings } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Clock, Globe, Settings, Trash2 } from 'lucide-react';
 
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useDateFormatter } from '../../hooks/useDateFormatter';
@@ -11,10 +11,7 @@ interface ConnectedBanksProps {
   onDelete: (integrationId: number) => void;
 }
 
-const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
-  integrations,
-  onDelete,
-}) => {
+const ConnectedBanks: React.FC<ConnectedBanksProps> = ({ integrations, onDelete }) => {
   const { t } = useTranslation();
   const { formatShortDate } = useDateFormatter();
 
@@ -111,9 +108,7 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
                       {countryFlag} {countryCode}
                     </span>
                     <span className="text-xs text-gray-400">•</span>
-                    <span className="text-xs text-gray-500">
-                      {getStatusText()}
-                    </span>
+                    <span className="text-xs text-gray-500">{getStatusText()}</span>
                     {integration.status === 'connected' && integration.last_sync && (
                       <>
                         <span className="text-xs text-gray-400">•</span>
@@ -131,13 +126,17 @@ const ConnectedBanks: React.FC<ConnectedBanksProps> = ({
                 {integration.created_at && (
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-3 w-3 text-gray-400" />
-                    <span>{t('integrations.connectedOn')}: {formatShortDate(integration.created_at)}</span>
+                    <span>
+                      {t('integrations.connectedOn')}: {formatShortDate(integration.created_at)}
+                    </span>
                   </div>
                 )}
                 {integration.last_sync && integration.status === 'connected' && (
                   <div className="flex items-center space-x-2">
                     <Clock className="h-3 w-3 text-gray-400" />
-                    <span>{t('integrations.lastSync')}: {formatShortDate(integration.last_sync)}</span>
+                    <span>
+                      {t('integrations.lastSync')}: {formatShortDate(integration.last_sync)}
+                    </span>
                   </div>
                 )}
               </div>

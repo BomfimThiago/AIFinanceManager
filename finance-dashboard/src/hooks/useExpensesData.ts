@@ -2,14 +2,14 @@
  * Expenses Data Hook - Business logic for expenses management
  * Handles CRUD operations and data calculations
  */
+import { useCallback, useMemo, useState } from 'react';
 
-import { useState, useCallback, useMemo } from 'react';
-import { useCreateExpense, useUpdateExpense, useDeleteExpense } from './queries';
+import type { Category, Expense } from '../types';
+import { getExpenseAmountInCurrency } from '../utils/currencyHelpers';
+import { getUserFriendlyError } from '../utils/errorMessages';
+import { useCreateExpense, useDeleteExpense, useUpdateExpense } from './queries';
 import { useAppNotifications } from './useAppNotifications';
 import { useUserPreferences } from './useUserPreferences';
-import { getUserFriendlyError } from '../utils/errorMessages';
-import { getExpenseAmountInCurrency } from '../utils/currencyHelpers';
-import type { Expense, Category } from '../types';
 
 interface ExpenseModalState {
   editingExpense: Expense | null;
@@ -28,10 +28,10 @@ interface ExpenseCalculations {
 interface ExpensesDataResult {
   // Modal state
   modalState: ExpenseModalState;
-  
+
   // Calculations
   calculations: ExpenseCalculations;
-  
+
   // Actions
   handleAddClick: () => void;
   handleEditClick: (expense: Expense) => void;
@@ -39,11 +39,11 @@ interface ExpensesDataResult {
   handleCloseModals: () => void;
   handleSaveExpense: (expenseData: any) => Promise<void>;
   handleConfirmDelete: () => Promise<void>;
-  
+
   // Utilities
   getConvertedAmount: (expense: Expense) => number;
   formatExpenseAmount: (expense: Expense) => string;
-  
+
   // Loading states
   isCreating: boolean;
   isUpdating: boolean;
@@ -103,27 +103,37 @@ export function useExpensesData(expenses: Expense[], categories: Category[]): Ex
   }, []);
 
   // CRUD operations
-  const handleSaveExpense = useCallback(async (expenseData: any) => {
-    try {
-      if (modalState.editingExpense) {
-        // Update existing expense
-        await updateExpenseMutation.mutateAsync({
-          expenseId: modalState.editingExpense.id,
-          expense: expenseData,
-        });
-        showSuccess('Expense updated successfully');
-      } else {
-        // Create new expense
-        await createExpenseMutation.mutateAsync(expenseData);
-        showSuccess('Expense created successfully');
+  const handleSaveExpense = useCallback(
+    async (expenseData: any) => {
+      try {
+        if (modalState.editingExpense) {
+          // Update existing expense
+          await updateExpenseMutation.mutateAsync({
+            expenseId: modalState.editingExpense.id,
+            expense: expenseData,
+          });
+          showSuccess('Expense updated successfully');
+        } else {
+          // Create new expense
+          await createExpenseMutation.mutateAsync(expenseData);
+          showSuccess('Expense created successfully');
+        }
+        handleCloseModals();
+      } catch (error: any) {
+        console.error('Save expense error:', error);
+        const friendlyError = getUserFriendlyError(error);
+        showError(friendlyError.title, friendlyError.message);
       }
-      handleCloseModals();
-    } catch (error: any) {
-      console.error('Save expense error:', error);
-      const friendlyError = getUserFriendlyError(error);
-      showError(friendlyError.title, friendlyError.message);
-    }
-  }, [modalState.editingExpense, updateExpenseMutation, createExpenseMutation, showSuccess, showError, handleCloseModals]);
+    },
+    [
+      modalState.editingExpense,
+      updateExpenseMutation,
+      createExpenseMutation,
+      showSuccess,
+      showError,
+      handleCloseModals,
+    ]
+  );
 
   const handleConfirmDelete = useCallback(async () => {
     if (!modalState.expenseToDelete) return;
@@ -137,23 +147,35 @@ export function useExpensesData(expenses: Expense[], categories: Category[]): Ex
       const friendlyError = getUserFriendlyError(error);
       showError(friendlyError.title, friendlyError.message);
     }
-  }, [modalState.expenseToDelete, deleteExpenseMutation, showSuccess, showError, handleCloseModals]);
+  }, [
+    modalState.expenseToDelete,
+    deleteExpenseMutation,
+    showSuccess,
+    showError,
+    handleCloseModals,
+  ]);
 
   // Currency utilities
-  const getConvertedAmount = useCallback((expense: Expense) => {
-    // TODO: Implement proper currency conversion
-    return getExpenseAmountInCurrency(expense, currency, (amount) => amount);
-  }, [currency]);
+  const getConvertedAmount = useCallback(
+    (expense: Expense) => {
+      // TODO: Implement proper currency conversion
+      return getExpenseAmountInCurrency(expense, currency, amount => amount);
+    },
+    [currency]
+  );
 
-  const formatExpenseAmount = useCallback((expense: Expense) => {
-    if (hideAmounts) return '••••';
-    
-    const amount = getConvertedAmount(expense);
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  }, [getConvertedAmount, hideAmounts, currency]);
+  const formatExpenseAmount = useCallback(
+    (expense: Expense) => {
+      if (hideAmounts) return '••••';
+
+      const amount = getConvertedAmount(expense);
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    },
+    [getConvertedAmount, hideAmounts, currency]
+  );
 
   // Calculations
   const calculations = useMemo<ExpenseCalculations>(() => {
@@ -165,8 +187,7 @@ export function useExpensesData(expenses: Expense[], categories: Category[]): Ex
       .filter(expense => expense.type === 'expense')
       .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
 
-    const totalAmount = expenses
-      .reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
+    const totalAmount = expenses.reduce((sum, expense) => sum + getConvertedAmount(expense), 0);
 
     return {
       totalAmount,
@@ -179,10 +200,10 @@ export function useExpensesData(expenses: Expense[], categories: Category[]): Ex
   return {
     // Modal state
     modalState,
-    
+
     // Calculations
     calculations,
-    
+
     // Actions
     handleAddClick,
     handleEditClick,
@@ -190,11 +211,11 @@ export function useExpensesData(expenses: Expense[], categories: Category[]): Ex
     handleCloseModals,
     handleSaveExpense,
     handleConfirmDelete,
-    
+
     // Utilities
     getConvertedAmount,
     formatExpenseAmount,
-    
+
     // Loading states
     isCreating: createExpenseMutation.isPending,
     isUpdating: updateExpenseMutation.isPending,

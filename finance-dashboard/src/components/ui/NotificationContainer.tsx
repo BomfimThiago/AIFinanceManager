@@ -1,8 +1,8 @@
 import React from 'react';
 
-import NotificationToast, { NotificationData } from './NotificationToast';
 import { useAppNotifications } from '../../hooks/useAppNotifications';
 import type { NotificationState } from '../../store/AppStateManager';
+import NotificationToast, { NotificationData } from './NotificationToast';
 
 interface NotificationContainerProps {
   notifications?: NotificationData[] | NotificationState[];
@@ -15,7 +15,7 @@ const NotificationContainer: React.FC<NotificationContainerProps> = ({
 }) => {
   // Use global notifications if no props provided (new architecture)
   const { notifications: globalNotifications, removeNotification } = useAppNotifications();
-  
+
   const notifications = propNotifications || globalNotifications;
   const onDismiss = propOnDismiss || removeNotification;
 

@@ -70,10 +70,7 @@ const getIntegrations = (connectedIntegrations: ConnectedIntegration[]): Integra
       description: 'Connect Latin American banks in Mexico and Brazil',
       icon: BelvoIcon,
       status: belvoConnected ? 'connected' : 'disconnected',
-      supportedCountries: [
-        '🇲🇽 Mexico',
-        '🇧🇷 Brazil',
-      ],
+      supportedCountries: ['🇲🇽 Mexico', '🇧🇷 Brazil'],
       provider: 'belvo',
       lastSync: belvoConnected
         ? connectedIntegrations
@@ -199,7 +196,6 @@ const AvailableIntegrations: React.FC<AvailableIntegrationsProps> = ({
                     </div>
                   </div>
                 </div>
-
               </div>
 
               <div className="flex-1">

@@ -120,6 +120,8 @@ class GoalsRepository(BaseRepository[GoalModel, GoalCreate, GoalUpdate]):
             target_date=target_date,
             priority=goal_data.priority,
             auto_calculate=goal_data.auto_calculate,
+            color=goal_data.color,
+            icon=goal_data.icon,
         )
         self.db.add(db_goal)
         await self.db.commit()

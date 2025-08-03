@@ -2,7 +2,6 @@
  * Goals Service - Business logic for goals management
  * Separates domain logic from UI components
  */
-
 import { getUserFriendlyError } from '../utils/errorMessages';
 
 export interface GoalOperationResult {

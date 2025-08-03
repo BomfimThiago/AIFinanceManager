@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   Baby,
   Bike,
@@ -155,15 +156,11 @@ export const iconMap: Record<string, LucideIcon> = {
 };
 
 // Component to render category icon
-export const CategoryIcon: React.FC<{ 
-  iconName: string; 
-  className?: string; 
-  color?: string; 
-}> = ({
-  iconName,
-  className = 'w-5 h-5',
-  color,
-}) => {
+export const CategoryIcon: React.FC<{
+  iconName: string;
+  className?: string;
+  color?: string;
+}> = ({ iconName, className = 'w-5 h-5', color }) => {
   const IconComponent = iconMap[iconName] || Tag;
   return <IconComponent className={className} style={color ? { color } : undefined} />;
 };

@@ -2,7 +2,6 @@
  * Expenses Service - Business logic for expense management
  * Handles bulk operations and business rules
  */
-
 import { getUserFriendlyError } from '../utils/errorMessages';
 
 export interface ExpenseOperationResult {
@@ -26,9 +25,9 @@ export class ExpensesService {
         'Expenses Added',
         `${count} expense${count > 1 ? 's' : ''} added successfully`
       );
-      return { 
-        success: true, 
-        message: `${count} expense${count > 1 ? 's' : ''} added successfully` 
+      return {
+        success: true,
+        message: `${count} expense${count > 1 ? 's' : ''} added successfully`,
       };
     } catch (error: any) {
       console.error('Add expenses error:', error);

@@ -2,14 +2,23 @@
  * Goals Data Hook - Business logic for goals management
  * Handles CRUD operations, filtering, and calculations
  */
+import { useCallback, useMemo, useState } from 'react';
 
-import { useState, useCallback, useMemo } from 'react';
-import { DollarSign, PiggyBank, CreditCard, Target, Clock, Calendar, TrendingUp } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  CreditCard,
+  DollarSign,
+  PiggyBank,
+  Target,
+  TrendingUp,
+} from 'lucide-react';
+
+import type { Category, Goal, GoalCreate, GoalStatus, GoalType } from '../types';
+import { getUserFriendlyError } from '../utils/errorMessages';
 import { useCategorySpending } from './queries';
 import { useAppNotifications } from './useAppNotifications';
 import { useUserPreferences } from './useUserPreferences';
-import { getUserFriendlyError } from '../utils/errorMessages';
-import type { Goal, GoalType, GoalStatus, Category, GoalCreate } from '../types';
 
 export type FilterType = 'all' | GoalType;
 export type StatusFilter = 'all' | GoalStatus;
@@ -34,12 +43,12 @@ interface GoalCalculations {
 interface GoalsDataResult {
   // Modal state
   modalState: GoalModalState;
-  
+
   // Filters
   filterType: FilterType;
   statusFilter: StatusFilter;
   filteredGoals: Goal[];
-  
+
   // Calculations
   calculations: GoalCalculations;
   goalsByType: {
@@ -47,7 +56,7 @@ interface GoalsDataResult {
     saving: Goal[];
     debt: Goal[];
   };
-  
+
   // Actions
   handleCreateGoalClick: () => void;
   handleEditGoal: (goal: Goal) => void;
@@ -58,14 +67,14 @@ interface GoalsDataResult {
   handleConfirmDelete: () => Promise<void>;
   setFilterType: (type: FilterType) => void;
   setStatusFilter: (status: StatusFilter) => void;
-  
+
   // Utilities
   getGoalIcon: (goalType: GoalType) => any;
   getTimeHorizonIcon: (timeHorizon: string) => any;
   getStatusColor: (status: GoalStatus) => string;
   getPriorityColor: (priority: number) => string;
   formatGoalAmount: (amount: number) => string;
-  
+
   // Loading states
   isDeleting: boolean;
   categorySpendingData: any;
@@ -134,29 +143,35 @@ export function useGoalsData(
   }, []);
 
   // CRUD operations
-  const handleCreateGoal = useCallback(async (goalData: GoalCreate) => {
-    try {
-      await onCreateGoal(goalData);
-      showSuccess('Goal created successfully');
-      handleCloseModals();
-    } catch (error: any) {
-      console.error('Create goal error:', error);
-      const friendlyError = getUserFriendlyError(error);
-      showError(friendlyError.title, friendlyError.message);
-    }
-  }, [onCreateGoal, showSuccess, showError, handleCloseModals]);
+  const handleCreateGoal = useCallback(
+    async (goalData: GoalCreate) => {
+      try {
+        await onCreateGoal(goalData);
+        showSuccess('Goal created successfully');
+        handleCloseModals();
+      } catch (error: any) {
+        console.error('Create goal error:', error);
+        const friendlyError = getUserFriendlyError(error);
+        showError(friendlyError.title, friendlyError.message);
+      }
+    },
+    [onCreateGoal, showSuccess, showError, handleCloseModals]
+  );
 
-  const handleUpdateGoal = useCallback(async (goalId: number, goalData: any) => {
-    try {
-      await onUpdateGoal(goalId, goalData);
-      showSuccess('Goal updated successfully');
-      handleCloseModals();
-    } catch (error: any) {
-      console.error('Update goal error:', error);
-      const friendlyError = getUserFriendlyError(error);
-      showError(friendlyError.title, friendlyError.message);
-    }
-  }, [onUpdateGoal, showSuccess, showError, handleCloseModals]);
+  const handleUpdateGoal = useCallback(
+    async (goalId: number, goalData: any) => {
+      try {
+        await onUpdateGoal(goalId, goalData);
+        showSuccess('Goal updated successfully');
+        handleCloseModals();
+      } catch (error: any) {
+        console.error('Update goal error:', error);
+        const friendlyError = getUserFriendlyError(error);
+        showError(friendlyError.title, friendlyError.message);
+      }
+    },
+    [onUpdateGoal, showSuccess, showError, handleCloseModals]
+  );
 
   const handleConfirmDelete = useCallback(async () => {
     if (!modalState.goalToDelete) return;
@@ -185,81 +200,107 @@ export function useGoalsData(
   }, [goals, filterType, statusFilter]);
 
   // Group goals by type
-  const goalsByType = useMemo(() => ({
-    spending: goals.filter(g => g.goal_type === 'spending'),
-    saving: goals.filter(g => g.goal_type === 'saving'),
-    debt: goals.filter(g => g.goal_type === 'debt'),
-  }), [goals]);
+  const goalsByType = useMemo(
+    () => ({
+      spending: goals.filter(g => g.goal_type === 'spending'),
+      saving: goals.filter(g => g.goal_type === 'saving'),
+      debt: goals.filter(g => g.goal_type === 'debt'),
+    }),
+    [goals]
+  );
 
   // Calculations
-  const calculations = useMemo<GoalCalculations>(() => ({
-    totalGoals: goals.length,
-    spendingGoals: goalsByType.spending.length,
-    savingGoals: goalsByType.saving.length,
-    debtGoals: goalsByType.debt.length,
-    activeGoals: goals.filter(g => g.status === 'active').length,
-    completedGoals: goals.filter(g => g.status === 'completed').length,
-  }), [goals, goalsByType]);
+  const calculations = useMemo<GoalCalculations>(
+    () => ({
+      totalGoals: goals.length,
+      spendingGoals: goalsByType.spending.length,
+      savingGoals: goalsByType.saving.length,
+      debtGoals: goalsByType.debt.length,
+      activeGoals: goals.filter(g => g.status === 'active').length,
+      completedGoals: goals.filter(g => g.status === 'completed').length,
+    }),
+    [goals, goalsByType]
+  );
 
   // Utility functions
   const getGoalIcon = useCallback((goalType: GoalType) => {
     switch (goalType) {
-      case 'spending': return DollarSign;
-      case 'saving': return PiggyBank;
-      case 'debt': return CreditCard;
-      default: return Target;
+      case 'spending':
+        return DollarSign;
+      case 'saving':
+        return PiggyBank;
+      case 'debt':
+        return CreditCard;
+      default:
+        return Target;
     }
   }, []);
 
   const getTimeHorizonIcon = useCallback((timeHorizon: string) => {
     switch (timeHorizon) {
-      case 'short': return Clock;
-      case 'medium': return Calendar;
-      case 'long': return TrendingUp;
-      default: return Calendar;
+      case 'short':
+        return Clock;
+      case 'medium':
+        return Calendar;
+      case 'long':
+        return TrendingUp;
+      default:
+        return Calendar;
     }
   }, []);
 
   const getStatusColor = useCallback((status: GoalStatus) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'completed': return 'text-blue-600 bg-blue-100';
-      case 'paused': return 'text-yellow-600 bg-yellow-100';
-      case 'cancelled': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'active':
+        return 'text-green-600 bg-green-100';
+      case 'completed':
+        return 'text-blue-600 bg-blue-100';
+      case 'paused':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'cancelled':
+        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   }, []);
 
   const getPriorityColor = useCallback((priority: number) => {
     switch (priority) {
-      case 1: return 'border-red-200 bg-red-50';
-      case 2: return 'border-yellow-200 bg-yellow-50';
-      case 3: return 'border-green-200 bg-green-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 1:
+        return 'border-red-200 bg-red-50';
+      case 2:
+        return 'border-yellow-200 bg-yellow-50';
+      case 3:
+        return 'border-green-200 bg-green-50';
+      default:
+        return 'border-gray-200 bg-gray-50';
     }
   }, []);
 
-  const formatGoalAmount = useCallback((amount: number) => {
-    if (hideAmounts) return '••••';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  }, [hideAmounts, currency]);
+  const formatGoalAmount = useCallback(
+    (amount: number) => {
+      if (hideAmounts) return '••••';
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    },
+    [hideAmounts, currency]
+  );
 
   return {
     // Modal state
     modalState,
-    
+
     // Filters
     filterType,
     statusFilter,
     filteredGoals,
-    
+
     // Calculations
     calculations,
     goalsByType,
-    
+
     // Actions
     handleCreateGoalClick,
     handleEditGoal,
@@ -270,14 +311,14 @@ export function useGoalsData(
     handleConfirmDelete,
     setFilterType,
     setStatusFilter,
-    
+
     // Utilities
     getGoalIcon,
     getTimeHorizonIcon,
     getStatusColor,
     getPriorityColor,
     formatGoalAmount,
-    
+
     // Loading states
     isDeleting,
     categorySpendingData,

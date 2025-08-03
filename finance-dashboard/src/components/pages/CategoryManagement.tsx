@@ -644,12 +644,16 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         ))}
                       </div>
                       <div className="flex items-center mt-3 space-x-2">
-                        <span className="text-xs sm:text-sm text-gray-500">{t('categories.selected')}:</span>
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {t('categories.selected')}:
+                        </span>
                         <div
                           className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg border border-gray-300"
                           style={{ backgroundColor: formData.color }}
                         />
-                        <span className="text-xs sm:text-sm font-medium text-gray-700">{formData.color}</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">
+                          {formData.color}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -768,7 +772,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
             <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
               {t('categories.noCustomCategories')}
             </h3>
-            <p className="text-sm sm:text-base text-gray-500">{t('categories.createFirstCategory')}</p>
+            <p className="text-sm sm:text-base text-gray-500">
+              {t('categories.createFirstCategory')}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -787,7 +793,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{tCategory(category.name)}</h4>
+                      <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                        {tCategory(category.name)}
+                      </h4>
                       {category.description && (
                         <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {tCategoryDescription(category.description, category.name)}
@@ -846,7 +854,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{tCategory(category.name)}</h4>
+                    <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                      {tCategory(category.name)}
+                    </h4>
                     {category.description && (
                       <p className="text-xs sm:text-sm text-gray-500 truncate">
                         {tCategoryDescription(category.description, category.name)}

@@ -37,6 +37,8 @@ export interface Goal {
   start_date: string;
   priority: 1 | 2 | 3; // 1=high, 2=medium, 3=low
   auto_calculate: boolean;
+  color?: string; // Goal color for visual identification
+  icon?: string; // Goal icon name for visual identification
   created_at: string;
   updated_at: string;
   // Computed properties
@@ -57,6 +59,8 @@ export interface GoalCreate {
   target_date?: string;
   priority: 1 | 2 | 3;
   auto_calculate: boolean;
+  color?: string; // Goal color for visual identification
+  icon?: string; // Goal icon name for visual identification
 }
 
 export interface GoalUpdate {
@@ -69,6 +73,8 @@ export interface GoalUpdate {
   priority?: 1 | 2 | 3;
   status?: GoalStatus;
   auto_calculate?: boolean;
+  color?: string; // Goal color for visual identification
+  icon?: string; // Goal icon name for visual identification
 }
 
 export interface GoalProgress {

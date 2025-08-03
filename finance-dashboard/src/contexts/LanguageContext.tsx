@@ -116,7 +116,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         signupSuccessMessage: 'Account created successfully!',
         loggingIn: 'Logging in...',
         signingUp: 'Signing up...',
-      }
+      },
     },
     es: {
       auth: {
@@ -128,7 +128,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         username: 'Usuario',
         loginToAccount: 'Inicia sesión en tu cuenta',
         createAccount: 'Crea tu cuenta',
-        dontHaveAccount: "¿No tienes cuenta?",
+        dontHaveAccount: '¿No tienes cuenta?',
         alreadyHaveAccount: '¿Ya tienes cuenta?',
         signUpHere: 'Regístrate aquí',
         loginHere: 'Inicia sesión aquí',
@@ -138,7 +138,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         signupSuccessMessage: '¡Cuenta creada exitosamente!',
         loggingIn: 'Iniciando sesión...',
         signingUp: 'Registrando...',
-      }
+      },
     },
     pt: {
       auth: {
@@ -150,7 +150,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         username: 'Usuário',
         loginToAccount: 'Entre na sua conta',
         createAccount: 'Crie sua conta',
-        dontHaveAccount: "Não tem conta?",
+        dontHaveAccount: 'Não tem conta?',
         alreadyHaveAccount: 'Já tem conta?',
         signUpHere: 'Cadastre-se aqui',
         loginHere: 'Entre aqui',
@@ -160,21 +160,26 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         signupSuccessMessage: 'Conta criada com sucesso!',
         loggingIn: 'Entrando...',
         signingUp: 'Cadastrando...',
-      }
-    }
+      },
+    },
   };
 
-  const translations = isAuthenticated 
-    ? (translationData?.translations || {})
-    : (fallbackTranslations[sessionLanguage as keyof typeof fallbackTranslations] || fallbackTranslations.en);
+  const translations = isAuthenticated
+    ? translationData?.translations || {}
+    : fallbackTranslations[sessionLanguage as keyof typeof fallbackTranslations] ||
+      fallbackTranslations.en;
 
   // Locale mapping for date formatting
   const getLocale = (): string => {
     switch (sessionLanguage) {
-      case 'en': return 'en-US';
-      case 'es': return 'es-ES';
-      case 'pt': return 'pt-BR'; // Brazilian Portuguese
-      default: return 'en-US';
+      case 'en':
+        return 'en-US';
+      case 'es':
+        return 'es-ES';
+      case 'pt':
+        return 'pt-BR'; // Brazilian Portuguese
+      default:
+        return 'en-US';
     }
   };
 
@@ -308,7 +313,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       // BULLETPROOF APPROACH: If we have categories context, check if this is a system category
       if (categories) {
         const category = categories.find(cat => cat.name === categoryName);
-        
+
         if (category) {
           // For system categories (is_default = true), always try translations
           if (category.is_default) {
@@ -316,31 +321,31 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
             if (category.translations?.name && category.translations.name[sessionLanguage]) {
               return category.translations.name[sessionLanguage];
             }
-            
+
             // Then try static translations
             const categoryTranslation = translations?.categoryNames?.[categoryName];
             if (categoryTranslation && typeof categoryTranslation === 'string') {
               return categoryTranslation;
             }
-            
+
             // If no translation found, return original name
             return categoryName;
           }
-          
+
           // For custom categories (is_default = false), check if they have database translations
           if (!category.is_default) {
             // First try database translations from the category itself
             if (category.translations?.name && category.translations.name[sessionLanguage]) {
               return category.translations.name[sessionLanguage];
             }
-            
+
             // For custom categories, also check if the name matches any static translations
             // This allows users who create categories like "Food", "Transport" to get translations
             const categoryTranslation = translations?.categoryNames?.[categoryName];
             if (categoryTranslation && typeof categoryTranslation === 'string') {
               return categoryTranslation;
             }
-            
+
             // If no translation found, return original name (user's custom name)
             return categoryName;
           }
@@ -350,9 +355,21 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       // Fallback logic when we don't have categories context (should rarely happen)
       // Only translate known system categories
       const knownSystemCategories = [
-        'Food', 'Transport', 'Shopping', 'Entertainment', 'Utilities', 
-        'Healthcare', 'Education', 'Home', 'Clothing', 'Technology', 
-        'Fitness', 'Travel', 'Gifts', 'Pets', 'Other'
+        'Food',
+        'Transport',
+        'Shopping',
+        'Entertainment',
+        'Utilities',
+        'Healthcare',
+        'Education',
+        'Home',
+        'Clothing',
+        'Technology',
+        'Fitness',
+        'Travel',
+        'Gifts',
+        'Pets',
+        'Other',
       ];
 
       if (knownSystemCategories.includes(categoryName)) {
@@ -391,13 +408,15 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         ) {
           const translatedDescription = category.translations.description[sessionLanguage];
           // Don't use translation if it would result in generic fallbacks
-          if (translatedDescription && 
-              translatedDescription.toLowerCase() !== 'uncategorized' && 
-              translatedDescription.toLowerCase() !== 'sin categoría' && 
-              translatedDescription.toLowerCase() !== 'sem categoria' &&
-              translatedDescription.toLowerCase() !== 'no description' &&
-              translatedDescription.toLowerCase() !== 'sin descripción' &&
-              translatedDescription.toLowerCase() !== 'sem descrição') {
+          if (
+            translatedDescription &&
+            translatedDescription.toLowerCase() !== 'uncategorized' &&
+            translatedDescription.toLowerCase() !== 'sin categoría' &&
+            translatedDescription.toLowerCase() !== 'sem categoria' &&
+            translatedDescription.toLowerCase() !== 'no description' &&
+            translatedDescription.toLowerCase() !== 'sin descripción' &&
+            translatedDescription.toLowerCase() !== 'sem descrição'
+          ) {
             return translatedDescription;
           }
         }
@@ -444,29 +463,29 @@ export const useLanguage = (): LanguageContextType => {
 
 // Hook for easy translation access
 export const useTranslation = () => {
-  const { 
-    t, 
-    tCategory, 
-    tCategoryDescription, 
-    isLoading, 
-    formatDate, 
-    formatShortDate, 
-    formatLongDate, 
-    formatDateTime, 
+  const {
+    t,
+    tCategory,
+    tCategoryDescription,
+    isLoading,
+    formatDate,
+    formatShortDate,
+    formatLongDate,
+    formatDateTime,
     formatRelativeDate,
-    getLocale
+    getLocale,
   } = useLanguage();
-  return { 
-    t, 
-    tCategory, 
-    tCategoryDescription, 
-    isLoading, 
-    formatDate, 
-    formatShortDate, 
-    formatLongDate, 
-    formatDateTime, 
+  return {
+    t,
+    tCategory,
+    tCategoryDescription,
+    isLoading,
+    formatDate,
+    formatShortDate,
+    formatLongDate,
+    formatDateTime,
     formatRelativeDate,
-    getLocale
+    getLocale,
   };
 };
 

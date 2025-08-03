@@ -2,17 +2,16 @@
  * Refactored Expenses Component - Pure UI presentation
  * Separates business logic from presentation using hooks
  */
-
 import React from 'react';
-import { DollarSign, Edit2, Plus, Trash2, TrendingDown, TrendingUp, Tag } from 'lucide-react';
+
+import { DollarSign, Edit2, Plus, Tag, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-import { useExpensesData } from '../../hooks/useExpensesData';
-import { useDateFormatter } from '../../hooks/useDateFormatter';
 import { useCategoryTranslation } from '../../contexts/LanguageContext';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
+import { useExpensesData } from '../../hooks/useExpensesData';
 import type { Category, Expense } from '../../types';
 import { CategoryIcon } from '../../utils/categoryIcons';
-
 // UI Components
 import ConfirmationModal from '../ui/ConfirmationModal';
 import EditExpenseModal from '../ui/EditExpenseModal';
@@ -33,17 +32,17 @@ const ExpenseRow: React.FC<{
 }> = ({ expense, categories, formatAmount, onEdit, onDelete }) => {
   const { formatShortDate } = useDateFormatter();
   const { tCategory } = useCategoryTranslation(categories);
-  
+
   // Find category details for icon and color
   const getCategoryDetails = (categoryName: string) => {
     const category = categories.find(cat => cat.name === categoryName);
     return {
       icon: category?.icon || 'tag',
       color: category?.color || '#6B7280',
-      translatedName: tCategory(categoryName)
+      translatedName: tCategory(categoryName),
     };
   };
-  
+
   const getTypeIcon = (type: string) => {
     return type === 'income' ? (
       <TrendingUp className="w-4 h-4 text-green-600" />
@@ -68,16 +67,14 @@ const ExpenseRow: React.FC<{
       </td>
       <td className="px-6 py-4">
         <div className="text-sm text-gray-900">{expense.description}</div>
-        {expense.merchant && (
-          <div className="text-sm text-gray-500">{expense.merchant}</div>
-        )}
+        {expense.merchant && <div className="text-sm text-gray-500">{expense.merchant}</div>}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         {(() => {
           const categoryDetails = getCategoryDetails(expense.category);
           return (
             <div className="flex items-center space-x-2">
-              <div 
+              <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: `${categoryDetails.color}20` }}
               >
@@ -87,7 +84,7 @@ const ExpenseRow: React.FC<{
                   color={categoryDetails.color}
                 />
               </div>
-              <span 
+              <span
                 className="text-sm font-medium capitalize"
                 style={{ color: categoryDetails.color }}
               >
@@ -95,7 +92,7 @@ const ExpenseRow: React.FC<{
               </span>
             </div>
           );
-        })()} 
+        })()}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`text-sm font-medium ${getTypeColor(expense.type)}`}>
@@ -152,7 +149,7 @@ const ExpensesSummary: React.FC<{
           {formatAmount(calculations.totalAmount)}
         </p>
       </div>
-      
+
       <div className="bg-white rounded-lg border p-4">
         <div className="flex items-center">
           <TrendingUp className="w-5 h-5 text-green-500" />
@@ -162,7 +159,7 @@ const ExpensesSummary: React.FC<{
           {formatAmount(calculations.totalIncome)}
         </p>
       </div>
-      
+
       <div className="bg-white rounded-lg border p-4">
         <div className="flex items-center">
           <TrendingDown className="w-5 h-5 text-red-500" />
@@ -172,15 +169,13 @@ const ExpensesSummary: React.FC<{
           {formatAmount(calculations.totalExpenses)}
         </p>
       </div>
-      
+
       <div className="bg-white rounded-lg border p-4">
         <div className="flex items-center">
           <span className="text-gray-400">#</span>
           <h3 className="ml-2 text-sm font-medium text-gray-500">Count</h3>
         </div>
-        <p className="mt-2 text-2xl font-semibold text-gray-900">
-          {calculations.expenseCount}
-        </p>
+        <p className="mt-2 text-2xl font-semibold text-gray-900">{calculations.expenseCount}</p>
       </div>
     </div>
   );
@@ -272,7 +267,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {expenses.map((expense) => (
+            {expenses.map(expense => (
               <ExpenseRow
                 key={expense.id}
                 expense={expense}

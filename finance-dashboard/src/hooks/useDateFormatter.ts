@@ -2,17 +2,16 @@
  * Date Formatter Hook - Locale-aware date formatting
  * Automatically formats dates based on user's selected language
  */
-
 import { useTranslation } from '../contexts/LanguageContext';
 
 export const useDateFormatter = () => {
-  const { 
-    formatDate, 
-    formatShortDate, 
-    formatLongDate, 
-    formatDateTime, 
+  const {
+    formatDate,
+    formatShortDate,
+    formatLongDate,
+    formatDateTime,
     formatRelativeDate,
-    getLocale 
+    getLocale,
   } = useTranslation();
 
   return {
@@ -27,7 +26,7 @@ export const useDateFormatter = () => {
     /**
      * Short date format based on locale
      * - English (US): 12/31/2023
-     * - Spanish (ES): 31/12/2023  
+     * - Spanish (ES): 31/12/2023
      * - Portuguese (BR): 31/12/2023
      */
     formatShortDate,
