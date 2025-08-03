@@ -15,6 +15,9 @@ from src.budgets.service import BudgetService
 from src.expenses.dependencies import get_expense_service
 from src.expenses.service import ExpenseService
 from src.insights.dependencies import get_insight_service
+from src.insights.financial_report_dependencies import get_financial_report_service
+from src.insights.financial_report_schemas import ComprehensiveFinancialReport
+from src.insights.financial_report_service import FinancialReportService
 from src.insights.schemas import AIInsight, Insight, InsightSummary
 from src.insights.service import InsightService
 from src.shared.exceptions import DatabaseError, ExternalServiceError
@@ -25,18 +28,45 @@ router = APIRouter(prefix="/api/insights", tags=["insights"])
 
 @router.post("/generate", response_model=list[AIInsight])
 async def generate_insights(
+    start_date: str | None = None,
+    end_date: str | None = None,
     insight_service: InsightService = Depends(get_insight_service),
     expense_service: ExpenseService = Depends(get_expense_service),
     budget_service: BudgetService = Depends(get_budget_service),
     current_user: User = Depends(get_current_user),
 ):
-    """Generate AI insights based on current expenses and budgets."""
+    """Generate AI insights based on current expenses and budgets with optional date filtering."""
     try:
-        logger.info(f"Generating insights for user {current_user.id}")
+        logger.info(f"🚀 INSIGHTS ENDPOINT CALLED - Generating insights for user {current_user.id} (dates: {start_date} to {end_date})")
 
         # Get expenses and budgets
         expenses = await expense_service.get_all()
         budgets_dict = await budget_service.get_all()
+        
+        # Filter expenses by date range if provided
+        if start_date or end_date:
+            from datetime import datetime
+            filtered_expenses = []
+            for expense in expenses:
+                expense_date = datetime.fromisoformat(expense.date).date()
+                
+                # Check start date
+                if start_date:
+                    start_date_obj = datetime.fromisoformat(start_date).date()
+                    if expense_date < start_date_obj:
+                        continue
+                
+                # Check end date
+                if end_date:
+                    end_date_obj = datetime.fromisoformat(end_date).date()
+                    if expense_date > end_date_obj:
+                        continue
+                
+                filtered_expenses.append(expense)
+            
+            expenses = filtered_expenses
+
+        logger.info(f"📊 Retrieved {len(expenses)} expenses and {len(budgets_dict)} budgets")
 
         # Convert budgets to the format expected by AI service
         budget_format = {}
@@ -48,6 +78,10 @@ async def generate_insights(
 
         # Generate insights
         insights = await insight_service.generate_insights(expenses, budget_format)
+
+        logger.info(f"🎯 INSIGHTS ENDPOINT RESPONSE - Returning {len(insights)} insights")
+        for i, insight in enumerate(insights):
+            logger.info(f"  📝 Insight {i+1}: {insight.title}")
 
         return insights
     except (DatabaseError, ExternalServiceError):
@@ -99,6 +133,26 @@ async def get_insight_summary(
     except Exception as e:
         logger.error(f"Error fetching insight summary: {e}")
         raise DatabaseError("get insight summary", details={"error": str(e)}) from e
+
+
+@router.get("/financial-report", response_model=ComprehensiveFinancialReport)
+async def get_financial_report(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    financial_report_service: FinancialReportService = Depends(get_financial_report_service),
+    current_user: User = Depends(get_current_user),
+):
+    """Generate comprehensive financial report with analytics for specified date range."""
+    try:
+        logger.info(f"Generating financial report for user {current_user.id} (dates: {start_date} to {end_date})")
+        report = await financial_report_service.generate_comprehensive_report(start_date, end_date)
+        logger.info(f"Financial report generated successfully")
+        return report
+    except DatabaseError:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating financial report: {e}")
+        raise DatabaseError("generate financial report", details={"error": str(e)}) from e
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)

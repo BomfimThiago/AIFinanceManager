@@ -265,10 +265,22 @@ export const budgetApi = {
 
 // AI Insights API calls
 export const insightsApi = {
-  generate: (): Promise<AIInsight[]> =>
-    apiRequest('/api/insights/generate', {
-      method: 'POST',
-    }),
+  generate: (startDate?: string, endDate?: string): Promise<AIInsight[]> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const url = `/api/insights/generate${params.toString() ? `?${params.toString()}` : ''}`;
+    return apiRequest(url, { method: 'POST' });
+  },
+  getFinancialReport: (startDate?: string, endDate?: string): Promise<any> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const url = `/api/insights/financial-report${params.toString() ? `?${params.toString()}` : ''}`;
+    return apiRequest(url, { method: 'GET' });
+  },
 };
 
 // Legacy functions for backward compatibility
@@ -502,11 +514,9 @@ export interface GoalsListResponse {
 }
 
 export const goalsApi = {
-  getAll: (): Promise<Goal[]> =>
-    apiRequest<Goal[]>('/api/goals'),
+  getAll: (): Promise<Goal[]> => apiRequest<Goal[]>('/api/goals'),
 
-  getById: (id: number): Promise<Goal> =>
-    apiRequest<Goal>(`/api/goals/${id}`),
+  getById: (id: number): Promise<Goal> => apiRequest<Goal>(`/api/goals/${id}`),
 
   create: (goal: GoalCreate): Promise<Goal> =>
     apiRequest<Goal>('/api/goals', {
@@ -528,13 +538,14 @@ export const goalsApi = {
   getByType: (goalType: string): Promise<Goal[]> =>
     apiRequest<Goal[]>(`/api/goals?goal_type=${goalType}`),
 
-  getActive: (): Promise<Goal[]> =>
-    apiRequest<Goal[]>('/api/goals?status=active'),
+  getActive: (): Promise<Goal[]> => apiRequest<Goal[]>('/api/goals?status=active'),
 
-  getSummary: (): Promise<any> =>
-    apiRequest<any>('/api/goals/summary'),
+  getSummary: (): Promise<any> => apiRequest<any>('/api/goals/summary'),
 
-  updateProgress: (id: number, progress: { amount: number; date?: string; notes?: string }): Promise<Goal> =>
+  updateProgress: (
+    id: number,
+    progress: { amount: number; date?: string; notes?: string }
+  ): Promise<Goal> =>
     apiRequest<Goal>(`/api/goals/${id}/progress`, {
       method: 'POST',
       body: JSON.stringify(progress),
