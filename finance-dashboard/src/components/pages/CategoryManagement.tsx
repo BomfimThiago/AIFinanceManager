@@ -76,14 +76,14 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 import { useCategoryTranslation } from '../../contexts/LanguageContext';
-import { useAppNotifications } from '../../hooks/useAppNotifications';
-import { useDateFormatter } from '../../hooks/useDateFormatter';
 import {
   useCategories,
   useCreateCategory,
   useDeleteCategory,
   useUpdateCategory,
 } from '../../hooks/queries';
+import { useAppNotifications } from '../../hooks/useAppNotifications';
+import { useDateFormatter } from '../../hooks/useDateFormatter';
 import type { Category } from '../../services/apiService';
 import { getUserFriendlyError } from '../../utils/errorMessages';
 import ConfirmationModal from '../ui/ConfirmationModal';
@@ -431,13 +431,13 @@ const CategoryIcon: React.FC<{ iconName: string; className?: string; color?: str
 
 const CategoryManagement: React.FC<CategoryManagementProps> = () => {
   const { showSuccess, showError } = useAppNotifications();
-  const { 
-    formatShortDate, 
-    formatLongDate, 
-    formatDateTime, 
-    formatRelativeDate, 
+  const {
+    formatShortDate,
+    formatLongDate,
+    formatDateTime,
+    formatRelativeDate,
     formatMonthYear,
-    getLocale 
+    getLocale,
   } = useDateFormatter();
 
   // React Query hooks
@@ -541,13 +541,17 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">{t('categories.title')}</h2>
+      {/* Page Header - Responsive like Integrations page */}
+      <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-start md:space-y-0">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900">{t('categories.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('categories.subtitle')}</p>
+        </div>
       </div>
 
       {/* Custom Categories */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mb-4 sm:mb-6">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
             <Palette className="h-5 w-5 mr-2" />
             {t('categories.customCategories')}
@@ -555,36 +559,36 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
           <button
             onClick={() => setShowForm(true)}
             disabled={createCategoryMutation.isPending}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all flex items-center justify-center sm:justify-start space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             <Plus className="h-4 w-4" />
             <span>{t('categories.addCategory')}</span>
           </button>
         </div>
 
-        {/* Category Modal */}
+        {/* Category Modal - Responsive */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-7xl w-full max-h-[95vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-xl max-w-7xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg sm:rounded-t-xl">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-xl font-semibold text-gray-900">
+                  <h4 className="text-lg sm:text-xl font-semibold text-gray-900">
                     {editingCategory
                       ? t('categories.editCategory')
                       : t('categories.addNewCategory')}
                   </h4>
                   <button
                     onClick={resetForm}
-                    className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <X className="h-6 w-6" />
+                    <X className="h-5 w-5 sm:h-6 sm:w-6" />
                   </button>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6">
-                {/* Top Section - Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+                {/* Top Section - Form Fields - Responsive */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('categories.categoryName')}
@@ -594,7 +598,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       required
                       value={formData.name}
                       onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                      className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-base sm:text-lg"
                       placeholder={t('categories.namePlaceholder')}
                     />
                   </div>
@@ -609,27 +613,27 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       onChange={e =>
                         setFormData(prev => ({ ...prev, description: e.target.value }))
                       }
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-base sm:text-lg"
                       placeholder={t('categories.descriptionPlaceholder')}
                     />
                   </div>
                 </div>
 
-                {/* Main Section - Color/Icon Selection with Preview */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Main Section - Color/Icon Selection with Preview - Responsive */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
                   {/* Color Selection */}
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-lg font-medium text-gray-700 mb-4">
+                      <label className="block text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                         {t('categories.chooseColor')}
                       </label>
-                      <div className="grid grid-cols-8 gap-3">
+                      <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 sm:gap-3">
                         {DEFAULT_COLORS.map(color => (
                           <button
                             key={color}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, color }))}
-                            className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
+                            className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
                               formData.color === color
                                 ? 'border-gray-800 scale-110 shadow-lg ring-2 ring-gray-400'
                                 : 'border-gray-300'
@@ -640,12 +644,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         ))}
                       </div>
                       <div className="flex items-center mt-3 space-x-2">
-                        <span className="text-sm text-gray-500">{t('categories.selected')}:</span>
+                        <span className="text-xs sm:text-sm text-gray-500">{t('categories.selected')}:</span>
                         <div
-                          className="w-5 h-5 rounded-lg border border-gray-300"
+                          className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg border border-gray-300"
                           style={{ backgroundColor: formData.color }}
                         />
-                        <span className="text-sm font-medium text-gray-700">{formData.color}</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-700">{formData.color}</span>
                       </div>
                     </div>
                   </div>
@@ -653,16 +657,16 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                   {/* Icon Selection */}
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-lg font-medium text-gray-700 mb-4">
+                      <label className="block text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                         {t('categories.chooseIcon')}
                       </label>
-                      <div className="grid grid-cols-8 gap-3">
+                      <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 sm:gap-3">
                         {DEFAULT_ICONS.map(icon => (
                           <button
                             key={icon}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, icon }))}
-                            className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center transition-all hover:bg-gray-50 hover:shadow-md ${
+                            className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg border-2 flex items-center justify-center transition-all hover:bg-gray-50 hover:shadow-md ${
                               formData.icon === icon
                                 ? 'border-green-500 bg-green-50 shadow-md'
                                 : 'border-gray-300 bg-white'
@@ -671,13 +675,13 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                           >
                             <CategoryIcon
                               iconName={icon}
-                              className="w-6 h-6"
+                              className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6"
                               color={formData.icon === icon ? '#10b981' : '#6b7280'}
                             />
                           </button>
                         ))}
                       </div>
-                      <p className="text-sm text-gray-500 mt-3">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-3">
                         {t('categories.selected')}:{' '}
                         <span className="font-medium">{formData.icon}</span>
                       </p>
@@ -685,15 +689,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                   </div>
 
                   {/* Preview Section */}
-                  <div className="space-y-4">
-                    <label className="block text-lg font-medium text-gray-700 mb-4">
+                  <div className="space-y-4 lg:col-span-2 xl:col-span-1">
+                    <label className="block text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                       {t('categories.livePreview')}
                     </label>
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-8 rounded-xl border-2 border-dashed border-gray-300 sticky top-20">
-                      <div className="text-center space-y-4">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8 rounded-xl border-2 border-dashed border-gray-300 sticky top-4 sm:top-20">
+                      <div className="text-center space-y-3 sm:space-y-4">
                         <div className="flex justify-center">
                           <div
-                            className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
+                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-lg"
                             style={{
                               backgroundColor: `${formData.color}20`,
                               border: `2px solid ${formData.color}40`,
@@ -701,20 +705,20 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                           >
                             <CategoryIcon
                               iconName={formData.icon}
-                              className="w-10 h-10"
+                              className="w-8 h-8 sm:w-10 sm:h-10"
                               color={formData.color}
                             />
                           </div>
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900 text-xl">
+                          <h3 className="font-bold text-gray-900 text-lg sm:text-xl">
                             {formData.name || t('categories.categoryName')}
                           </h3>
-                          <p className="text-gray-600 mt-1">
+                          <p className="text-gray-600 mt-1 text-sm sm:text-base">
                             {formData.description || t('categories.noDescription')}
                           </p>
                         </div>
-                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 pt-4 border-t border-gray-200">
+                        <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-500 pt-3 sm:pt-4 border-t border-gray-200">
                           <div className="flex items-center space-x-1">
                             <div
                               className="w-3 h-3 rounded-full"
@@ -732,18 +736,18 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm sm:text-base"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
+                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium text-sm sm:text-base"
                   >
                     {(createCategoryMutation.isPending || updateCategoryMutation.isPending) && (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -759,57 +763,57 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
           </div>
         )}
         {userCategories.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg">
+            <Tag className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
               {t('categories.noCustomCategories')}
             </h3>
-            <p className="text-gray-500">{t('categories.createFirstCategory')}</p>
+            <p className="text-sm sm:text-base text-gray-500">{t('categories.createFirstCategory')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {userCategories.map(category => (
-              <div key={category.id} className="bg-white p-4 rounded-lg border shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-3">
+              <div key={category.id} className="bg-gray-50 p-3 sm:p-4 rounded-lg border shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: `${category.color}20` }}
                     >
                       <CategoryIcon
                         iconName={category.icon || 'tag'}
-                        className="w-5 h-5"
+                        className="w-4 h-4 sm:w-5 sm:h-5"
                         color={category.color}
                       />
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{tCategory(category.name)}</h4>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{tCategory(category.name)}</h4>
                       {category.description && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
                           {tCategoryDescription(category.description, category.name)}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-1 flex-shrink-0 ml-2">
                     <button
                       onClick={() => handleEdit(category)}
                       disabled={updateCategoryMutation.isPending}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title={t('categories.editCategory')}
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </button>
                     <button
                       onClick={() => setDeleteModal({ show: true, category })}
                       disabled={deleteCategoryMutation.isPending}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title={t('categories.deleteCategory')}
                     >
                       {deleteCategoryMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                       ) : (
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
                     </button>
                   </div>
@@ -821,36 +825,36 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       </div>
 
       {/* Default Categories */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
           <Tag className="h-5 w-5 mr-2" />
           {t('categories.defaultCategories')}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {defaultCategories.map(category => (
-            <div key={category.id} className="bg-gray-50 p-4 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+            <div key={category.id} className="bg-gray-50 p-3 sm:p-4 rounded-lg border">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: `${category.color}20` }}
                   >
                     <CategoryIcon
                       iconName={category.icon || 'tag'}
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5"
                       color={category.color}
                     />
                   </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">{tCategory(category.name)}</h4>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{tCategory(category.name)}</h4>
                     {category.description && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">
                         {tCategoryDescription(category.description, category.name)}
                       </p>
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded">
+                <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded flex-shrink-0 ml-2">
                   {t('categories.system')}
                 </span>
               </div>
