@@ -16,10 +16,7 @@ export default defineConfig({
   publicDir: 'public',
   build: {
     rollupOptions: {
-      input: {
-        main: './index.html',
-        refactored: './index-refactored.html'
-      }
+      input: './index.html'
     },
     // Copy additional files
     copyPublicDir: true
