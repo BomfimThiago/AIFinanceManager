@@ -276,4 +276,6 @@ infrastructure-secrets/
 # Deployment scripts with sensitive data (keep templates)
 scripts/*
 !scripts/*.template.sh
-BACKEND-DEPLOYMENT-GUIDE.md 
+BACKEND-DEPLOYMENT-GUIDE.md backend/.env.production
+*.env.production
+finance-dashboard/.env.production

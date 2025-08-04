@@ -16,13 +16,14 @@ export const goalKeys = {
 };
 
 // Query hooks
-export const useGoals = () => {
+export const useGoals = (enabled: boolean = true) => {
   return useQuery({
     queryKey: goalKeys.lists(),
     queryFn: async () => {
       const response = await goalsApi.getAll();
       return response || [];
     },
+    enabled: enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

@@ -12,10 +12,11 @@ export const budgetKeys = {
 };
 
 // Queries
-export function useBudgets() {
+export function useBudgets(enabled: boolean = true) {
   return useQuery({
     queryKey: budgetKeys.lists(),
     queryFn: () => budgetApi.getAll(),
+    enabled: enabled,
   });
 }
 

@@ -29,6 +29,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setAuthToken(null);
           setTokenState(null);
           setUser(null);
+          // Clear from localStorage as well
+          localStorage.removeItem('authToken');
         }
       }
       setIsLoading(false);

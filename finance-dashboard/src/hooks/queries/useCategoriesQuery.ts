@@ -13,10 +13,11 @@ export const categoryKeys = {
 };
 
 // Get all categories
-export const useCategories = (includeDefault: boolean = true) => {
+export const useCategories = (includeDefault: boolean = true, enabled: boolean = true) => {
   return useQuery({
     queryKey: categoryKeys.list(includeDefault.toString()),
     queryFn: () => categoryApi.getAll(includeDefault),
+    enabled: enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

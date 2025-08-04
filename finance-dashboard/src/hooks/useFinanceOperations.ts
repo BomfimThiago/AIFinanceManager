@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react';
 
 // Custom hooks
+import { useAuth } from '../contexts/AuthContext';
 import { useGlobalFilters } from '../contexts/GlobalFiltersContext';
 import { ExpensesService } from '../services/expensesService';
 // Services
@@ -29,6 +30,7 @@ export function useFinanceOperations() {
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
 
   // App state hooks
+  const { isAuthenticated } = useAuth();
   const { filters } = useGlobalFilters();
   const { showError, showSuccess } = useAppNotifications();
 
@@ -62,6 +64,7 @@ export function useFinanceOperations() {
   } = useExpenses({
     ...queryFilters,
     type: queryFilters.type || undefined,
+    enabled: isAuthenticated,
   });
 
   // Apply client-side category filtering for multiple categories
@@ -87,15 +90,15 @@ export function useFinanceOperations() {
     return filtered;
   }, [rawExpenses, hasMultipleCategories, filters.categories]);
 
-  const { data: budgetsData, isLoading: budgetsLoading, error: budgetsError } = useBudgets();
+  const { data: budgetsData, isLoading: budgetsLoading, error: budgetsError } = useBudgets(isAuthenticated);
 
   const {
     data: categoriesData,
     isLoading: categoriesLoading,
     error: categoriesError,
-  } = useCategories(true);
+  } = useCategories(true, isAuthenticated);
 
-  const { data: goals = [], isLoading: goalsLoading, error: goalsError } = useGoals();
+  const { data: goals = [], isLoading: goalsLoading, error: goalsError } = useGoals(isAuthenticated);
 
   // Mutations
   const createBulkExpensesMutation = useCreateBulkExpenses();

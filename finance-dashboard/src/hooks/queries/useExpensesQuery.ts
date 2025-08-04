@@ -29,6 +29,7 @@ export function useExpenses(filters?: {
   startDate?: string;
   endDate?: string;
   search?: string;
+  enabled?: boolean;
 }) {
   const normalizedFilters = {
     month: filters?.month && filters.month > 0 ? filters.month : undefined,
@@ -55,6 +56,7 @@ export function useExpenses(filters?: {
   return useQuery({
     queryKey: expenseKeys.list(normalizedFilters),
     queryFn: () => expenseApi.getAll(normalizedFilters),
+    enabled: filters?.enabled !== false,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     placeholderData: prev => prev,
