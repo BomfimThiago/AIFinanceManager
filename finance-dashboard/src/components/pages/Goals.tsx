@@ -275,9 +275,8 @@ const GoalCard: React.FC<{
 
   return (
     <div
-      className="p-4 sm:p-6 rounded-xl shadow-sm border-2 relative overflow-hidden"
+      className="p-4 sm:p-6 rounded-xl shadow-sm border-2 relative overflow-hidden bg-white"
       style={{
-        backgroundColor: `${goalColor}15`, // 15% opacity background
         borderColor: goalColor,
       }}
     >

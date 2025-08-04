@@ -6,9 +6,12 @@ import React from 'react';
 
 import { CreditCard, RefreshCw, Target, TrendingUp, Wallet } from 'lucide-react';
 
+import { useGlobalFilters } from '../../contexts/GlobalFiltersContext';
+import { useTranslation } from '../../contexts/LanguageContext';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import type { Budgets, Expense } from '../../types';
+import { filterExpenses, getFilterSummary } from '../../utils/expenseFilters';
 // UI Components
 import InteractiveExpenseFlow from '../charts/InteractiveExpenseFlow';
 import InteractiveSpendingTimeline from '../charts/InteractiveSpendingTimeline';
@@ -58,7 +61,8 @@ const FilterStatus: React.FC<{
   hasActiveFilters: boolean;
   hasActiveDashboardState: boolean;
   onReset: () => void;
-}> = ({ hasActiveFilters, hasActiveDashboardState, onReset }) => {
+  t: (key: string) => string;
+}> = ({ hasActiveFilters, hasActiveDashboardState, onReset, t }) => {
   if (!hasActiveFilters && !hasActiveDashboardState) return null;
 
   return (
@@ -75,7 +79,7 @@ const FilterStatus: React.FC<{
         </div>
         <div className="ml-3">
           <p className="text-sm font-medium text-blue-800">
-            Filters are active - showing filtered results
+            {t('dashboard.filtersActive')}
           </p>
         </div>
       </div>
@@ -84,7 +88,7 @@ const FilterStatus: React.FC<{
         className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-md text-sm font-medium transition-colors"
       >
         <RefreshCw className="w-4 h-4 inline mr-1" />
-        Reset Filters
+        {t('dashboard.resetFilters')}
       </button>
     </div>
   );
@@ -101,6 +105,7 @@ const SummaryCards: React.FC<{
   hideAmounts: boolean;
   currency: string;
 }> = ({ calculations, hideAmounts, currency }) => {
+  const { t } = useTranslation();
   const formatAmount = (amount: number) => {
     if (hideAmounts) return '••••';
     return new Intl.NumberFormat('en-US', {
@@ -112,21 +117,21 @@ const SummaryCards: React.FC<{
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <SummaryCard
-        title="Total Income"
+        title={t('dashboard.totalIncome')}
         value={formatAmount(calculations.totalIncome)}
         icon={TrendingUp}
         trend={calculations.totalIncome > 0 ? 'positive' : 'neutral'}
         className="bg-green-50 border-green-200"
       />
       <SummaryCard
-        title="Total Expenses"
+        title={t('dashboard.totalExpenses')}
         value={formatAmount(calculations.totalExpenses)}
         icon={CreditCard}
         trend={calculations.totalExpenses > 0 ? 'negative' : 'neutral'}
         className="bg-red-50 border-red-200"
       />
       <SummaryCard
-        title="Net Amount"
+        title={t('dashboard.netAmount')}
         value={formatAmount(calculations.netAmount)}
         icon={Wallet}
         trend={
@@ -145,7 +150,7 @@ const SummaryCards: React.FC<{
         }
       />
       <SummaryCard
-        title="Active Budgets"
+        title={t('dashboard.activeGoals')}
         value={calculations.budgetCount.toString()}
         icon={Target}
         trend="neutral"
@@ -157,7 +162,13 @@ const SummaryCards: React.FC<{
 
 // Main Dashboard Component
 const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts }) => {
+  const { t } = useTranslation();
   const { currency } = useUserPreferences();
+  const { filters } = useGlobalFilters();
+  
+  // Filter expenses based on global filters
+  const filteredExpenses = filterExpenses(expenses, filters);
+  const filterSummary = getFilterSummary(filters, expenses.length, filteredExpenses.length);
   const {
     calculations,
     categoryData,
@@ -172,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
     handleTimeRangeSelect,
     handleDateClick,
     resetDashboardFilters,
-  } = useDashboardData(expenses, budgets);
+  } = useDashboardData(filteredExpenses, budgets);
 
   // Early returns for loading and error states
   if (isLoading) {
@@ -186,11 +197,39 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
   // Pure JSX - only UI rendering
   return (
     <div className="space-y-8">
-      {/* Filter Status */}
+      {/* Global Filter Status */}
+      {filterSummary.hasFilters && (
+        <div className="mb-6 flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">
+                Showing {filterSummary.filteredCount} of {filterSummary.totalCount} transactions
+              </p>
+              {filterSummary.description && (
+                <p className="text-xs text-green-600 mt-1">
+                  Filtered by: {filterSummary.description}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Dashboard Filter Status */}
       <FilterStatus
         hasActiveFilters={hasActiveFilters}
         hasActiveDashboardState={hasActiveDashboardState}
         onReset={resetDashboardFilters}
+        t={t}
       />
 
       {/* Summary Cards */}
@@ -199,14 +238,14 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Spending by Category</h3>
-          <InteractiveExpenseFlow expenses={expenses || []} onCategoryClick={handleCategoryClick} />
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('dashboard.spendingByCategory')}</h3>
+          <InteractiveExpenseFlow expenses={filteredExpenses || []} onCategoryClick={handleCategoryClick} />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Trends</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('dashboard.monthlyTrends')}</h3>
           <InteractiveSpendingTimeline
-            expenses={expenses || []}
+            expenses={filteredExpenses || []}
             onTimeRangeSelect={handleTimeRangeSelect}
           />
         </div>
@@ -214,9 +253,9 @@ const Dashboard: React.FC<DashboardProps> = ({ expenses, budgets, hideAmounts })
 
       {/* Spending Heatmap */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Spending Heatmap</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('dashboard.spendingHeatmap')}</h3>
         <SpendingHeatmap
-          expenses={expenses || []}
+          expenses={filteredExpenses || []}
           onDateClick={handleDateClick}
           selectedDate={interactionState.selectedDate}
         />

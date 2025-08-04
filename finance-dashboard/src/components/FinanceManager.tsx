@@ -9,12 +9,10 @@ import { useAppNavigation } from '../hooks/useAppNavigation';
 import { useFinanceOperations } from '../hooks/useFinanceOperations';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 // UI Components
-import GlobalFiltersSidebar from './layout/GlobalFiltersSidebar';
 import Header from './layout/Header';
 import Navigation from './layout/Navigation';
 import CategoryManagement from './pages/CategoryManagement';
-import Dashboard from './pages/Dashboard';
-import Expenses from './pages/Expenses';
+import FinancialOverview from './pages/FinancialOverview';
 import Goals from './pages/Goals';
 import Insights from './pages/Insights';
 import Integrations from './pages/Integrations';
@@ -24,7 +22,7 @@ import Upload from './pages/Upload';
 
 const FinanceManager: React.FC = () => {
   // UI state management (no business logic)
-  const { activeTab, sidebarVisible, setActiveTab, toggleSidebar } = useAppNavigation();
+  const { activeTab, setActiveTab } = useAppNavigation();
   const { hideAmounts, togglePrivacyMode } = useUserPreferences();
 
   // Business operations (separated from UI)
@@ -74,11 +72,15 @@ const FinanceManager: React.FC = () => {
   // Render tab content (pure UI logic)
   const renderTabContent = (): React.JSX.Element => {
     switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard expenses={expenses} budgets={budgets} hideAmounts={hideAmounts} />;
-
-      case 'expenses':
-        return <Expenses expenses={expenses} categories={categories} hideAmounts={hideAmounts} />;
+      case 'overview':
+        return (
+          <FinancialOverview
+            expenses={expenses}
+            budgets={budgets}
+            categories={categories}
+            hideAmounts={hideAmounts}
+          />
+        );
 
       case 'upload':
         return (
@@ -132,22 +134,19 @@ const FinanceManager: React.FC = () => {
     }
   };
 
-  // Clean JSX - only UI rendering logic using responsive pattern
+  // Clean JSX - only UI rendering logic
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onTogglePrivacy={togglePrivacyMode} hideAmounts={hideAmounts} />
 
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Responsive layout - sidebar doesn't affect content positioning below lg */}
-      <div className="relative flex lg:flex-row">
-        <GlobalFiltersSidebar isVisible={sidebarVisible} onToggle={toggleSidebar} />
-
-        {/* Main content area - full width below lg, adjusted above lg */}
-        <main className="flex-1 min-h-0 lg:overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{renderTabContent()}</div>
-        </main>
-      </div>
+      {/* Main content area */}
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {renderTabContent()}
+        </div>
+      </main>
     </div>
   );
 };

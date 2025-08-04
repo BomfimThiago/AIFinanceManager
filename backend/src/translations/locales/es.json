@@ -14,7 +14,8 @@
     "budgets": "Presupuestos",
     "categories": "Categorías",
     "insights": "Insights de IA",
-    "integrations": "Integraciones"
+    "integrations": "Integraciones",
+    "financialOverview": "Analítica"
   },
   "common": {
     "loading": "Cargando...",
@@ -78,7 +79,9 @@
     "progress": "Progreso",
     "saving": "Guardando...",
     "changes": "Cambios",
-    "goal": "Meta"
+    "goal": "Meta",
+    "count": "Cantidad",
+    "selected": "seleccionados"
   },
   "auth": {
     "signInTitle": "Iniciar sesión en tu cuenta",
@@ -132,7 +135,13 @@
     "totalIncome": "Ingresos Totales",
     "totalExpenses": "Gastos Totales",
     "netSavings": "Ahorro Neto",
-    "activeBudgets": "Presupuestos Activos"
+    "netAmount": "Cantidad Neta",
+    "activeGoals": "Metas Activas",
+    "filtersActive": "Los filtros están activos - mostrando resultados filtrados",
+    "resetFilters": "Restablecer Filtros",
+    "spendingByCategory": "Gastos por Categoría",
+    "monthlyTrends": "Tendencias Mensuales",
+    "spendingHeatmap": "Mapa de Calor de Gastos"
   },
   "expenses": {
     "title": "Gastos",
@@ -163,7 +172,8 @@
     "expenseUpdatedMessage": "Gasto actualizado exitosamente",
     "expenseCreated": "Gasto Creado",
     "expenseCreatedMessage": "Gasto creado exitosamente",
-    "deleteConfirmMessage": "¿Está seguro de que desea eliminar \"{description}\"? Esta acción no se puede deshacer."
+    "deleteConfirmMessage": "¿Está seguro de que desea eliminar \"{description}\"? Esta acción no se puede deshacer.",
+    "createFirstExpense": "Comienza creando un nuevo gasto."
   },
   "budgets": {
     "title": "Presupuestos",
@@ -369,6 +379,10 @@
     "to": "Hasta",
     "fromDate": "Desde: {date}",
     "toDate": "Hasta: {date}",
+    "month": "Mes",
+    "year": "Año",
+    "allMonths": "Todos los Meses",
+    "allYears": "Todos los Años",
     "filterActive": "filtro activo",
     "filtersActive": "filtros activos",
     "activeFiltersCount": "{count} {count, plural, one {filtro} other {filtros}} activos"
@@ -547,5 +561,9 @@
     "saveChanges": "Guardar Cambios",
     "cancel": "Cancelar",
     "loading": "Cargando..."
+  },
+  "financialOverview": {
+    "title": "Analítica Financiera",
+    "subtitle": "Monitorea tus finanzas y rastrea gastos"
   }
 }

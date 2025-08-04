@@ -14,7 +14,8 @@
     "budgets": "Budgets",
     "categories": "Categories",
     "insights": "AI Insights",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "financialOverview": "Analytics"
   },
   "common": {
     "loading": "Loading...",
@@ -78,7 +79,9 @@
     "progress": "Progress",
     "saving": "Saving...",
     "changes": "Changes",
-    "goal": "Goal"
+    "goal": "Goal",
+    "count": "Count",
+    "selected": "selected"
   },
   "auth": {
     "signInTitle": "Sign in to your account",
@@ -132,7 +135,13 @@
     "totalIncome": "Total Income",
     "totalExpenses": "Total Expenses",
     "netSavings": "Net Savings",
-    "activeBudgets": "Active Budgets"
+    "netAmount": "Net Amount",
+    "activeGoals": "Active Goals",
+    "filtersActive": "Filters are active - showing filtered results",
+    "resetFilters": "Reset Filters",
+    "spendingByCategory": "Spending by Category",
+    "monthlyTrends": "Monthly Trends",
+    "spendingHeatmap": "Spending Heatmap"
   },
   "expenses": {
     "title": "Expenses",
@@ -163,7 +172,8 @@
     "expenseUpdatedMessage": "Expense updated successfully",
     "expenseCreated": "Expense Created",
     "expenseCreatedMessage": "Expense created successfully",
-    "deleteConfirmMessage": "Are you sure you want to delete \"{description}\"? This action cannot be undone."
+    "deleteConfirmMessage": "Are you sure you want to delete \"{description}\"? This action cannot be undone.",
+    "createFirstExpense": "Get started by creating a new expense."
   },
   "budgets": {
     "title": "Budget Overview",
@@ -386,6 +396,10 @@
     "to": "To",
     "fromDate": "From: {date}",
     "toDate": "To: {date}",
+    "month": "Month",
+    "year": "Year",
+    "allMonths": "All Months",
+    "allYears": "All Years",
     "filterActive": "filter active",
     "filtersActive": "filters active",
     "activeFiltersCount": "{count} {count, plural, one {filter} other {filters}} active"
@@ -547,5 +561,9 @@
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
     "loading": "Loading..."
+  },
+  "financialOverview": {
+    "title": "Financial Analytics",
+    "subtitle": "Monitor your finances and track expenses"
   }
 }

@@ -165,9 +165,8 @@ export interface UploadHistory {
 }
 
 export type TabId =
-  | 'dashboard'
+  | 'overview'
   | 'upload'
-  | 'expenses'
   | 'goals'
   | 'categories'
   | 'insights'

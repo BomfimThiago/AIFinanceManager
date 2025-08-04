@@ -17,14 +17,8 @@ export function useAppNavigation() {
     [dispatch]
   );
 
-  const toggleSidebar = useCallback(() => {
-    dispatch({ type: 'TOGGLE_SIDEBAR' });
-  }, [dispatch]);
-
   return {
     activeTab: state.activeTab as TabId,
-    sidebarVisible: state.sidebarVisible,
     setActiveTab,
-    toggleSidebar,
   };
 }

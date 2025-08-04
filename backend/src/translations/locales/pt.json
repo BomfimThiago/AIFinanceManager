@@ -14,7 +14,8 @@
     "budgets": "Orçamentos",
     "categories": "Categorias",
     "insights": "Insights de IA",
-    "integrations": "Integrações"
+    "integrations": "Integrações",
+    "financialOverview": "Análise"
   },
   "common": {
     "loading": "Carregando...",
@@ -78,7 +79,9 @@
     "progress": "Progresso",
     "saving": "Salvando...",
     "changes": "Alterações",
-    "goal": "Meta"
+    "goal": "Meta",
+    "count": "Quantidade",
+    "selected": "selecionados"
   },
   "auth": {
     "signInTitle": "Entrar na sua conta",
@@ -132,7 +135,13 @@
     "totalIncome": "Receita Total",
     "totalExpenses": "Despesas Totais",
     "netSavings": "Economia Líquida",
-    "activeBudgets": "Orçamentos Ativos"
+    "netAmount": "Valor Líquido",
+    "activeGoals": "Metas Ativas",
+    "filtersActive": "Filtros estão ativos - mostrando resultados filtrados",
+    "resetFilters": "Redefinir Filtros",
+    "spendingByCategory": "Gastos por Categoria",
+    "monthlyTrends": "Tendências Mensais",
+    "spendingHeatmap": "Mapa de Calor de Gastos"
   },
   "expenses": {
     "title": "Despesas",
@@ -163,7 +172,8 @@
     "expenseUpdatedMessage": "Despesa atualizada com sucesso",
     "expenseCreated": "Despesa Criada",
     "expenseCreatedMessage": "Despesa criada com sucesso",
-    "deleteConfirmMessage": "Tem certeza de que deseja excluir \"{description}\"? Esta ação não pode ser desfeita."
+    "deleteConfirmMessage": "Tem certeza de que deseja excluir \"{description}\"? Esta ação não pode ser desfeita.",
+    "createFirstExpense": "Comece criando uma nova despesa."
   },
   "budgets": {
     "title": "Orçamentos",
@@ -369,6 +379,10 @@
     "to": "Até",
     "fromDate": "De: {date}",
     "toDate": "Até: {date}",
+    "month": "Mês",
+    "year": "Ano",
+    "allMonths": "Todos os Meses",
+    "allYears": "Todos os Anos",
     "filterActive": "filtro ativo",
     "filtersActive": "filtros ativos",
     "activeFiltersCount": "{count} {count, plural, one {filtro} other {filtros}} ativos"
@@ -547,5 +561,9 @@
     "saveChanges": "Salvar Alterações",
     "cancel": "Cancelar",
     "loading": "Carregando..."
+  },
+  "financialOverview": {
+    "title": "Análise Financeira",
+    "subtitle": "Monitore suas finanças e acompanhe despesas"
   }
 }

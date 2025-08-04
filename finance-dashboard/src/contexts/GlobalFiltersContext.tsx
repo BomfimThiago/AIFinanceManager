@@ -6,6 +6,8 @@ export interface GlobalFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  month?: number; // 1-12 (January = 1, December = 12)
+  year?: number;   // Full year number (e.g., 2025)
 }
 
 interface GlobalFiltersContextType {

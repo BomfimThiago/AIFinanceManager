@@ -60,7 +60,7 @@ export type AppAction =
 
 // Initial State
 export const initialAppState: AppState = {
-  activeTab: 'dashboard',
+  activeTab: 'overview',
   sidebarVisible: true,
   filters: {
     type: null,
