@@ -147,3 +147,20 @@ async def add_category_preference(
         "account_name": account_name,
         "category_name": category_name,
     }
+
+
+@router.post("/update-translations", status_code=status.HTTP_200_OK)
+async def update_default_category_translations(
+    user_service: Annotated[
+        tuple[int, CategoryService], Depends(get_current_user_category_service)
+    ],
+) -> dict[str, int]:
+    """Update existing default categories with translations (admin endpoint)."""
+    user_id, service = user_service
+
+    updated_count = await service.update_default_category_translations()
+
+    return {
+        "message": f"Updated {updated_count} default categories with translations",
+        "updated_count": updated_count,
+    }

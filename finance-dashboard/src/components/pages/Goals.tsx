@@ -119,7 +119,10 @@ interface GoalsProps {
 }
 
 // Empty State Component - Responsive
-const EmptyState: React.FC<{ onCreateClick: () => void; t: (key: string) => string }> = ({ onCreateClick, t }) => (
+const EmptyState: React.FC<{ onCreateClick: () => void; t: (key: string) => string }> = ({
+  onCreateClick,
+  t,
+}) => (
   <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg">
     <Target className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
     <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">{t('goals.noGoalsYet')}</h3>
@@ -269,9 +272,11 @@ const GoalCard: React.FC<{
   const defaultVisual = getDefaultGoalVisual(goal.goal_type);
   const goalColor = goal.color || defaultVisual.color;
   const goalIcon = goal.icon || defaultVisual.icon;
-  
+
   // Debug: Log if we're using custom or default colors
-  console.log(`Goal "${goal.title}": using ${goal.color ? 'custom' : 'default'} color (${goalColor}) and ${goal.icon ? 'custom' : 'default'} icon (${goalIcon})`);
+  console.log(
+    `Goal "${goal.title}": using ${goal.color ? 'custom' : 'default'} color (${goalColor}) and ${goal.icon ? 'custom' : 'default'} icon (${goalIcon})`
+  );
 
   return (
     <div
@@ -363,7 +368,9 @@ const GoalCard: React.FC<{
 
       {/* Category for spending goals */}
       {goal.category && (
-        <div className="mt-2 text-xs text-gray-500">{t('goals.category')}: {tCategory(goal.category)}</div>
+        <div className="mt-2 text-xs text-gray-500">
+          {t('goals.category')}: {tCategory(goal.category)}
+        </div>
       )}
 
       {/* Actions */}

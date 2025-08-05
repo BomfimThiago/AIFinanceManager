@@ -54,7 +54,7 @@ async def get_expenses(
         category=category,
         start_date=start_date,
         end_date=end_date,
-        search=search
+        search=search,
     )
 
 

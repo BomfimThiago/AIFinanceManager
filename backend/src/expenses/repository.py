@@ -96,7 +96,7 @@ class ExpenseRepository(BaseRepository[ExpenseModel, ExpenseCreate, ExpenseUpdat
             search_term = f"%{search}%"
             search_conditions = or_(
                 self.model.description.ilike(search_term),
-                self.model.merchant.ilike(search_term)
+                self.model.merchant.ilike(search_term),
             )
             conditions.append(search_conditions)
 

@@ -23,17 +23,33 @@ class GoalBase(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200, description="Goal title")
     description: str | None = Field(None, description="Goal description")
-    goal_type: GoalType = Field(..., description="Type of goal (spending, saving, debt)")
-    time_horizon: TimeHorizon = Field(..., description="Time horizon (short, medium, long)")
+    goal_type: GoalType = Field(
+        ..., description="Type of goal (spending, saving, debt)"
+    )
+    time_horizon: TimeHorizon = Field(
+        ..., description="Time horizon (short, medium, long)"
+    )
     recurrence: GoalRecurrence = Field(..., description="Recurrence pattern")
     target_amount: float = Field(..., gt=0, description="Target amount")
-    contribution_amount: float | None = Field(None, gt=0, description="Amount to save/pay per recurrence period")
+    contribution_amount: float | None = Field(
+        None, gt=0, description="Amount to save/pay per recurrence period"
+    )
     category: str | None = Field(None, description="Category for spending goals")
-    target_date: str | None = Field(default=None, description="Target completion date (YYYY-MM-DD)")
-    priority: int = Field(1, ge=1, le=3, description="Priority (1=high, 2=medium, 3=low)")
-    auto_calculate: bool = Field(True, description="Auto-calculate progress from expenses")
-    color: str | None = Field(default=None, description="Hex color code for visual identification")
-    icon: str | None = Field(default=None, description="Icon name for visual identification")
+    target_date: str | None = Field(
+        default=None, description="Target completion date (YYYY-MM-DD)"
+    )
+    priority: int = Field(
+        1, ge=1, le=3, description="Priority (1=high, 2=medium, 3=low)"
+    )
+    auto_calculate: bool = Field(
+        True, description="Auto-calculate progress from expenses"
+    )
+    color: str | None = Field(
+        default=None, description="Hex color code for visual identification"
+    )
+    icon: str | None = Field(
+        default=None, description="Icon name for visual identification"
+    )
 
 
 class GoalCreate(GoalBase):
@@ -62,8 +78,12 @@ class GoalUpdate(BaseModel):
     priority: int | None = Field(default=None, ge=1, le=3)
     status: GoalStatus | None = Field(default=None)
     auto_calculate: bool | None = Field(default=None)
-    color: str | None = Field(default=None, description="Hex color code for visual identification")
-    icon: str | None = Field(default=None, description="Icon name for visual identification")
+    color: str | None = Field(
+        default=None, description="Hex color code for visual identification"
+    )
+    icon: str | None = Field(
+        default=None, description="Icon name for visual identification"
+    )
 
 
 class Goal(GoalBase):
@@ -90,7 +110,10 @@ class Goal(GoalBase):
     @property
     def is_completed(self) -> bool:
         """Check if goal is completed."""
-        return self.current_amount >= self.target_amount or self.status == GoalStatus.COMPLETED
+        return (
+            self.current_amount >= self.target_amount
+            or self.status == GoalStatus.COMPLETED
+        )
 
     @computed_field
     @property
@@ -104,8 +127,13 @@ class GoalProgress(BaseModel):
 
     goal_id: int = Field(..., description="Goal ID")
     amount: float = Field(..., description="Progress amount to add/subtract")
-    date: str | None = Field(default=None, description="Date of progress (defaults to today, YYYY-MM-DD format)")
-    notes: str | None = Field(default=None, description="Optional notes about the progress")
+    date: str | None = Field(
+        default=None,
+        description="Date of progress (defaults to today, YYYY-MM-DD format)",
+    )
+    notes: str | None = Field(
+        default=None, description="Optional notes about the progress"
+    )
 
 
 class GoalSummary(BaseModel):
@@ -120,8 +148,12 @@ class GoalSummary(BaseModel):
     completed_goals: int = Field(..., description="Number of completed goals")
 
     total_target: float = Field(..., description="Total target amount across all goals")
-    total_progress: float = Field(..., description="Total progress amount across all goals")
-    overall_progress_percentage: float = Field(..., description="Overall progress percentage")
+    total_progress: float = Field(
+        ..., description="Total progress amount across all goals"
+    )
+    overall_progress_percentage: float = Field(
+        ..., description="Overall progress percentage"
+    )
 
     goals_by_type: dict[GoalType, list[Goal]] = Field(
         ..., description="Goals grouped by type"
@@ -134,10 +166,16 @@ class GoalSummary(BaseModel):
 class GoalTemplateCreate(BaseModel):
     """Schema for creating goals from templates."""
 
-    template_type: str = Field(..., description="Template type (monthly_budget, emergency_fund, etc.)")
-    category: str | None = Field(default=None, description="Category for spending goals")
+    template_type: str = Field(
+        ..., description="Template type (monthly_budget, emergency_fund, etc.)"
+    )
+    category: str | None = Field(
+        default=None, description="Category for spending goals"
+    )
     amount: float = Field(..., gt=0, description="Goal amount")
-    months: int | None = Field(default=None, gt=0, description="Number of months for savings goals")
+    months: int | None = Field(
+        default=None, gt=0, description="Number of months for savings goals"
+    )
 
 
 # Legacy Budget schemas for backward compatibility

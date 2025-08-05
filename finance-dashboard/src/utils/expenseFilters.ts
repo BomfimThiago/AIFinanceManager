@@ -7,7 +7,7 @@ import { Expense } from '../types';
 export const filterExpenses = (expenses: Expense[], filters: GlobalFilters): Expense[] => {
   if (!expenses || expenses.length === 0) return [];
 
-  return expenses.filter((expense) => {
+  return expenses.filter(expense => {
     // Category filter
     if (filters.categories && filters.categories.length > 0) {
       if (!filters.categories.includes(expense.category)) {
@@ -29,9 +29,11 @@ export const filterExpenses = (expenses: Expense[], filters: GlobalFilters): Exp
       const searchableFields = [
         expense.description || '',
         expense.merchant || '',
-        expense.category || ''
-      ].join(' ').toLowerCase();
-      
+        expense.category || '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
       if (!searchableFields.includes(searchTerm)) {
         return false;
       }
@@ -39,7 +41,7 @@ export const filterExpenses = (expenses: Expense[], filters: GlobalFilters): Exp
 
     // Date filtering - Priority: Date Range > Month/Year
     const expenseDate = new Date(expense.date);
-    
+
     // Date range has highest priority
     if (filters.startDate || filters.endDate) {
       if (filters.startDate) {
@@ -48,7 +50,7 @@ export const filterExpenses = (expenses: Expense[], filters: GlobalFilters): Exp
           return false;
         }
       }
-      
+
       if (filters.endDate) {
         const endDate = new Date(filters.endDate);
         // Include the entire end date (set to end of day)
@@ -65,7 +67,7 @@ export const filterExpenses = (expenses: Expense[], filters: GlobalFilters): Exp
           return false;
         }
       }
-      
+
       // Year filter (if no date range)
       if (filters.year !== undefined) {
         const expenseYear = expenseDate.getFullYear();
@@ -82,21 +84,27 @@ export const filterExpenses = (expenses: Expense[], filters: GlobalFilters): Exp
 /**
  * Get filter summary for display
  */
-export const getFilterSummary = (filters: GlobalFilters, totalExpenses: number, filteredExpenses: number) => {
+export const getFilterSummary = (
+  filters: GlobalFilters,
+  totalExpenses: number,
+  filteredExpenses: number
+) => {
   const activeFilters = [];
-  
+
   if (filters.categories && filters.categories.length > 0) {
-    activeFilters.push(`${filters.categories.length} category${filters.categories.length > 1 ? 'ies' : 'y'}`);
+    activeFilters.push(
+      `${filters.categories.length} category${filters.categories.length > 1 ? 'ies' : 'y'}`
+    );
   }
-  
+
   if (filters.type) {
     activeFilters.push(filters.type);
   }
-  
+
   if (filters.search) {
     activeFilters.push(`search: "${filters.search}"`);
   }
-  
+
   if (filters.startDate || filters.endDate) {
     if (filters.startDate && filters.endDate) {
       activeFilters.push(`date range`);
@@ -107,20 +115,32 @@ export const getFilterSummary = (filters: GlobalFilters, totalExpenses: number, 
     }
   } else {
     if (filters.month !== undefined) {
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                         'July', 'August', 'September', 'October', 'November', 'December'];
+      const monthNames = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
       activeFilters.push(monthNames[filters.month - 1]);
     }
     if (filters.year !== undefined) {
       activeFilters.push(`${filters.year}`);
     }
   }
-  
+
   return {
     hasFilters: activeFilters.length > 0,
     filterCount: activeFilters.length,
     filteredCount: filteredExpenses,
     totalCount: totalExpenses,
-    description: activeFilters.join(', ')
+    description: activeFilters.join(', '),
   };
 };

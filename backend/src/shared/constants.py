@@ -129,35 +129,35 @@ class GoalType(str, Enum):
     """Financial goal types."""
 
     SPENDING = "spending"  # Traditional budget limits
-    SAVING = "saving"      # Target savings amount
-    DEBT = "debt"          # Debt payoff goals
+    SAVING = "saving"  # Target savings amount
+    DEBT = "debt"  # Debt payoff goals
 
 
 class TimeHorizon(str, Enum):
     """Goal time horizons."""
 
-    SHORT = "short"     # 1-6 months
-    MEDIUM = "medium"   # 6 months - 2 years
-    LONG = "long"       # 2+ years
+    SHORT = "short"  # 1-6 months
+    MEDIUM = "medium"  # 6 months - 2 years
+    LONG = "long"  # 2+ years
 
 
 class GoalRecurrence(str, Enum):
     """Goal recurrence patterns."""
 
-    ONE_TIME = "one_time"      # Single target (savings goal)
-    WEEKLY = "weekly"          # Recurring weekly
-    MONTHLY = "monthly"        # Recurring monthly
-    QUARTERLY = "quarterly"    # Recurring quarterly
-    YEARLY = "yearly"          # Recurring yearly
+    ONE_TIME = "one_time"  # Single target (savings goal)
+    WEEKLY = "weekly"  # Recurring weekly
+    MONTHLY = "monthly"  # Recurring monthly
+    QUARTERLY = "quarterly"  # Recurring quarterly
+    YEARLY = "yearly"  # Recurring yearly
 
 
 class GoalStatus(str, Enum):
     """Goal completion status."""
 
-    ACTIVE = "active"          # Currently tracking
-    COMPLETED = "completed"    # Goal achieved
-    PAUSED = "paused"         # Temporarily paused
-    CANCELLED = "cancelled"    # User cancelled
+    ACTIVE = "active"  # Currently tracking
+    COMPLETED = "completed"  # Goal achieved
+    PAUSED = "paused"  # Temporarily paused
+    CANCELLED = "cancelled"  # User cancelled
 
 
 # API Constants

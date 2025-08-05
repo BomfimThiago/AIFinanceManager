@@ -76,8 +76,8 @@ async def register_user(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except AuthException as e:
         raise HTTPException(
@@ -86,8 +86,8 @@ async def register_user(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except Exception as e:
         logger.error(f"Registration error: {e}")
@@ -97,8 +97,8 @@ async def register_user(
                 "success": False,
                 "error": "Registration failed",
                 "error_code": "INTERNAL_SERVER_ERROR",
-                "details": {}
-            }
+                "details": {},
+            },
         ) from e
 
 
@@ -128,8 +128,8 @@ async def login_user(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except InactiveUserError as e:
         raise HTTPException(
@@ -138,8 +138,8 @@ async def login_user(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except AuthException as e:
         raise HTTPException(
@@ -148,8 +148,8 @@ async def login_user(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except Exception as e:
         logger.error(f"Login error: {e}")
@@ -159,8 +159,8 @@ async def login_user(
                 "success": False,
                 "error": "Authentication failed",
                 "error_code": "INTERNAL_SERVER_ERROR",
-                "details": {}
-            }
+                "details": {},
+            },
         ) from e
 
 
@@ -189,8 +189,8 @@ async def refresh_access_token(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except AuthException as e:
         raise HTTPException(
@@ -199,8 +199,8 @@ async def refresh_access_token(
                 "success": False,
                 "error": str(e),
                 "error_code": e.error_code,
-                "details": e.details
-            }
+                "details": e.details,
+            },
         ) from e
     except Exception as e:
         logger.error(f"Token refresh error: {e}")
@@ -210,8 +210,8 @@ async def refresh_access_token(
                 "success": False,
                 "error": "Token refresh failed",
                 "error_code": "INTERNAL_SERVER_ERROR",
-                "details": {}
-            }
+                "details": {},
+            },
         ) from e
 
 

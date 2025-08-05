@@ -42,18 +42,22 @@ class CategoryService:
         # Generate translations for the category name and description
         try:
             translations = await self.translation_service.translate_category_content(
-                category_data.name,
-                category_data.description
+                category_data.name, category_data.description
             )
         except Exception as e:
             # Log the error but don't fail category creation
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.warning(f"Failed to generate translations for category '{category_data.name}': {e}")
+            logger.warning(
+                f"Failed to generate translations for category '{category_data.name}': {e}"
+            )
             translations = None
 
         # Create the category with translations
-        category = await self.repository.create_user_category(user_id, category_data, translations)
+        category = await self.repository.create_user_category(
+            user_id, category_data, translations
+        )
         return category
 
     async def update_category(
@@ -114,6 +118,25 @@ class CategoryService:
                 created_count += 1
 
         return created_count
+
+    async def update_default_category_translations(self) -> int:
+        """Update existing default categories with translations."""
+        updated_count = 0
+        default_translations = (
+            self.translation_service.populate_default_category_translations()
+        )
+
+        # Get all default categories
+        default_categories = await self.repository.get_default_categories()
+
+        for category in default_categories:
+            if category.name in default_translations:
+                # Update the category with translations
+                category.translations = default_translations[category.name]
+                await self.db.commit()
+                updated_count += 1
+
+        return updated_count
 
     async def get_category_names_for_llm(self, user_id: int | None = None) -> list[str]:
         """Get category names formatted for LLM processing."""

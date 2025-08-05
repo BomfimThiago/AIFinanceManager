@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 class TrendDirection(str, Enum):
     """Trend direction enum."""
+
     UP = "up"
     DOWN = "down"
     STABLE = "stable"
@@ -19,6 +20,7 @@ class TrendDirection(str, Enum):
 
 class FinancialHealthGrade(str, Enum):
     """Financial health grade enum."""
+
     EXCELLENT = "excellent"
     GOOD = "good"
     FAIR = "fair"
@@ -27,6 +29,7 @@ class FinancialHealthGrade(str, Enum):
 
 class ExecutiveSummary(BaseModel):
     """Executive summary data."""
+
     period_start: date
     period_end: date
     total_income: float
@@ -41,6 +44,7 @@ class ExecutiveSummary(BaseModel):
 
 class MonthlyTrendData(BaseModel):
     """Monthly trend data point."""
+
     month: str
     year: int
     income: float
@@ -51,6 +55,7 @@ class MonthlyTrendData(BaseModel):
 
 class CategoryAnalysis(BaseModel):
     """Category analysis data."""
+
     category: str
     amount: float
     percentage: float
@@ -63,6 +68,7 @@ class CategoryAnalysis(BaseModel):
 
 class MerchantAnalysis(BaseModel):
     """Merchant analysis data."""
+
     merchant: str
     total_amount: float
     transaction_count: int
@@ -73,6 +79,7 @@ class MerchantAnalysis(BaseModel):
 
 class TransactionPatterns(BaseModel):
     """Transaction patterns analysis."""
+
     average_transaction_size: float
     largest_transaction: float
     smallest_transaction: float
@@ -83,6 +90,7 @@ class TransactionPatterns(BaseModel):
 
 class BudgetPerformance(BaseModel):
     """Budget performance analysis."""
+
     overall_adherence_score: float
     categories_over_budget: list[str]
     categories_under_budget: list[str]
@@ -93,6 +101,7 @@ class BudgetPerformance(BaseModel):
 
 class FinancialHealthMetrics(BaseModel):
     """Financial health metrics."""
+
     savings_rate: float
     expense_ratio_fixed: float
     expense_ratio_variable: float
@@ -103,6 +112,7 @@ class FinancialHealthMetrics(BaseModel):
 
 class GoalProgress(BaseModel):
     """Goal progress data."""
+
     goal_id: int
     title: str
     target_amount: float
@@ -115,6 +125,7 @@ class GoalProgress(BaseModel):
 
 class GoalAlignment(BaseModel):
     """Goal alignment analysis."""
+
     active_goals: list[GoalProgress]
     total_monthly_required: float
     current_monthly_savings: float
@@ -124,6 +135,7 @@ class GoalAlignment(BaseModel):
 
 class RecommendationPriority(str, Enum):
     """Recommendation priority enum."""
+
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -131,6 +143,7 @@ class RecommendationPriority(str, Enum):
 
 class Recommendation(BaseModel):
     """Individual recommendation."""
+
     title: str
     description: str
     impact: str
@@ -142,6 +155,7 @@ class Recommendation(BaseModel):
 
 class ActionPlan(BaseModel):
     """Action plan with priorities."""
+
     top_priorities: list[Recommendation]
     monthly_savings_potential: float
     next_steps: list[str]
@@ -149,6 +163,7 @@ class ActionPlan(BaseModel):
 
 class ComprehensiveFinancialReport(BaseModel):
     """Complete financial report."""
+
     executive_summary: ExecutiveSummary
     monthly_trends: list[MonthlyTrendData]
     category_analysis: list[CategoryAnalysis]

@@ -2,7 +2,6 @@
 Translation API endpoints.
 """
 
-
 import logging
 
 from fastapi import APIRouter, HTTPException, status
@@ -36,8 +35,7 @@ async def extract_translation_keys(request: ExtractRequest) -> ExtractResponse:
         logger.info(f"Extracting translation keys from {len(request.files)} files")
 
         result = translation_service.extract_from_files(
-            file_paths=request.files,
-            dry_run=request.dry_run
+            file_paths=request.files, dry_run=request.dry_run
         )
 
         logger.info(f"Extraction completed: {result.new_keys} new keys found")
@@ -47,7 +45,7 @@ async def extract_translation_keys(request: ExtractRequest) -> ExtractResponse:
         logger.error(f"Translation extraction failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to extract translation keys: {e!s}"
+            detail=f"Failed to extract translation keys: {e!s}",
         )
 
 
@@ -65,17 +63,19 @@ async def translate_missing_strings(request: TranslateRequest) -> TranslateRespo
         result = await translation_service.translate_missing(
             target_languages=request.target_languages,
             force=request.force,
-            batch_size=request.batch_size
+            batch_size=request.batch_size,
         )
 
-        logger.info(f"Translation completed: {result.total_translated} strings translated")
+        logger.info(
+            f"Translation completed: {result.total_translated} strings translated"
+        )
         return result
 
     except Exception as e:
         logger.error(f"Translation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to translate strings: {e!s}"
+            detail=f"Failed to translate strings: {e!s}",
         )
 
 
@@ -92,15 +92,12 @@ async def get_translations(language: str) -> TranslationsResponse:
         return result
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to get translations for {language}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get translations: {e!s}"
+            detail=f"Failed to get translations: {e!s}",
         )
 
 
@@ -117,7 +114,7 @@ async def get_available_languages() -> dict[str, str]:
         logger.error(f"Failed to get available languages: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get available languages"
+            detail="Failed to get available languages",
         )
 
 
@@ -140,7 +137,7 @@ async def get_translation_stats() -> dict[str, dict]:
                 "total_keys": translation_data.stats.total_keys,
                 "translated_keys": translation_data.stats.translated_keys,
                 "missing_keys": translation_data.stats.missing_keys,
-                "last_updated": translation_data.last_updated
+                "last_updated": translation_data.last_updated,
             }
 
         return stats
@@ -149,5 +146,5 @@ async def get_translation_stats() -> dict[str, dict]:
         logger.error(f"Failed to get translation stats: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get translation statistics"
+            detail="Failed to get translation statistics",
         )

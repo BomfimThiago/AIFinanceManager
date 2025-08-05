@@ -508,8 +508,6 @@ async def get_belvo_integrations(
         ) from e
 
 
-
-
 @router.delete(
     "/belvo/integrations/{integration_id}",
     response_model=DeleteResponse,
@@ -546,8 +544,6 @@ async def delete_belvo_integration(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete integration: {e!s}",
         ) from e
-
-
 
 
 @router.post(
@@ -761,7 +757,9 @@ async def handle_historical_update_webhook(
             current_time = datetime.now(UTC)
 
             if integration.status == IntegrationStatus.PENDING:
-                logger.info(f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED")
+                logger.info(
+                    f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED"
+                )
                 integration.status = IntegrationStatus.CONNECTED
                 integration.connected_at = current_time
 
@@ -882,7 +880,9 @@ async def handle_new_transactions_webhook(
             current_time = datetime.now(UTC)
 
             if integration.status == IntegrationStatus.PENDING:
-                logger.info(f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED")
+                logger.info(
+                    f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED"
+                )
                 integration.status = IntegrationStatus.CONNECTED
                 integration.connected_at = current_time
 
@@ -1024,7 +1024,9 @@ async def handle_transactions_updated_webhook(
             current_time = datetime.now(UTC)
 
             if integration.status == IntegrationStatus.PENDING:
-                logger.info(f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED")
+                logger.info(
+                    f"🎯 First webhook received - changing integration {integration.id} status from PENDING to CONNECTED"
+                )
                 integration.status = IntegrationStatus.CONNECTED
                 integration.connected_at = current_time
 

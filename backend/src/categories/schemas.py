@@ -7,7 +7,9 @@ for category management.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
+
+from src.categories.models import CategoryType
 
 
 class CategoryBase(BaseModel):
@@ -24,7 +26,9 @@ class CategoryBase(BaseModel):
 class CategoryCreate(CategoryBase):
     """Schema for creating a new category."""
 
-    category_type: str = Field("expense", description="Category type (expense or income)")
+    category_type: str = Field(
+        "expense", description="Category type (expense or income)"
+    )
 
 
 class CategoryUpdate(BaseModel):
@@ -39,7 +43,9 @@ class CategoryUpdate(BaseModel):
     )
     icon: str | None = Field(None, max_length=50, description="Icon name")
     is_active: bool | None = Field(None, description="Whether category is active")
-    category_type: str | None = Field(None, description="Category type (expense or income)")
+    category_type: str | None = Field(
+        None, description="Category type (expense or income)"
+    )
 
 
 class Category(CategoryBase):
@@ -53,10 +59,18 @@ class Category(CategoryBase):
         None, description="User ID (null for default categories)"
     )
     translations: dict[str, dict[str, str]] | None = Field(
-        None, description="Category translations (name and description) by language code"
+        None,
+        description="Category translations (name and description) by language code",
     )
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
+
+    @field_serializer("category_type")
+    def serialize_category_type(self, category_type) -> str:
+        """Convert CategoryType enum to lowercase string."""
+        if isinstance(category_type, CategoryType):
+            return category_type.value.lower()
+        return str(category_type).lower()
 
     class Config:
         from_attributes = True

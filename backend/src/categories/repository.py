@@ -7,7 +7,7 @@ This module contains the repository class for category-related database operatio
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.categories.models import CategoryModel
+from src.categories.models import CategoryModel, CategoryType
 from src.categories.schemas import CategoryCreate, CategoryUpdate
 from src.expenses.models import ExpenseModel
 from src.shared.repository import BaseRepository
@@ -56,7 +56,10 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
         return list(result.scalars().all())
 
     async def create_user_category(
-        self, user_id: int, category_data: CategoryCreate, translations: dict | None = None
+        self,
+        user_id: int,
+        category_data: CategoryCreate,
+        translations: dict | None = None,
     ) -> CategoryModel:
         """Create a custom category for a user."""
         db_obj = self.model(
@@ -73,8 +76,17 @@ class CategoryRepository(BaseRepository[CategoryModel, CategoryCreate, CategoryU
 
     async def create_default_category(self, category_data: dict) -> CategoryModel:
         """Create a default system category."""
+        # Convert category_type string to enum if needed
+        processed_data = category_data.copy()
+        if "category_type" in processed_data and isinstance(
+            processed_data["category_type"], str
+        ):
+            processed_data["category_type"] = CategoryType(
+                processed_data["category_type"]
+            )
+
         db_obj = self.model(
-            **category_data, user_id=None, is_default=True, is_active=True
+            **processed_data, user_id=None, is_default=True, is_active=True
         )
         self.db.add(db_obj)
         await self.db.commit()

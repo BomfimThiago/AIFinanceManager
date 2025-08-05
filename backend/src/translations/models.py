@@ -2,7 +2,6 @@
 Translation models and schemas.
 """
 
-
 from pydantic import Field
 
 from src.shared.models import CustomModel
@@ -35,8 +34,7 @@ class TranslateRequest(CustomModel):
     """Request to translate missing strings."""
 
     target_languages: list[str] = Field(
-        default=["es", "pt"],
-        description="Languages to translate to"
+        default=["es", "pt"], description="Languages to translate to"
     )
     force: bool = Field(False, description="Re-translate all strings")
     batch_size: int = Field(50, description="Number of strings per translation batch")
@@ -58,7 +56,9 @@ class TranslationStats(CustomModel):
     total_keys: int = Field(description="Total translation keys")
     translated_keys: int = Field(description="Number of translated keys")
     missing_keys: int = Field(description="Number of missing translations")
-    completion_percentage: float = Field(description="Translation completion percentage")
+    completion_percentage: float = Field(
+        description="Translation completion percentage"
+    )
 
 
 class TranslationsResponse(CustomModel):

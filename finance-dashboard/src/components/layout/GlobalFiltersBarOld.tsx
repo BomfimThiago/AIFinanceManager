@@ -89,7 +89,10 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
         setShowDatePicker(false);
       }
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowCategoryDropdown(false);
       }
       if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
@@ -105,13 +108,13 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
     if (Array.isArray(value)) {
       const [startDate, endDate] = value as DateRange;
       setDateRange([startDate, endDate]);
-      
+
       if (startDate) {
         updateFilter('startDate', startDate.toISOString().split('T')[0]);
       } else {
         clearFilter('startDate');
       }
-      
+
       if (endDate) {
         updateFilter('endDate', endDate.toISOString().split('T')[0]);
       } else {
@@ -179,7 +182,7 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
               type="text"
               placeholder={t('filters.searchPlaceholder')}
               value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              onChange={e => setLocalSearch(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
             {localSearch && (
@@ -209,17 +212,21 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
               <button
                 onClick={() => clearFilter('categories')}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                  !filters.categories || filters.categories.length === 0 ? 'bg-indigo-50 text-indigo-600' : 'text-gray-900'
+                  !filters.categories || filters.categories.length === 0
+                    ? 'bg-indigo-50 text-indigo-600'
+                    : 'text-gray-900'
                 }`}
               >
                 {t('filters.allCategories')}
               </button>
-              {categories.map((category) => (
+              {categories.map(category => (
                 <button
                   key={category.name}
                   onClick={() => handleCategoryChange(category.name)}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                    filters.categories?.includes(category.name) ? 'bg-indigo-50 text-indigo-600' : 'text-gray-900'
+                    filters.categories?.includes(category.name)
+                      ? 'bg-indigo-50 text-indigo-600'
+                      : 'text-gray-900'
                   }`}
                 >
                   <CategoryDisplay category={category} size="sm" />
@@ -283,14 +290,12 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
               {dateRange[0] && dateRange[1]
                 ? `${formatShortDate(dateRange[0])} - ${formatShortDate(dateRange[1])}`
                 : dateRange[0]
-                ? `${t('filters.from')}: ${formatShortDate(dateRange[0])}`
-                : dateRange[1]
-                ? `${t('filters.to')}: ${formatShortDate(dateRange[1])}`
-                : t('filters.dateRange')}
+                  ? `${t('filters.from')}: ${formatShortDate(dateRange[0])}`
+                  : dateRange[1]
+                    ? `${t('filters.to')}: ${formatShortDate(dateRange[1])}`
+                    : t('filters.dateRange')}
             </span>
-            <span className="sm:hidden">
-              {t('common.date')}
-            </span>
+            <span className="sm:hidden">{t('common.date')}</span>
             <ChevronDown className="ml-1 w-4 h-4" />
           </button>
 
@@ -333,7 +338,7 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-gray-500">{t('dashboard.activeFilters')}:</span>
-          
+
           {filters.search && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
               <Search className="w-3 h-3 mr-1" />
@@ -383,8 +388,8 @@ const GlobalFiltersBar: React.FC<GlobalFiltersBarProps> = ({ onClose }) => {
               {filters.startDate && filters.endDate
                 ? `${formatShortDate(new Date(filters.startDate))} - ${formatShortDate(new Date(filters.endDate))}`
                 : filters.startDate
-                ? `${t('filters.from')}: ${formatShortDate(new Date(filters.startDate))}`
-                : `${t('filters.to')}: ${formatShortDate(new Date(filters.endDate!))}`}
+                  ? `${t('filters.from')}: ${formatShortDate(new Date(filters.startDate))}`
+                  : `${t('filters.to')}: ${formatShortDate(new Date(filters.endDate!))}`}
               <button
                 onClick={() => {
                   clearFilter('startDate');

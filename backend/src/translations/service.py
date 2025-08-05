@@ -28,7 +28,7 @@ class TranslationService:
     # Supported languages with their full names for better translation context
     SUPPORTED_LANGUAGES = {
         "es": "Spanish (Spain/Latin America)",
-        "pt": "Portuguese (Brazilian)"
+        "pt": "Portuguese (Brazilian)",
     }
 
     # Translation key pattern: t('key') or t("key")
@@ -57,7 +57,7 @@ class TranslationService:
                     "hideAmounts": "Hide amounts",
                     "showAmounts": "Show amounts",
                     "preferences": "Preferences",
-                    "signOut": "Sign out"
+                    "signOut": "Sign out",
                 },
                 "navigation": {
                     "dashboard": "Dashboard",
@@ -66,7 +66,7 @@ class TranslationService:
                     "budgets": "Budgets",
                     "categories": "Categories",
                     "insights": "AI Insights",
-                    "integrations": "Integrations"
+                    "integrations": "Integrations",
                 },
                 "common": {
                     "loading": "Loading...",
@@ -77,8 +77,8 @@ class TranslationService:
                     "delete": "Delete",
                     "edit": "Edit",
                     "add": "Add",
-                    "close": "Close"
-                }
+                    "close": "Close",
+                },
             }
             self._save_json(en_file, initial_translations)
             logger.info("Created initial English translation file")
@@ -87,7 +87,7 @@ class TranslationService:
         """Load JSON file safely."""
         try:
             if file_path.exists():
-                with open(file_path, encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read().strip()
                     return json.loads(content) if content else {}
             return {}
@@ -98,11 +98,11 @@ class TranslationService:
     def _save_json(self, file_path: Path, data: dict) -> None:
         """Save JSON file with pretty formatting."""
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-            f.write('\n')
+            f.write("\n")
 
-    def _get_all_keys(self, obj: dict, prefix: str = '') -> list[str]:
+    def _get_all_keys(self, obj: dict, prefix: str = "") -> list[str]:
         """Get all keys from nested object."""
         keys = []
         for key, value in obj.items():
@@ -116,7 +116,7 @@ class TranslationService:
     def _get_value(self, obj: dict, key: str) -> str | None:
         """Get value from nested object using dot notation."""
         try:
-            keys = key.split('.')
+            keys = key.split(".")
             current = obj
             for k in keys:
                 current = current[k]
@@ -126,7 +126,7 @@ class TranslationService:
 
     def _set_value(self, obj: dict, key: str, value: str) -> None:
         """Set value in nested object using dot notation."""
-        keys = key.split('.')
+        keys = key.split(".")
         current = obj
         for k in keys[:-1]:
             if k not in current:
@@ -134,7 +134,9 @@ class TranslationService:
             current = current[k]
         current[keys[-1]] = value
 
-    def extract_from_files(self, file_paths: list[str], dry_run: bool = False) -> ExtractResponse:
+    def extract_from_files(
+        self, file_paths: list[str], dry_run: bool = False
+    ) -> ExtractResponse:
         """Extract translation keys from source files."""
         logger.info(f"Extracting translation keys from {len(file_paths)} files")
 
@@ -155,7 +157,7 @@ class TranslationService:
                     logger.warning(f"File not found: {abs_path}")
                     continue
 
-                with open(abs_path, encoding='utf-8') as f:
+                with open(abs_path, encoding="utf-8") as f:
                     content = f.read()
 
                 # Find all translation keys
@@ -181,7 +183,7 @@ class TranslationService:
             TranslationKey(
                 key=key,
                 source=self._get_value(existing_translations, key) or f"TODO: {key}",
-                context=self._infer_context(key)
+                context=self._infer_context(key),
             )
             for key in sorted(all_keys)
         ]
@@ -197,40 +199,38 @@ class TranslationService:
             logger.info(f"Added {len(new_keys)} new keys to {en_file}")
 
         return ExtractResponse(
-            keys_found=len(all_keys),
-            new_keys=len(new_keys),
-            keys=key_details
+            keys_found=len(all_keys), new_keys=len(new_keys), keys=key_details
         )
 
     def _infer_context(self, key: str) -> str:
         """Infer UI context from translation key."""
-        parts = key.split('.')
+        parts = key.split(".")
 
         context_map = {
-            'header': 'Header/Navigation bar',
-            'navigation': 'Navigation menu',
-            'dashboard': 'Dashboard page',
-            'expenses': 'Expenses page',
-            'budgets': 'Budgets page',
-            'common': 'Common UI elements',
-            'button': 'Button label',
-            'modal': 'Modal dialog',
-            'form': 'Form field',
-            'error': 'Error message',
-            'success': 'Success message'
+            "header": "Header/Navigation bar",
+            "navigation": "Navigation menu",
+            "dashboard": "Dashboard page",
+            "expenses": "Expenses page",
+            "budgets": "Budgets page",
+            "common": "Common UI elements",
+            "button": "Button label",
+            "modal": "Modal dialog",
+            "form": "Form field",
+            "error": "Error message",
+            "success": "Success message",
         }
 
         for part in parts:
             if part in context_map:
                 return context_map[part]
 
-        return 'UI element'
+        return "UI element"
 
     async def translate_missing(
         self,
         target_languages: list[str] | None = None,
         force: bool = False,
-        batch_size: int = 50
+        batch_size: int = 50,
     ) -> TranslateResponse:
         """Translate missing strings using Anthropic Claude."""
         if target_languages is None:
@@ -263,20 +263,28 @@ class TranslationService:
             for key in source_keys:
                 if force or not self._get_value(target_data, key):
                     source_text = self._get_value(source_data, key)
-                    if source_text and isinstance(source_text, str) and not source_text.startswith("TODO:"):
-                        missing_keys.append({
-                            'key': key,
-                            'source': source_text,
-                            'context': self._infer_context(key)
-                        })
+                    if (
+                        source_text
+                        and isinstance(source_text, str)
+                        and not source_text.startswith("TODO:")
+                    ):
+                        missing_keys.append(
+                            {
+                                "key": key,
+                                "source": source_text,
+                                "context": self._infer_context(key),
+                            }
+                        )
 
-            logger.info(f"Found {len(missing_keys)} strings to translate for {language}")
+            logger.info(
+                f"Found {len(missing_keys)} strings to translate for {language}"
+            )
 
             if not missing_keys:
                 details[language] = {
-                    'translated': 0,
-                    'skipped': 0,
-                    'status': 'up_to_date'
+                    "translated": 0,
+                    "skipped": 0,
+                    "status": "up_to_date",
                 }
                 continue
 
@@ -285,8 +293,10 @@ class TranslationService:
             updated_data = target_data.copy()
 
             for i in range(0, len(missing_keys), batch_size):
-                batch = missing_keys[i:i + batch_size]
-                logger.info(f"Translating batch {i // batch_size + 1}/{(len(missing_keys) + batch_size - 1) // batch_size} for {language}")
+                batch = missing_keys[i : i + batch_size]
+                logger.info(
+                    f"Translating batch {i // batch_size + 1}/{(len(missing_keys) + batch_size - 1) // batch_size} for {language}"
+                )
 
                 try:
                     translations = await self._translate_batch(batch, language)
@@ -307,31 +317,38 @@ class TranslationService:
 
             total_translated += translated_count
             details[language] = {
-                'translated': translated_count,
-                'skipped': len(missing_keys) - translated_count,
-                'status': 'completed' if translated_count > 0 else 'failed'
+                "translated": translated_count,
+                "skipped": len(missing_keys) - translated_count,
+                "status": "completed" if translated_count > 0 else "failed",
             }
 
         # Estimate cost (roughly $0.25 per 1M input tokens, $1.25 per 1M output tokens for Haiku)
         estimated_tokens = total_translated * 20  # Rough estimate
-        estimated_cost = (estimated_tokens / 1_000_000) * 1.50  # Combined input/output cost
+        estimated_cost = (
+            estimated_tokens / 1_000_000
+        ) * 1.50  # Combined input/output cost
 
         return TranslateResponse(
             languages_processed=target_languages,
             total_translated=total_translated,
             estimated_cost=f"${estimated_cost:.4f}",
-            details=details
+            details=details,
         )
 
-    async def _translate_batch(self, batch: list[dict], target_language: str) -> dict[str, str]:
+    async def _translate_batch(
+        self, batch: list[dict], target_language: str
+    ) -> dict[str, str]:
         """Translate a batch of strings using Anthropic Claude."""
-        strings_obj = {item['key']: item['source'] for item in batch}
+        strings_obj = {item["key"]: item["source"] for item in batch}
 
         # Add context information
-        context_info = "\n".join([
-            f"- {item['key']}: {item['context']}"
-            for item in batch if item.get('context')
-        ])
+        context_info = "\n".join(
+            [
+                f"- {item['key']}: {item['context']}"
+                for item in batch
+                if item.get("context")
+            ]
+        )
 
         prompt = f"""You are a professional translator for a personal finance web application.
 Translate the following UI strings from English to {self.SUPPORTED_LANGUAGES[target_language]}.
@@ -358,13 +375,13 @@ Return ONLY a valid JSON object with the translations (same keys, translated val
             message = self.anthropic_client.messages.create(
                 model="claude-3-5-haiku-20241022",
                 max_tokens=4000,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
             )
 
             response_text = message.content[0].text
 
             # Extract JSON from response
-            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            json_match = re.search(r"\{[\s\S]*\}", response_text)
             if not json_match:
                 raise ValueError("No valid JSON found in response")
 
@@ -379,20 +396,20 @@ Return ONLY a valid JSON object with the translations (same keys, translated val
 
     def get_translations(self, language: str) -> TranslationsResponse:
         """Get translations for a specific language."""
-        if language not in ['en', *list(self.SUPPORTED_LANGUAGES.keys())]:
+        if language not in ["en", *list(self.SUPPORTED_LANGUAGES.keys())]:
             raise ValueError(f"Unsupported language: {language}")
 
         lang_file = self.locales_dir / f"{language}.json"
         translations = self._load_json(lang_file)
 
         # Calculate statistics
-        if language == 'en':
+        if language == "en":
             stats = TranslationStats(
                 language=language,
                 total_keys=len(self._get_all_keys(translations)),
                 translated_keys=len(self._get_all_keys(translations)),
                 missing_keys=0,
-                completion_percentage=100.0
+                completion_percentage=100.0,
             )
         else:
             en_file = self.locales_dir / "en.json"
@@ -403,14 +420,16 @@ Return ONLY a valid JSON object with the translations (same keys, translated val
             total_keys = len(source_keys)
             translated_keys = len(target_keys.intersection(source_keys))
             missing_keys = total_keys - translated_keys
-            completion_percentage = (translated_keys / total_keys * 100) if total_keys > 0 else 0
+            completion_percentage = (
+                (translated_keys / total_keys * 100) if total_keys > 0 else 0
+            )
 
             stats = TranslationStats(
                 language=language,
                 total_keys=total_keys,
                 translated_keys=translated_keys,
                 missing_keys=missing_keys,
-                completion_percentage=completion_percentage
+                completion_percentage=completion_percentage,
             )
 
         # Get last modified time
@@ -423,7 +442,7 @@ Return ONLY a valid JSON object with the translations (same keys, translated val
             language=language,
             translations=translations,
             stats=stats,
-            last_updated=last_updated
+            last_updated=last_updated,
         )
 
     def get_available_languages(self) -> dict[str, str]:

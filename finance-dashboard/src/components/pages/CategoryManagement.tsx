@@ -171,7 +171,6 @@ const DEFAULT_COLORS = [
   '#6C5CE7',
   '#9C27B0',
   '#673AB7',
-  '#3F51B5',
   '#A29BFE',
   '#7C4DFF',
   '#651FFF',
@@ -189,7 +188,6 @@ const DEFAULT_COLORS = [
   '#4ECDC4',
   '#26A69A',
   '#00ACC1',
-  '#00BCD4',
   '#B2DFDB',
   '#E0F2F1',
   '#1DE9B6',
@@ -530,8 +528,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
   };
 
   const userCategories = categories.filter(cat => !cat.is_default);
-  const defaultExpenseCategories = categories.filter(cat => cat.is_default && cat.category_type === 'expense');
-  const defaultIncomeCategories = categories.filter(cat => cat.is_default && cat.category_type === 'income');
+  const defaultExpenseCategories = categories.filter(
+    cat => cat.is_default && cat.category_type === 'expense'
+  );
+  const defaultIncomeCategories = categories.filter(
+    cat => cat.is_default && cat.category_type === 'income'
+  );
 
   // Show loading state
   if (isLoading) {
@@ -613,7 +615,12 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     </label>
                     <select
                       value={formData.category_type}
-                      onChange={e => setFormData(prev => ({ ...prev, category_type: e.target.value as 'expense' | 'income' }))}
+                      onChange={e =>
+                        setFormData(prev => ({
+                          ...prev,
+                          category_type: e.target.value as 'expense' | 'income',
+                        }))
+                      }
                       className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-base sm:text-lg"
                     >
                       <option value="expense">{t('categories.expense')}</option>
@@ -646,9 +653,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         {t('categories.chooseColor')}
                       </label>
                       <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 sm:gap-3">
-                        {DEFAULT_COLORS.map(color => (
+                        {DEFAULT_COLORS.map((color, index) => (
                           <button
-                            key={color}
+                            key={`${color}-${index}`}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, color }))}
                             className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
@@ -683,9 +690,9 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                         {t('categories.chooseIcon')}
                       </label>
                       <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 sm:gap-3">
-                        {DEFAULT_ICONS.map(icon => (
+                        {DEFAULT_ICONS.map((icon, index) => (
                           <button
-                            key={icon}
+                            key={`${icon}-${index}`}
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, icon }))}
                             className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg border-2 flex items-center justify-center transition-all hover:bg-gray-50 hover:shadow-md ${
@@ -797,13 +804,10 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {userCategories.map(category => (
-              <div key={category.id} className="bg-gray-50 p-3 sm:p-4 rounded-lg border shadow-sm">
+              <div key={category.id} className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-                    <div
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${category.color}20` }}
-                    >
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <CategoryIcon
                         iconName={category.icon || 'tag'}
                         className="w-4 h-4 sm:w-5 sm:h-5"
@@ -854,18 +858,17 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
           <Tag className="h-5 w-5 mr-2" />
-          {t('categories.defaultExpenseCategories')} 
-          <span className="ml-2 text-sm font-normal text-gray-500">({defaultExpenseCategories.length})</span>
+          {t('categories.defaultExpenseCategories')}
+          <span className="ml-2 text-sm font-normal text-gray-500">
+            ({defaultExpenseCategories.length})
+          </span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {defaultExpenseCategories.map(category => (
-            <div key={category.id} className="bg-red-50 p-3 sm:p-4 rounded-lg border border-red-100">
+            <div key={category.id} className="bg-white p-3 sm:p-4 rounded-lg border">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-                  <div
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${category.color}20` }}
-                  >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                     <CategoryIcon
                       iconName={category.icon || 'tag'}
                       className="w-4 h-4 sm:w-5 sm:h-5"
@@ -883,7 +886,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-red-600 bg-red-200 px-2 py-1 rounded flex-shrink-0 ml-2">
+                <span className="text-xs text-red-600 px-2 py-1 rounded border border-red-200 flex-shrink-0 ml-2">
                   {t('categories.expense')}
                 </span>
               </div>
@@ -897,17 +900,16 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
           <DollarSign className="h-5 w-5 mr-2" />
           {t('categories.defaultIncomeCategories')}
-          <span className="ml-2 text-sm font-normal text-gray-500">({defaultIncomeCategories.length})</span>
+          <span className="ml-2 text-sm font-normal text-gray-500">
+            ({defaultIncomeCategories.length})
+          </span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {defaultIncomeCategories.map(category => (
-            <div key={category.id} className="bg-green-50 p-3 sm:p-4 rounded-lg border border-green-100">
+            <div key={category.id} className="bg-white p-3 sm:p-4 rounded-lg border">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-                  <div
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${category.color}20` }}
-                  >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                     <CategoryIcon
                       iconName={category.icon || 'tag'}
                       className="w-4 h-4 sm:w-5 sm:h-5"
@@ -925,7 +927,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-green-600 bg-green-200 px-2 py-1 rounded flex-shrink-0 ml-2">
+                <span className="text-xs text-green-600 px-2 py-1 rounded border border-green-200 flex-shrink-0 ml-2">
                   {t('categories.income')}
                 </span>
               </div>

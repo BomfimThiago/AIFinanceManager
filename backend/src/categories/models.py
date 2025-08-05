@@ -17,8 +17,8 @@ from src.database import Base
 class CategoryType(str, enum.Enum):
     """Enum for category types."""
 
-    EXPENSE = "expense"
-    INCOME = "income"
+    EXPENSE = "EXPENSE"
+    INCOME = "INCOME"
 
 
 class CategoryModel(Base):

@@ -46,9 +46,13 @@ class FinancialReportService:
         self.budget_service = budget_service
         self.goals_service = goals_service
 
-    async def generate_comprehensive_report(self, start_date: str | None = None, end_date: str | None = None) -> ComprehensiveFinancialReport:
+    async def generate_comprehensive_report(
+        self, start_date: str | None = None, end_date: str | None = None
+    ) -> ComprehensiveFinancialReport:
         """Generate a comprehensive financial report for specified date range."""
-        logger.info(f"Generating comprehensive financial report (dates: {start_date} to {end_date})")
+        logger.info(
+            f"Generating comprehensive financial report (dates: {start_date} to {end_date})"
+        )
 
         # Get filtered data based on date range
         expenses = await self.expense_service.get_all()
@@ -59,7 +63,9 @@ class FinancialReportService:
         if start_date or end_date:
             expenses = self._filter_expenses_by_date(expenses, start_date, end_date)
 
-        logger.info(f"Retrieved {len(expenses)} expenses, {len(budgets)} budgets, {len(goals)} goals")
+        logger.info(
+            f"Retrieved {len(expenses)} expenses, {len(budgets)} budgets, {len(goals)} goals"
+        )
 
         # Generate report sections
         executive_summary = self._generate_executive_summary(expenses)
@@ -103,7 +109,9 @@ class FinancialReportService:
                 average_daily_spending=0.0,
                 total_transactions=0,
                 financial_health_score=0,
-                quick_insights=["No financial data available yet. Start by adding expenses!"],
+                quick_insights=[
+                    "No financial data available yet. Start by adding expenses!"
+                ],
             )
 
         # Calculate date range
@@ -115,7 +123,9 @@ class FinancialReportService:
         total_income = sum(e.amount for e in expenses if e.type == "income")
         total_expenses = sum(e.amount for e in expenses if e.type == "expense")
         net_savings = total_income - total_expenses
-        net_savings_percentage = (net_savings / total_income * 100) if total_income > 0 else 0
+        net_savings_percentage = (
+            (net_savings / total_income * 100) if total_income > 0 else 0
+        )
 
         # Calculate daily average
         days_count = (period_end - period_start).days + 1
@@ -124,12 +134,18 @@ class FinancialReportService:
         # Generate quick insights
         quick_insights = []
         if net_savings > 0:
-            quick_insights.append(f"You saved {abs(net_savings_percentage):.1f}% of your income this period")
+            quick_insights.append(
+                f"You saved {abs(net_savings_percentage):.1f}% of your income this period"
+            )
         else:
-            quick_insights.append(f"You spent {abs(net_savings_percentage):.1f}% more than your income")
+            quick_insights.append(
+                f"You spent {abs(net_savings_percentage):.1f}% more than your income"
+            )
 
         if average_daily_spending > 0:
-            quick_insights.append(f"Average daily spending: ${average_daily_spending:.2f}")
+            quick_insights.append(
+                f"Average daily spending: ${average_daily_spending:.2f}"
+            )
 
         # Calculate financial health score (simplified)
         health_score = min(100, max(0, int(50 + net_savings_percentage)))
@@ -147,7 +163,9 @@ class FinancialReportService:
             quick_insights=quick_insights,
         )
 
-    def _generate_monthly_trends(self, expenses: list[Expense]) -> list[MonthlyTrendData]:
+    def _generate_monthly_trends(
+        self, expenses: list[Expense]
+    ) -> list[MonthlyTrendData]:
         """Generate monthly trend data."""
         monthly_data = defaultdict(lambda: {"income": 0, "expenses": 0, "count": 0})
 
@@ -195,27 +213,37 @@ class FinancialReportService:
             budget_info = budgets.get(category)
             budget_limit = budget_info.limit if budget_info else None
             budget_percentage = (
-                (data["amount"] / budget_limit * 100) if budget_limit and budget_limit > 0 else None
+                (data["amount"] / budget_limit * 100)
+                if budget_limit and budget_limit > 0
+                else None
             )
 
             analysis.append(
                 CategoryAnalysis(
                     category=category,
                     amount=data["amount"],
-                    percentage=(data["amount"] / total_expenses * 100) if total_expenses > 0 else 0,
+                    percentage=(data["amount"] / total_expenses * 100)
+                    if total_expenses > 0
+                    else 0,
                     transaction_count=data["count"],
                     trend=TrendDirection.STABLE,  # Simplified for now
                     budget_limit=budget_limit,
                     budget_percentage=budget_percentage,
-                    average_transaction=data["amount"] / data["count"] if data["count"] > 0 else 0,
+                    average_transaction=data["amount"] / data["count"]
+                    if data["count"] > 0
+                    else 0,
                 )
             )
 
         return sorted(analysis, key=lambda x: x.amount, reverse=True)
 
-    def _generate_merchant_analysis(self, expenses: list[Expense]) -> list[MerchantAnalysis]:
+    def _generate_merchant_analysis(
+        self, expenses: list[Expense]
+    ) -> list[MerchantAnalysis]:
         """Generate merchant analysis."""
-        merchant_data = defaultdict(lambda: {"amount": 0, "count": 0, "last_date": None})
+        merchant_data = defaultdict(
+            lambda: {"amount": 0, "count": 0, "last_date": None}
+        )
         total_expenses = sum(e.amount for e in expenses if e.type == "expense")
 
         for expense in expenses:
@@ -236,15 +264,21 @@ class FinancialReportService:
                     merchant=merchant,
                     total_amount=data["amount"],
                     transaction_count=data["count"],
-                    percentage_of_total=(data["amount"] / total_expenses * 100) if total_expenses > 0 else 0,
-                    average_transaction=data["amount"] / data["count"] if data["count"] > 0 else 0,
+                    percentage_of_total=(data["amount"] / total_expenses * 100)
+                    if total_expenses > 0
+                    else 0,
+                    average_transaction=data["amount"] / data["count"]
+                    if data["count"] > 0
+                    else 0,
                     last_transaction_date=data["last_date"] or date.today(),
                 )
             )
 
         return sorted(analysis, key=lambda x: x.total_amount, reverse=True)[:10]
 
-    def _generate_transaction_patterns(self, expenses: list[Expense]) -> TransactionPatterns:
+    def _generate_transaction_patterns(
+        self, expenses: list[Expense]
+    ) -> TransactionPatterns:
         """Generate transaction patterns."""
         if not expenses:
             return TransactionPatterns(
@@ -263,7 +297,9 @@ class FinancialReportService:
             day = datetime.fromisoformat(expense.date).strftime("%A")
             days_count[day] += 1
 
-        most_common_day = max(days_count.items(), key=lambda x: x[1])[0] if days_count else "Monday"
+        most_common_day = (
+            max(days_count.items(), key=lambda x: x[1])[0] if days_count else "Monday"
+        )
 
         # Find recurring expenses (simplified - merchants with 3+ transactions)
         merchant_counts = defaultdict(int)
@@ -271,9 +307,7 @@ class FinancialReportService:
             if expense.merchant:
                 merchant_counts[expense.merchant] += 1
 
-        recurring = [
-            merchant for merchant, count in merchant_counts.items() if count >= 3
-        ][:5]
+        [merchant for merchant, count in merchant_counts.items() if count >= 3][:5]
 
         return TransactionPatterns(
             average_transaction_size=sum(amounts) / len(amounts) if amounts else 0,
@@ -334,12 +368,18 @@ class FinancialReportService:
             total_spent=total_spent,
         )
 
-    def _generate_financial_health_metrics(self, expenses: list[Expense]) -> FinancialHealthMetrics:
+    def _generate_financial_health_metrics(
+        self, expenses: list[Expense]
+    ) -> FinancialHealthMetrics:
         """Generate financial health metrics."""
         total_income = sum(e.amount for e in expenses if e.type == "income")
         total_expenses = sum(e.amount for e in expenses if e.type == "expense")
 
-        savings_rate = ((total_income - total_expenses) / total_income * 100) if total_income > 0 else 0
+        savings_rate = (
+            ((total_income - total_expenses) / total_income * 100)
+            if total_income > 0
+            else 0
+        )
 
         # Simplified health grade calculation
         if savings_rate >= 20:
@@ -353,7 +393,9 @@ class FinancialReportService:
 
         monthly_expenses = total_expenses / 12 if total_expenses > 0 else 0
         emergency_fund_months = (
-            (total_income - total_expenses) / monthly_expenses if monthly_expenses > 0 else 0
+            (total_income - total_expenses) / monthly_expenses
+            if monthly_expenses > 0
+            else 0
         )
 
         return FinancialHealthMetrics(
@@ -365,7 +407,9 @@ class FinancialReportService:
             overall_grade=grade,
         )
 
-    def _generate_goal_alignment(self, goals: list, expenses: list[Expense]) -> GoalAlignment:
+    def _generate_goal_alignment(
+        self, goals: list, expenses: list[Expense]
+    ) -> GoalAlignment:
         """Generate goal alignment analysis."""
         if not goals:
             return GoalAlignment(
@@ -396,7 +440,9 @@ class FinancialReportService:
                         title=goal.title,
                         target_amount=goal.target_amount,
                         current_amount=goal.current_amount,
-                        progress_percentage=(goal.current_amount / goal.target_amount * 100)
+                        progress_percentage=(
+                            goal.current_amount / goal.target_amount * 100
+                        )
                         if goal.target_amount > 0
                         else 0,
                         required_monthly_savings=monthly_required,
@@ -412,7 +458,9 @@ class FinancialReportService:
             recommendations=[],
         )
 
-    def _generate_ai_insights(self, expenses: list[Expense], budgets: dict, goals: list) -> list[str]:
+    def _generate_ai_insights(
+        self, expenses: list[Expense], budgets: dict, goals: list
+    ) -> list[str]:
         """Generate non-AI insights based on financial data analysis."""
         insights = []
 
@@ -425,15 +473,27 @@ class FinancialReportService:
 
         # Basic financial health insights
         if total_expenses > total_income:
-            overspend_pct = ((total_expenses - total_income) / total_income * 100) if total_income > 0 else 0
-            insights.append(f"You're spending {overspend_pct:.1f}% more than you earn - consider reducing expenses")
+            overspend_pct = (
+                ((total_expenses - total_income) / total_income * 100)
+                if total_income > 0
+                else 0
+            )
+            insights.append(
+                f"You're spending {overspend_pct:.1f}% more than you earn - consider reducing expenses"
+            )
 
         if not budgets:
             insights.append("Set up budgets to better control your spending")
 
-        savings_rate = ((total_income - total_expenses) / total_income * 100) if total_income > 0 else 0
+        savings_rate = (
+            ((total_income - total_expenses) / total_income * 100)
+            if total_income > 0
+            else 0
+        )
         if savings_rate < 10:
-            insights.append("Try to save at least 10% of your income for financial security")
+            insights.append(
+                "Try to save at least 10% of your income for financial security"
+            )
         elif savings_rate >= 20:
             insights.append("Excellent! You're saving 20%+ of your income")
 
@@ -442,23 +502,37 @@ class FinancialReportService:
             category_spending = {}
             for expense in expenses:
                 if expense.type == "expense":
-                    category_spending[expense.category] = category_spending.get(expense.category, 0) + expense.amount
+                    category_spending[expense.category] = (
+                        category_spending.get(expense.category, 0) + expense.amount
+                    )
 
             if category_spending:
                 top_category = max(category_spending.items(), key=lambda x: x[1])
                 total_spending = sum(category_spending.values())
-                pct = (top_category[1] / total_spending * 100) if total_spending > 0 else 0
+                pct = (
+                    (top_category[1] / total_spending * 100)
+                    if total_spending > 0
+                    else 0
+                )
 
                 if pct > 40:
-                    insights.append(f"{top_category[0]} represents {pct:.1f}% of your spending - consider if this aligns with your priorities")
+                    insights.append(
+                        f"{top_category[0]} represents {pct:.1f}% of your spending - consider if this aligns with your priorities"
+                    )
 
         # Goal-related insights
         if goals:
-            active_goals = [g for g in goals if hasattr(g, 'status') and g.status == 'active']
+            active_goals = [
+                g for g in goals if hasattr(g, "status") and g.status == "active"
+            ]
             if active_goals:
-                insights.append(f"You have {len(active_goals)} active goals - keep tracking your progress!")
+                insights.append(
+                    f"You have {len(active_goals)} active goals - keep tracking your progress!"
+                )
         else:
-            insights.append("Consider setting financial goals to stay motivated and focused")
+            insights.append(
+                "Consider setting financial goals to stay motivated and focused"
+            )
 
         return insights
 
@@ -500,9 +574,13 @@ class FinancialReportService:
 
         return recommendations
 
-    def _generate_action_plan(self, recommendations: list[Recommendation]) -> ActionPlan:
+    def _generate_action_plan(
+        self, recommendations: list[Recommendation]
+    ) -> ActionPlan:
         """Generate action plan."""
-        high_priority = [r for r in recommendations if r.priority == RecommendationPriority.HIGH]
+        high_priority = [
+            r for r in recommendations if r.priority == RecommendationPriority.HIGH
+        ]
 
         potential_savings = sum(
             r.potential_savings for r in recommendations if r.potential_savings
@@ -521,7 +599,12 @@ class FinancialReportService:
             next_steps=next_steps,
         )
 
-    def _filter_expenses_by_date(self, expenses: list[Expense], start_date: str | None = None, end_date: str | None = None) -> list[Expense]:
+    def _filter_expenses_by_date(
+        self,
+        expenses: list[Expense],
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[Expense]:
         """Filter expenses by date range."""
         if not start_date and not end_date:
             return expenses

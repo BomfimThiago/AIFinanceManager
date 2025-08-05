@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface LanguageTransitionProps {
@@ -10,9 +11,9 @@ interface LanguageTransitionProps {
  * Component that adds a smooth transition effect when language is changing
  * to prevent the flickering of translation keys.
  */
-export const LanguageTransition: React.FC<LanguageTransitionProps> = ({ 
-  children, 
-  className = '' 
+export const LanguageTransition: React.FC<LanguageTransitionProps> = ({
+  children,
+  className = '',
 }) => {
   const { isChangingLanguage } = useLanguage();
 

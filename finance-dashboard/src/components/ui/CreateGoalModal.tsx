@@ -119,7 +119,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 
   // Step management
   const [currentStep, setCurrentStep] = useState<'type' | 'details' | 'customize'>('type');
-  
+
   // Form data
   const [goalType, setGoalType] = useState<GoalType>('saving');
   const [title, setTitle] = useState('');
@@ -131,7 +131,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
   const [recurrence, setRecurrence] = useState<GoalRecurrence>('one_time');
   const [priority, setPriority] = useState<1 | 2 | 3>(2);
   const [autoCalculate, setAutoCalculate] = useState(false);
-  
+
   // Visual customization
   const [color, setColor] = useState('#8B5CF6');
   const [icon, setIcon] = useState('piggy-bank');
@@ -147,7 +147,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
     const defaultVisual = getDefaultGoalVisual(newType);
     setColor(defaultVisual.color);
     setIcon(defaultVisual.icon);
-    
+
     // Set sensible defaults based on type
     if (newType === 'spending') {
       setRecurrence('monthly');
@@ -243,7 +243,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
         recurrence,
         target_amount: parseFloat(targetAmount),
         category: goalType === 'spending' ? category : undefined,
-        target_date: (goalType === 'saving' || goalType === 'debt') ? targetDate : undefined,
+        target_date: goalType === 'saving' || goalType === 'debt' ? targetDate : undefined,
         priority,
         auto_calculate: autoCalculate,
         color,
@@ -251,7 +251,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
       };
 
       await onCreateGoal(goalData);
-      
+
       // Reset form
       setCurrentStep('type');
       setGoalType('saving');
@@ -267,7 +267,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
       setColor('#8B5CF6');
       setIcon('piggy-bank');
       setErrors({});
-      
+
       onClose();
     } catch (error) {
       console.error('Error creating goal:', error);
@@ -322,8 +322,12 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
           {currentStep === 'type' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">What type of goal do you want to create?</h3>
-                <p className="text-gray-600">Choose the type that best fits what you want to achieve.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  What type of goal do you want to create?
+                </h3>
+                <p className="text-gray-600">
+                  Choose the type that best fits what you want to achieve.
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -362,7 +366,9 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Tell us about your goal</h3>
-                <p className="text-gray-600">Provide the basic details for your {selectedGoalType?.title.toLowerCase()}.</p>
+                <p className="text-gray-600">
+                  Provide the basic details for your {selectedGoalType?.title.toLowerCase()}.
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -379,9 +385,11 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                       errors.title ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder={
-                      goalType === 'saving' ? 'e.g., Emergency Fund' :
-                      goalType === 'spending' ? 'e.g., Food Budget' :
-                      'e.g., Credit Card Payoff'
+                      goalType === 'saving'
+                        ? 'e.g., Emergency Fund'
+                        : goalType === 'spending'
+                          ? 'e.g., Food Budget'
+                          : 'e.g., Credit Card Payoff'
                     }
                   />
                   {errors.title && (
@@ -395,7 +403,8 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                 {/* Target Amount */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {goalType === 'spending' ? 'Budget Limit' : 'Target Amount'} * ({sessionCurrency})
+                    {goalType === 'spending' ? 'Budget Limit' : 'Target Amount'} * (
+                    {sessionCurrency})
                   </label>
                   <input
                     type="number"
@@ -485,13 +494,15 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 
                 {/* Time Horizon */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Time Frame
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time Frame</label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { value: 'short' as TimeHorizon, label: 'Short-term', desc: '1-6 months' },
-                      { value: 'medium' as TimeHorizon, label: 'Medium-term', desc: '6 months - 2 years' },
+                      {
+                        value: 'medium' as TimeHorizon,
+                        label: 'Medium-term',
+                        desc: '6 months - 2 years',
+                      },
                       { value: 'long' as TimeHorizon, label: 'Long-term', desc: '2+ years' },
                     ].map(horizon => (
                       <button
@@ -513,9 +524,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
 
                 {/* Priority */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
                   <select
                     value={priority}
                     onChange={e => setPriority(parseInt(e.target.value) as 1 | 2 | 3)}
@@ -549,7 +558,9 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Customize your goal</h3>
-                <p className="text-gray-600">Choose colors and icons to make your goal stand out.</p>
+                <p className="text-gray-600">
+                  Choose colors and icons to make your goal stand out.
+                </p>
               </div>
 
               {/* Preview */}
@@ -610,9 +621,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
                       type="button"
                       onClick={() => setIcon(iconName)}
                       className={`p-2 rounded-lg border transition-all hover:bg-gray-50 ${
-                        icon === iconName
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200'
+                        icon === iconName ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                       }`}
                       aria-label={`Select icon ${iconName}`}
                     >
@@ -639,7 +648,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
               </button>
             )}
           </div>
-          
+
           <div className="flex space-x-3">
             <button
               type="button"
@@ -649,7 +658,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({
             >
               Cancel
             </button>
-            
+
             {currentStep === 'customize' ? (
               <button
                 type="button"

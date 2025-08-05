@@ -25,10 +25,18 @@ class GoalModel(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Goal type and classification
-    goal_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # spending, saving, debt
-    time_horizon: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # short, medium, long
-    recurrence: Mapped[str] = mapped_column(String(20), nullable=False)  # one_time, weekly, monthly, etc.
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active", index=True)
+    goal_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, index=True
+    )  # spending, saving, debt
+    time_horizon: Mapped[str] = mapped_column(
+        String(20), nullable=False, index=True
+    )  # short, medium, long
+    recurrence: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # one_time, weekly, monthly, etc.
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active", index=True
+    )
 
     # Financial amounts
     target_amount: Mapped[float] = mapped_column(Float, nullable=False)
@@ -40,15 +48,25 @@ class GoalModel(Base):
 
     # Time-based fields
     target_date: Mapped[datetime | None] = mapped_column(Date, nullable=True)
-    start_date: Mapped[datetime] = mapped_column(Date, nullable=False, server_default=func.current_date())
+    start_date: Mapped[datetime] = mapped_column(
+        Date, nullable=False, server_default=func.current_date()
+    )
 
     # Configuration
-    auto_calculate: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)  # Auto-calc from expenses
-    priority: Mapped[int] = mapped_column(nullable=False, default=1)  # 1=high, 2=medium, 3=low
+    auto_calculate: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True
+    )  # Auto-calc from expenses
+    priority: Mapped[int] = mapped_column(
+        nullable=False, default=1
+    )  # 1=high, 2=medium, 3=low
 
     # Visual identification
-    color: Mapped[str | None] = mapped_column(String(10), nullable=True)  # Hex color code for goal
-    icon: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Icon name for goal
+    color: Mapped[str | None] = mapped_column(
+        String(10), nullable=True
+    )  # Hex color code for goal
+    icon: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )  # Icon name for goal
 
     # Metadata
     created_at: Mapped[datetime] = mapped_column(

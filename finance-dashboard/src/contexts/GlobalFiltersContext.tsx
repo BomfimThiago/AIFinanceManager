@@ -7,7 +7,7 @@ export interface GlobalFilters {
   endDate?: string;
   search?: string;
   month?: number; // 1-12 (January = 1, December = 12)
-  year?: number;   // Full year number (e.g., 2025)
+  year?: number; // Full year number (e.g., 2025)
 }
 
 interface GlobalFiltersContextType {
@@ -35,7 +35,15 @@ interface GlobalFiltersProviderProps {
 }
 
 export const GlobalFiltersProvider: React.FC<GlobalFiltersProviderProps> = ({ children }) => {
-  const [filters, setFiltersState] = useState<GlobalFilters>({});
+  // Initialize with current month and year
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+  const currentYear = now.getFullYear();
+
+  const [filters, setFiltersState] = useState<GlobalFilters>({
+    month: currentMonth,
+    year: currentYear,
+  });
 
   const setFilters = useCallback((newFilters: GlobalFilters) => {
     setFiltersState(newFilters);

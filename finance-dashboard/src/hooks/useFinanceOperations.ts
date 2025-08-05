@@ -90,7 +90,11 @@ export function useFinanceOperations() {
     return filtered;
   }, [rawExpenses, hasMultipleCategories, filters.categories]);
 
-  const { data: budgetsData, isLoading: budgetsLoading, error: budgetsError } = useBudgets(isAuthenticated);
+  const {
+    data: budgetsData,
+    isLoading: budgetsLoading,
+    error: budgetsError,
+  } = useBudgets(isAuthenticated);
 
   const {
     data: categoriesData,
@@ -98,7 +102,11 @@ export function useFinanceOperations() {
     error: categoriesError,
   } = useCategories(true, isAuthenticated);
 
-  const { data: goals = [], isLoading: goalsLoading, error: goalsError } = useGoals(isAuthenticated);
+  const {
+    data: goals = [],
+    isLoading: goalsLoading,
+    error: goalsError,
+  } = useGoals(isAuthenticated);
 
   // Mutations
   const createBulkExpensesMutation = useCreateBulkExpenses();

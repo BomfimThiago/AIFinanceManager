@@ -32,7 +32,7 @@ class ExpenseService:
     def _model_to_schema(self, expense_model: ExpenseModel) -> Expense:
         """Convert SQLAlchemy model to Pydantic schema."""
         return Expense(
-            id=getattr(expense_model, "id", 0),
+            id=getattr(expense_model, "id", 0) or 0,
             date=expense_model.date,
             amount=expense_model.amount,
             category=expense_model.category,
@@ -41,6 +41,7 @@ class ExpenseService:
             type=expense_model.type.value,
             source=expense_model.source.value if expense_model.source else "manual",
             items=expense_model.items,
+            transaction_id=expense_model.transaction_id,
             original_currency=expense_model.original_currency,
             amounts=expense_model.amounts,
             exchange_rates=expense_model.exchange_rates,
@@ -66,7 +67,7 @@ class ExpenseService:
             category=category,
             start_date=start_date,
             end_date=end_date,
-            search=search
+            search=search,
         )
 
         return [self._model_to_schema(expense) for expense in expense_models]
@@ -77,6 +78,17 @@ class ExpenseService:
         if expense_model:
             return self._model_to_schema(expense_model)
         return None
+
+    async def get_by_transaction_id(self, transaction_id: str) -> Expense | None:
+        """Get expense by transaction ID."""
+        expense_model = await self.repository.get_by_transaction_id(transaction_id)
+        if expense_model:
+            return self._model_to_schema(expense_model)
+        return None
+
+    async def transaction_id_exists(self, transaction_id: str) -> bool:
+        """Check if transaction ID exists."""
+        return await self.repository.transaction_id_exists(transaction_id)
 
     async def create(self, expense_data: ExpenseCreate) -> Expense:
         """Create a new expense."""

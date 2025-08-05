@@ -30,12 +30,16 @@ class IncomeGoalLinkModel(Base):
 
     # Link details
     amount_allocated: Mapped[float] = mapped_column(Float, nullable=False)
-    allocation_percentage: Mapped[float] = mapped_column(Float, nullable=True)  # Percentage of income allocated
+    allocation_percentage: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Percentage of income allocated
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # AI-suggested fields
     ai_suggested: Mapped[bool] = mapped_column(default=False, nullable=False)
-    ai_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)  # 0.0 to 1.0
+    ai_confidence: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )  # 0.0 to 1.0
     ai_reasoning: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Timestamps
@@ -51,4 +55,3 @@ class IncomeGoalLinkModel(Base):
 
     def __repr__(self):
         return f"<IncomeGoalLinkModel(id={self.id}, expense_id={self.expense_id}, goal_id={self.goal_id}, amount={self.amount_allocated})>"
-

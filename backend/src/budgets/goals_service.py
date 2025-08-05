@@ -45,8 +45,12 @@ class GoalsService:
             target_amount=goal_model.target_amount,
             current_amount=goal_model.current_amount,
             category=goal_model.category,
-            target_date=goal_model.target_date.isoformat() if goal_model.target_date else None,
-            start_date=goal_model.start_date.isoformat() if goal_model.start_date else None,
+            target_date=goal_model.target_date.isoformat()
+            if goal_model.target_date
+            else None,
+            start_date=goal_model.start_date.isoformat()
+            if goal_model.start_date
+            else None,
             priority=goal_model.priority,
             auto_calculate=goal_model.auto_calculate,
             color=goal_model.color,
@@ -83,7 +87,7 @@ class GoalsService:
     async def create_goal(self, goal_data: GoalCreate) -> Goal:
         """Create a new goal."""
         # Auto-set start_date if not provided
-        if hasattr(goal_data, 'start_date') and not goal_data.start_date:
+        if hasattr(goal_data, "start_date") and not goal_data.start_date:
             goal_data.start_date = date.today()
 
         # Auto-generate title if not specific enough
@@ -93,9 +97,12 @@ class GoalsService:
         goal_model = await self.repository.create_goal(goal_data)
         return self._model_to_schema(goal_model)
 
-    async def update_goal(self, goal_id: int, goal_data: GoalUpdate) -> Goal:
+    async def update_goal(self, goal_id: int, goal_data: GoalUpdate) -> Goal | None:
         """Update an existing goal."""
         goal_model = await self.repository.update(goal_id, goal_data)
+        
+        if not goal_model:
+            return None
 
         # Check if goal is completed
         if goal_model.current_amount >= goal_model.target_amount:
@@ -232,13 +239,13 @@ class GoalsService:
         result = {}
         for category, budget_data in budgets_dict.items():
             result[category] = Budget(
-                id=budget_data['id'],
+                id=budget_data["id"],
                 category=category,
-                limit=budget_data['limit'],
-                spent=budget_data['spent'],
+                limit=budget_data["limit"],
+                spent=budget_data["spent"],
                 period="monthly",  # Default for legacy compatibility
-                created_at=budget_data['created_at'],
-                updated_at=budget_data['updated_at'],
+                created_at=budget_data["created_at"],
+                updated_at=budget_data["updated_at"],
             )
 
         return result

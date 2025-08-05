@@ -165,13 +165,7 @@ export interface UploadHistory {
   error_message?: string;
 }
 
-export type TabId =
-  | 'overview'
-  | 'upload'
-  | 'goals'
-  | 'categories'
-  | 'insights'
-  | 'integrations';
+export type TabId = 'overview' | 'upload' | 'goals' | 'categories' | 'insights' | 'integrations';
 
 export interface Currency {
   code: string;

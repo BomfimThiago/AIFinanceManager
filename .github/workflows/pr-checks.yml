@@ -1,0 +1,217 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main, develop ]
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Validate PR title
+      uses: amannn/action-semantic-pull-request@v5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          perf
+          test
+          chore
+          ci
+        requireScope: false
+        subjectPattern: ^(?![A-Z]).+$
+        subjectPatternError: |
+          The subject "{subject}" found in the pull request title "{title}"
+          didn't match the configured pattern. Please ensure that the subject
+          doesn't start with an uppercase character.
+
+    - name: Check for breaking changes
+      run: |
+        if [[ "${{ github.event.pull_request.title }}" == *"BREAKING CHANGE"* ]] || 
+           [[ "${{ github.event.pull_request.body }}" == *"BREAKING CHANGE"* ]]; then
+          echo "⚠️ This PR contains breaking changes"
+          echo "breaking_changes=true" >> $GITHUB_ENV
+        else
+          echo "✅ No breaking changes detected"
+          echo "breaking_changes=false" >> $GITHUB_ENV
+        fi
+
+    - name: Check PR size
+      run: |
+        FILES_CHANGED=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "${{ github.event.pull_request.url }}/files" | jq length)
+        
+        LINES_CHANGED=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "${{ github.event.pull_request.url }}" | jq '.additions + .deletions')
+        
+        echo "Files changed: $FILES_CHANGED"
+        echo "Lines changed: $LINES_CHANGED"
+        
+        if [ "$FILES_CHANGED" -gt 50 ] || [ "$LINES_CHANGED" -gt 1000 ]; then
+          echo "⚠️ Large PR detected - consider splitting into smaller PRs"
+          echo "large_pr=true" >> $GITHUB_ENV
+        else
+          echo "✅ PR size is reasonable"
+          echo "large_pr=false" >> $GITHUB_ENV
+        fi
+
+    - name: Comment on PR
+      if: env.large_pr == 'true' || env.breaking_changes == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { large_pr, breaking_changes } = process.env;
+          let message = "## PR Review Notes\n\n";
+          
+          if (large_pr === 'true') {
+            message += "⚠️ **Large PR detected** - This PR changes many files or lines. Consider:\n";
+            message += "- Splitting into smaller, focused PRs\n";
+            message += "- Adding detailed description of changes\n";
+            message += "- Ensuring comprehensive testing\n\n";
+          }
+          
+          if (breaking_changes === 'true') {
+            message += "🚨 **Breaking Changes** - This PR contains breaking changes:\n";
+            message += "- Ensure proper versioning (major version bump)\n";
+            message += "- Update documentation and migration guides\n";
+            message += "- Coordinate with team before merging\n\n";
+          }
+          
+          message += "Automated checks are running. Please wait for all checks to pass before requesting review.";
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: message
+          });
+
+  code-coverage:
+    name: Code Coverage Report
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: finance_coverage_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras --dev
+        uv add --dev pytest-cov
+
+    - name: Set up test environment
+      run: |
+        cat > .env << EOF
+        ENVIRONMENT=test
+        DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finance_coverage_db
+        ANTHROPIC_API_KEY=test_key
+        CORS_ORIGINS=http://localhost:3000
+        SECRET_KEY=test_secret
+        JWT_SECRET_KEY=test_jwt_secret
+        DEBUG=false
+        EOF
+
+    - name: Run database migrations
+      run: |
+        uv run alembic upgrade head
+
+    - name: Run tests with coverage
+      run: |
+        uv run python -m pytest tests/ --cov=src --cov-report=xml --cov-report=html --cov-fail-under=70
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/finance_coverage_db
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+
+    - name: Comment coverage report
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            // Read coverage report (if available)
+            const coverageFile = path.join('backend', 'coverage.xml');
+            if (fs.existsSync(coverageFile)) {
+              const message = `## 📊 Code Coverage Report
+              
+              Coverage report has been generated and uploaded to Codecov.
+              
+              - Coverage reports are available in the PR checks
+              - Minimum coverage threshold: 70%
+              - View detailed report: [Codecov](https://codecov.io/gh/${{ github.repository }}/pull/${{ github.event.number }})
+              
+              Please ensure any new code is properly tested.`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            }
+          } catch (error) {
+            console.log('Could not generate coverage comment:', error.message);
+          }
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
+      with:
+        fail-on-severity: moderate
+        allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC

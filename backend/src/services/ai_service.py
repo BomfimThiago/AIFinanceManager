@@ -38,7 +38,9 @@ class AIService:
         if self.category_service and user_id:
             try:
                 # Get categories from the database (both default and user's custom categories)
-                categories = await self.category_service.get_user_categories(user_id, include_default=True)
+                categories = await self.category_service.get_user_categories(
+                    user_id, include_default=True
+                )
                 if categories:
                     # Extract just the category names as a comma-separated list
                     category_names = [category.name for category in categories]
@@ -47,9 +49,7 @@ class AIService:
                 logger.warning(f"Failed to get database categories: {e}")
 
         # Fallback to default categories
-        return (
-            "Clothing, Education, Entertainment, Fitness, Food, Gifts, Healthcare, Home, Other, Pets, Shopping, Technology, Transport, Travel, Utilities"
-        )
+        return "Clothing, Education, Entertainment, Fitness, Food, Gifts, Healthcare, Home, Other, Pets, Shopping, Technology, Transport, Travel, Utilities"
 
     async def _get_user_category_preferences_for_prompt(
         self, user_id: int | None = None
@@ -115,7 +115,9 @@ class AIService:
 
             # If still no results, try chunked processing
             if not expenses:
-                logger.info("Full document processing failed, attempting chunked processing...")
+                logger.info(
+                    "Full document processing failed, attempting chunked processing..."
+                )
                 expenses = await self._process_document_chunked(
                     file_content, file_type, user_id
                 )
@@ -127,7 +129,11 @@ class AIService:
             return None
 
     async def _process_document_full(
-        self, file_content: bytes, file_type: str, user_id: int | None = None, use_advanced_model: bool = True
+        self,
+        file_content: bytes,
+        file_type: str,
+        user_id: int | None = None,
+        use_advanced_model: bool = True,
     ) -> list[Expense] | None:
         """Process the entire document in one AI call."""
         try:
@@ -135,7 +141,11 @@ class AIService:
             base64_data = base64.b64encode(file_content).decode()
 
             # Select model based on document complexity
-            model = "claude-sonnet-4-20250514" if use_advanced_model else "claude-3-5-haiku-20241022"
+            model = (
+                "claude-sonnet-4-20250514"
+                if use_advanced_model
+                else "claude-3-5-haiku-20241022"
+            )
             logger.info(f"Processing document with model: {model}")
 
             message = self.client.messages.create(
@@ -308,7 +318,18 @@ class AIService:
                     # Create expense object
                     # Determine transaction type based on category
                     transaction_type = expense_data.get("type", "expense")
-                    if expense_data["category"] in ["Salary", "Pix", "Bank Transfer", "Investment", "Bonus", "Freelance", "Business", "Rental", "Gift", "Other Income"]:
+                    if expense_data["category"] in [
+                        "Salary",
+                        "Pix",
+                        "Bank Transfer",
+                        "Investment",
+                        "Bonus",
+                        "Freelance",
+                        "Business",
+                        "Rental",
+                        "Gift",
+                        "Other Income",
+                    ]:
                         transaction_type = "income"
 
                     expense = Expense(
@@ -560,36 +581,41 @@ class AIService:
             from datetime import datetime
 
             # Prepare expense data for analysis
-            logger.info(f"🔍 Starting insights generation - Expenses count: {len(expenses) if expenses else 0}")
+            logger.info(
+                f"🔍 Starting insights generation - Expenses count: {len(expenses) if expenses else 0}"
+            )
             logger.info(f"🔍 Budgets dict: {budgets_dict}")
 
             if not expenses:
                 logger.info("No expenses to analyze - returning onboarding insights")
                 # Return helpful onboarding insights when no data exists
                 from src.insights.schemas import AIInsight
+
                 return [
                     AIInsight(
                         title="Welcome to Your Finance Dashboard!",
                         message="Start by uploading receipts or adding expenses manually to begin tracking your finances.",
                         type="info",
-                        actionable="Click the 'Upload' tab to add your first receipt, or go to 'Expenses' to add transactions manually."
+                        actionable="Click the 'Upload' tab to add your first receipt, or go to 'Expenses' to add transactions manually.",
                     ),
                     AIInsight(
                         title="Set Up Your First Budget",
                         message="Creating budgets helps you control spending and reach your financial goals.",
                         type="info",
-                        actionable="Navigate to the 'Budgets' tab to set spending limits for different categories."
+                        actionable="Navigate to the 'Budgets' tab to set spending limits for different categories.",
                     ),
                     AIInsight(
                         title="Track Different Currencies",
                         message="This app supports multiple currencies (USD, EUR, BRL) with automatic conversion.",
                         type="info",
-                        actionable="Use the currency selector in the top navigation to switch between currencies."
-                    )
+                        actionable="Use the currency selector in the top navigation to switch between currencies.",
+                    ),
                 ]
 
             # Group expenses by month and category
-            monthly_data = defaultdict(lambda: {"income": 0, "expenses": 0, "by_category": defaultdict(float)})
+            monthly_data = defaultdict(
+                lambda: {"income": 0, "expenses": 0, "by_category": defaultdict(float)}
+            )
             category_totals = defaultdict(float)
             merchant_frequency = defaultdict(int)
 
@@ -602,7 +628,9 @@ class AIService:
                     monthly_data[month_key]["income"] += expense.amount
                 else:
                     monthly_data[month_key]["expenses"] += expense.amount
-                    monthly_data[month_key]["by_category"][expense.category] += expense.amount
+                    monthly_data[month_key]["by_category"][expense.category] += (
+                        expense.amount
+                    )
                     category_totals[expense.category] += expense.amount
                     if expense.merchant:
                         merchant_frequency[expense.merchant] += 1
@@ -612,15 +640,27 @@ class AIService:
             latest_month = sorted_months[-1] if sorted_months else None
 
             # Find highest and lowest spending months
-            highest_spending_month = max(monthly_data.items(), key=lambda x: x[1]["expenses"]) if monthly_data else None
-            lowest_spending_month = min(monthly_data.items(), key=lambda x: x[1]["expenses"]) if monthly_data else None
+            highest_spending_month = (
+                max(monthly_data.items(), key=lambda x: x[1]["expenses"])
+                if monthly_data
+                else None
+            )
+            lowest_spending_month = (
+                min(monthly_data.items(), key=lambda x: x[1]["expenses"])
+                if monthly_data
+                else None
+            )
 
             # Get top spending categories
-            sorted_categories = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
+            sorted_categories = sorted(
+                category_totals.items(), key=lambda x: x[1], reverse=True
+            )
             top_categories = sorted_categories[:5] if sorted_categories else []
 
             # Get most frequent merchants
-            sorted_merchants = sorted(merchant_frequency.items(), key=lambda x: x[1], reverse=True)
+            sorted_merchants = sorted(
+                merchant_frequency.items(), key=lambda x: x[1], reverse=True
+            )
             top_merchants = sorted_merchants[:5] if sorted_merchants else []
 
             # Format spending month data
@@ -707,6 +747,7 @@ Be specific with numbers and percentages. Make insights actionable and personali
 
             # Convert to AIInsight objects
             from src.insights.schemas import AIInsight
+
             insights = []
 
             for insight_data in insights_data:
@@ -724,7 +765,7 @@ Be specific with numbers and percentages. Make insights actionable and personali
 
             logger.info(f"🎯 Generated {len(insights)} AI insights")
             for i, insight in enumerate(insights):
-                logger.info(f"  Insight {i+1}: {insight.title} ({insight.type})")
+                logger.info(f"  Insight {i + 1}: {insight.title} ({insight.type})")
             return insights
 
         except Exception as error:
@@ -737,7 +778,9 @@ Be specific with numbers and percentages. Make insights actionable and personali
         for month in sorted_months[-6:]:  # Last 6 months
             data = monthly_data[month]
             net = data["income"] - data["expenses"]
-            lines.append(f"{month}: Income ${data['income']:.2f}, Expenses ${data['expenses']:.2f}, Net ${net:.2f}")
+            lines.append(
+                f"{month}: Income ${data['income']:.2f}, Expenses ${data['expenses']:.2f}, Net ${net:.2f}"
+            )
         return "\n".join(lines)
 
     def _format_category_data(self, top_categories, category_totals):
@@ -764,7 +807,9 @@ Be specific with numbers and percentages. Make insights actionable and personali
             spent = current_month_spending.get(category, 0)
             percentage = (spent / limit * 100) if limit > 0 else 0
             status = "🔴 OVER" if spent > limit else "✅ OK"
-            lines.append(f"{category}: ${spent:.2f} / ${limit:.2f} ({percentage:.1f}%) {status}")
+            lines.append(
+                f"{category}: ${spent:.2f} / ${limit:.2f} ({percentage:.1f}%) {status}"
+            )
         return "\n".join(lines) if lines else "No budgets set"
 
     def _parse_insights_response(self, response_text):
@@ -784,7 +829,11 @@ Be specific with numbers and percentages. Make insights actionable and personali
             valid_types = ["warning", "success", "info"]
 
             for insight in insights_data:
-                if isinstance(insight, dict) and "title" in insight and "message" in insight:
+                if (
+                    isinstance(insight, dict)
+                    and "title" in insight
+                    and "message" in insight
+                ):
                     # Ensure type is valid
                     if insight.get("type") not in valid_types:
                         insight["type"] = "info"
@@ -795,7 +844,6 @@ Be specific with numbers and percentages. Make insights actionable and personali
         except Exception as e:
             logger.error(f"Error parsing insights response: {e}")
             return []
-
 
     async def suggest_goal_allocations(
         self,
@@ -817,7 +865,8 @@ Be specific with numbers and percentages. Make insights actionable and personali
                     "priority": goal.get("priority"),  # 1=high, 2=medium, 3=low
                     "target_amount": goal.get("target_amount"),
                     "current_amount": goal.get("current_amount"),
-                    "remaining": goal.get("target_amount", 0) - goal.get("current_amount", 0),
+                    "remaining": goal.get("target_amount", 0)
+                    - goal.get("current_amount", 0),
                     "target_date": goal.get("target_date"),
                     "description": goal.get("description", ""),
                 }
@@ -873,13 +922,19 @@ Provide ONLY the JSON array, no additional text."""
             allocations = json.loads(response_text)
 
             # Validate allocations
-            total_allocated = sum(alloc.get("amount_allocated", 0) for alloc in allocations)
+            total_allocated = sum(
+                alloc.get("amount_allocated", 0) for alloc in allocations
+            )
             if total_allocated > income_amount:
-                logger.warning(f"AI suggested allocations exceed income amount: {total_allocated} > {income_amount}")
+                logger.warning(
+                    f"AI suggested allocations exceed income amount: {total_allocated} > {income_amount}"
+                )
                 # Scale down proportionally
                 scale_factor = income_amount / total_allocated
                 for alloc in allocations:
-                    alloc["amount_allocated"] = round(alloc["amount_allocated"] * scale_factor, 2)
+                    alloc["amount_allocated"] = round(
+                        alloc["amount_allocated"] * scale_factor, 2
+                    )
                     alloc["allocation_percentage"] = round(
                         (alloc["amount_allocated"] / income_amount) * 100, 1
                     )
@@ -894,6 +949,7 @@ Provide ONLY the JSON array, no additional text."""
         except Exception as error:
             logger.error(f"Error suggesting goal allocations: {error}")
             return []
+
 
 # Note: AIService instances should be created with category_service dependency
 # No global instance to ensure proper dependency injection

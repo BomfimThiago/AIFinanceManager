@@ -60,8 +60,8 @@ const Header: React.FC<HeaderProps> = ({ hideAmounts, onTogglePrivacy }) => {
               )}
             </button>
 
-            {/* Currency & Language Selectors - Hidden on mobile */}
-            <div className="hidden sm:flex items-center space-x-4">
+            {/* Currency & Language Selectors - Always visible */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <CurrencySelector />
               <LanguageSelector />
             </div>

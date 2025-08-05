@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { Loader2 } from 'lucide-react';
+
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface TranslationLoadingWrapperProps {
@@ -10,7 +12,9 @@ interface TranslationLoadingWrapperProps {
  * Wrapper component that shows a loading screen until translations are loaded.
  * This prevents the flickering of translation keys during initial load.
  */
-export const TranslationLoadingWrapper: React.FC<TranslationLoadingWrapperProps> = ({ children }) => {
+export const TranslationLoadingWrapper: React.FC<TranslationLoadingWrapperProps> = ({
+  children,
+}) => {
   const { isLoading } = useLanguage();
 
   if (isLoading) {

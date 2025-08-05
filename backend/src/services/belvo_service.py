@@ -65,22 +65,24 @@ class BelvoService:
 
             async with (
                 aiohttp.ClientSession() as session,
-                session.post(url, json=payload, headers={"Content-Type": "application/json"}) as response,
+                session.post(
+                    url, json=payload, headers={"Content-Type": "application/json"}
+                ) as response,
             ):
-                    if response.status in [200, 201]:
-                        data = await response.json()
-                        logger.info(
-                            f"Successfully generated Belvo widget token for external_id: {external_id}"
-                        )
-                        return data["access"]
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to generate widget token: {response.status} - {error_text}"
-                        )
-                        raise Exception(
-                            f"Failed to generate widget token: {response.status}"
-                        )
+                if response.status in [200, 201]:
+                    data = await response.json()
+                    logger.info(
+                        f"Successfully generated Belvo widget token for external_id: {external_id}"
+                    )
+                    return data["access"]
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to generate widget token: {response.status} - {error_text}"
+                    )
+                    raise Exception(
+                        f"Failed to generate widget token: {response.status}"
+                    )
 
         except Exception as e:
             logger.error(f"Error generating Belvo widget token: {e}")
@@ -127,20 +129,22 @@ class BelvoService:
 
             async with (
                 aiohttp.ClientSession() as session,
-                session.post(url, json=payload, headers={"Content-Type": "application/json"}) as response,
+                session.post(
+                    url, json=payload, headers={"Content-Type": "application/json"}
+                ) as response,
             ):
-                    if response.status in [200, 201]:
-                        data = await response.json()
-                        logger.info("Successfully generated consent management token")
-                        return data["access"]
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to generate consent management token: {response.status} - {error_text}"
-                        )
-                        raise Exception(
-                            f"Failed to generate consent management token: {response.status}"
-                        )
+                if response.status in [200, 201]:
+                    data = await response.json()
+                    logger.info("Successfully generated consent management token")
+                    return data["access"]
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to generate consent management token: {response.status} - {error_text}"
+                    )
+                    raise Exception(
+                        f"Failed to generate consent management token: {response.status}"
+                    )
 
         except Exception as e:
             logger.error(f"Error generating consent management token: {e}")
@@ -615,20 +619,20 @@ class BelvoService:
                     json=payload,
                 ) as response,
             ):
-                    if response.status == 201:
-                        data = await response.json()
-                        logger.info(
-                            f"Historical update triggered for link {link_id}: {data.get('request_id')}"
-                        )
-                        return data
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to trigger historical update: {response.status} - {error_text}"
-                        )
-                        raise Exception(
-                            f"Failed to trigger historical update: {response.status}"
-                        )
+                if response.status == 201:
+                    data = await response.json()
+                    logger.info(
+                        f"Historical update triggered for link {link_id}: {data.get('request_id')}"
+                    )
+                    return data
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to trigger historical update: {response.status} - {error_text}"
+                    )
+                    raise Exception(
+                        f"Failed to trigger historical update: {response.status}"
+                    )
 
         except Exception as e:
             logger.error(f"Error triggering historical update: {e}")
@@ -728,16 +732,16 @@ class BelvoService:
                     auth=aiohttp.BasicAuth(self.secret_id, self.secret_password),
                 ) as response,
             ):
-                    if response.status == 200:
-                        data = await response.json()
-                        logger.info(f"Retrieved transaction {transaction_id}")
-                        return data
-                    else:
-                        error_text = await response.text()
-                        logger.error(
-                            f"Failed to get transaction {transaction_id}: {response.status} - {error_text}"
-                        )
-                        return None
+                if response.status == 200:
+                    data = await response.json()
+                    logger.info(f"Retrieved transaction {transaction_id}")
+                    return data
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Failed to get transaction {transaction_id}: {response.status} - {error_text}"
+                    )
+                    return None
 
         except Exception as e:
             logger.error(f"Error getting transaction {transaction_id}: {e}")

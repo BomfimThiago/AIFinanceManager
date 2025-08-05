@@ -66,9 +66,7 @@ const ExpenseCard: React.FC<{
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           {getTypeIcon(expense.type)}
-          <span className="text-sm font-medium text-gray-900">
-            {formatShortDate(expense.date)}
-          </span>
+          <span className="text-sm font-medium text-gray-900">{formatShortDate(expense.date)}</span>
         </div>
         <div className="flex items-center space-x-1">
           <button
@@ -93,9 +91,7 @@ const ExpenseCard: React.FC<{
         {/* Description and Merchant */}
         <div>
           <div className="font-medium text-gray-900 text-base">{expense.description}</div>
-          {expense.merchant && (
-            <div className="text-sm text-gray-500 mt-1">{expense.merchant}</div>
-          )}
+          {expense.merchant && <div className="text-sm text-gray-500 mt-1">{expense.merchant}</div>}
         </div>
 
         {/* Category and Amount */}
@@ -191,10 +187,7 @@ const ExpenseTableRow: React.FC<{
               color={categoryDetails.color}
             />
           </div>
-          <span
-            className="text-sm font-medium capitalize"
-            style={{ color: categoryDetails.color }}
-          >
+          <span className="text-sm font-medium capitalize" style={{ color: categoryDetails.color }}>
             {categoryDetails.translatedName}
           </span>
         </div>
@@ -238,7 +231,7 @@ const ExpensesSummary: React.FC<{
   currency: string;
 }> = ({ calculations, hideAmounts, currency }) => {
   const { t } = useTranslation();
-  
+
   const formatAmount = (amount: number) => {
     if (hideAmounts) return '••••';
     return new Intl.NumberFormat('en-US', {
@@ -294,11 +287,15 @@ const ExpensesSummary: React.FC<{
       <div className="bg-white rounded-lg border p-3 sm:p-4">
         <div className="flex items-center space-x-2 sm:space-x-3">
           <div className="p-1.5 sm:p-2 rounded-lg bg-purple-100 flex-shrink-0">
-            <span className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 font-bold text-sm sm:text-base flex items-center justify-center">#</span>
+            <span className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 font-bold text-sm sm:text-base flex items-center justify-center">
+              #
+            </span>
           </div>
           <div className="min-w-0">
             <p className="text-xs sm:text-sm text-gray-600">{t('common.count')}</p>
-            <p className="text-lg sm:text-2xl font-bold text-gray-900">{calculations.expenseCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-gray-900">
+              {calculations.expenseCount}
+            </p>
           </div>
         </div>
       </div>
@@ -309,22 +306,22 @@ const ExpensesSummary: React.FC<{
 // Empty State Component
 const EmptyState: React.FC<{ onAddClick: () => void }> = ({ onAddClick }) => {
   const { t } = useTranslation();
-  
+
   return (
-  <div className="text-center py-12">
-    <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
-    <h3 className="mt-2 text-sm font-medium text-gray-900">{t('expenses.noExpenses')}</h3>
-    <p className="mt-1 text-sm text-gray-500">{t('expenses.createFirstExpense')}</p>
-    <div className="mt-6">
-      <button
-        onClick={onAddClick}
-        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        {t('expenses.addExpense')}
-      </button>
+    <div className="text-center py-12">
+      <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
+      <h3 className="mt-2 text-sm font-medium text-gray-900">{t('expenses.noExpenses')}</h3>
+      <p className="mt-1 text-sm text-gray-500">{t('expenses.createFirstExpense')}</p>
+      <div className="mt-6">
+        <button
+          onClick={onAddClick}
+          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          {t('expenses.addExpense')}
+        </button>
+      </div>
     </div>
-  </div>
   );
 };
 
@@ -332,7 +329,7 @@ const EmptyState: React.FC<{ onAddClick: () => void }> = ({ onAddClick }) => {
 const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }) => {
   const { t } = useTranslation();
   const { filters } = useGlobalFilters();
-  
+
   // Filter expenses based on global filters
   const filteredExpenses = filterExpenses(expenses, filters);
   const filterSummary = getFilterSummary(filters, expenses.length, filteredExpenses.length);
@@ -355,7 +352,7 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
   if (expenses.length === 0) {
     return <EmptyState onAddClick={handleAddClick} />;
   }
-  
+
   // Show filtered empty state if no results after filtering
   if (filteredExpenses.length === 0 && filterSummary.hasFilters) {
     return (
@@ -382,10 +379,12 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
             </div>
           </div>
         </div>
-        
+
         <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg">
           <Tag className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No matching expenses</h3>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+            No matching expenses
+          </h3>
           <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4 px-4">
             Try adjusting your filters or add a new expense.
           </p>
@@ -525,7 +524,9 @@ const Expenses: React.FC<ExpensesProps> = ({ expenses, categories, hideAmounts }
           onClose={handleCloseModals}
           onConfirm={handleConfirmDelete}
           title={t('expenses.deleteExpense')}
-          message={t('expenses.deleteConfirmMessage', { description: modalState.expenseToDelete.description })}
+          message={t('expenses.deleteConfirmMessage', {
+            description: modalState.expenseToDelete.description,
+          })}
           confirmButtonText={t('common.delete')}
           variant="danger"
           isLoading={isDeleting}

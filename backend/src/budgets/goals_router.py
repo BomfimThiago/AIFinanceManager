@@ -38,11 +38,14 @@ budgets_router = APIRouter(prefix="/api/budgets", tags=["budgets"])
 
 # === GOALS ENDPOINTS (New System) ===
 
+
 @goals_router.get("", response_model=list[Goal])
 async def get_goals(
     goal_type: GoalType | None = Query(None, description="Filter by goal type"),
     status: GoalStatus | None = Query(None, description="Filter by status"),
-    time_horizon: TimeHorizon | None = Query(None, description="Filter by time horizon"),
+    time_horizon: TimeHorizon | None = Query(
+        None, description="Filter by time horizon"
+    ),
     goals_service: GoalsService = Depends(get_goals_service),
     current_user: User = Depends(get_current_user),
 ):
@@ -214,7 +217,9 @@ async def create_goal_from_template(
         raise
     except Exception as e:
         logger.error(f"Error creating goal from template: {e}")
-        raise DatabaseError("create goal from template", details={"error": str(e)}) from e
+        raise DatabaseError(
+            "create goal from template", details={"error": str(e)}
+        ) from e
 
 
 @goals_router.get("/spending/budgets", response_model=dict[str, Budget])
@@ -229,10 +234,13 @@ async def get_spending_as_budgets(
         raise
     except Exception as e:
         logger.error(f"Error fetching spending goals as budgets: {e}")
-        raise DatabaseError("get spending goals as budgets", details={"error": str(e)}) from e
+        raise DatabaseError(
+            "get spending goals as budgets", details={"error": str(e)}
+        ) from e
 
 
 # === LEGACY BUDGET ENDPOINTS (Backward Compatibility) ===
+
 
 @budgets_router.get("", response_model=dict[str, Budget])
 async def get_budgets(
@@ -256,7 +264,9 @@ async def create_budget(
 ):
     """Create or update a budget for a category (legacy compatibility)."""
     try:
-        logger.info(f"Creating/updating budget for user {current_user.id}: {budget.model_dump()}")
+        logger.info(
+            f"Creating/updating budget for user {current_user.id}: {budget.model_dump()}"
+        )
         return await goals_service.create_or_update_budget(budget)
     except DatabaseError:
         raise
@@ -278,7 +288,9 @@ async def update_budget_spent(
         return await goals_service.update_budget_spent(category, amount)
     except NotFoundError:
         # Create a default budget if it doesn't exist
-        budget_create = BudgetCreate(category=category, limit=amount * 2)  # Set reasonable default
+        budget_create = BudgetCreate(
+            category=category, limit=amount * 2
+        )  # Set reasonable default
         await goals_service.create_or_update_budget(budget_create)
         return await goals_service.update_budget_spent(category, amount)
     except DatabaseError:

@@ -4,6 +4,7 @@
  */
 import React from 'react';
 
+import { useTranslation } from '../contexts/LanguageContext';
 // Business logic hooks (ports to domain layer)
 import { useAppNavigation } from '../hooks/useAppNavigation';
 import { useFinanceOperations } from '../hooks/useFinanceOperations';
@@ -25,6 +26,7 @@ const FinanceManager: React.FC = () => {
   // UI state management (no business logic)
   const { activeTab, setActiveTab } = useAppNavigation();
   const { hideAmounts, togglePrivacyMode } = useUserPreferences();
+  const { t } = useTranslation();
 
   // Business operations (separated from UI)
   const {
@@ -49,7 +51,9 @@ const FinanceManager: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your financial data...</p>
+          <p className="mt-4 text-gray-600">
+            {t('common.loadingFinancialData', 'Loading your financial data...')}
+          </p>
         </div>
       </div>
     );
@@ -62,9 +66,11 @@ const FinanceManager: React.FC = () => {
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Unable to load financial data
+            {t('common.unableToLoadData', 'Unable to load financial data')}
           </h2>
-          <p className="text-gray-600">Please refresh the page or try again later.</p>
+          <p className="text-gray-600">
+            {t('common.refreshOrRetry', 'Please refresh the page or try again later.')}
+          </p>
         </div>
       </div>
     );
@@ -129,7 +135,9 @@ const FinanceManager: React.FC = () => {
       default:
         return (
           <div className="p-8 text-center">
-            <h2 className="text-xl font-semibold text-gray-800">Page not found</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              {t('common.pageNotFound', 'Page not found')}
+            </h2>
           </div>
         );
     }
@@ -145,9 +153,7 @@ const FinanceManager: React.FC = () => {
 
         {/* Main content area */}
         <main className="flex-1">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {renderTabContent()}
-          </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{renderTabContent()}</div>
         </main>
       </LanguageTransition>
     </div>
