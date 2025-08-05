@@ -133,6 +133,7 @@ export interface Category {
   description?: string;
   icon: string; // Icon name as string (e.g., 'utensils', 'car', 'shopping-bag')
   color: string;
+  category_type?: 'expense' | 'income';
   is_default?: boolean;
   is_active?: boolean;
   user_id?: number;

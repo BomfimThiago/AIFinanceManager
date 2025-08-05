@@ -392,6 +392,7 @@ export interface Category {
   description?: string;
   color?: string;
   icon?: string;
+  category_type?: 'expense' | 'income';
   is_default: boolean;
   is_active: boolean;
   user_id?: number;
@@ -413,6 +414,7 @@ export interface CategoryCreate {
   description?: string;
   color?: string;
   icon?: string;
+  category_type?: 'expense' | 'income';
 }
 
 export interface CategoryUpdate {
@@ -420,6 +422,7 @@ export interface CategoryUpdate {
   description?: string;
   color?: string;
   icon?: string;
+  category_type?: 'expense' | 'income';
   is_active?: boolean;
 }
 

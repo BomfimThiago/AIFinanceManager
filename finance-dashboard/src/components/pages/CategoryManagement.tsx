@@ -93,6 +93,7 @@ interface CategoryFormData {
   description: string;
   color: string;
   icon: string;
+  category_type: 'expense' | 'income';
 }
 
 interface CategoryManagementProps {}
@@ -498,6 +499,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       description: category.description || '',
       color: category.color || DEFAULT_COLORS[0],
       icon: category.icon || DEFAULT_ICONS[0],
+      category_type: category.category_type || 'expense',
     });
     setShowForm(true);
   };
@@ -521,13 +523,15 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
       description: '',
       color: DEFAULT_COLORS[0],
       icon: DEFAULT_ICONS[0],
+      category_type: 'expense',
     });
     setEditingCategory(null);
     setShowForm(false);
   };
 
   const userCategories = categories.filter(cat => !cat.is_default);
-  const defaultCategories = categories.filter(cat => cat.is_default);
+  const defaultExpenseCategories = categories.filter(cat => cat.is_default && cat.category_type === 'expense');
+  const defaultIncomeCategories = categories.filter(cat => cat.is_default && cat.category_type === 'income');
 
   // Show loading state
   if (isLoading) {
@@ -588,7 +592,7 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
 
               <form onSubmit={handleSubmit} className="p-4 sm:p-6">
                 {/* Top Section - Form Fields - Responsive */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('categories.categoryName')}
@@ -601,6 +605,20 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                       className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-base sm:text-lg"
                       placeholder={t('categories.namePlaceholder')}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('categories.categoryType')}
+                    </label>
+                    <select
+                      value={formData.category_type}
+                      onChange={e => setFormData(prev => ({ ...prev, category_type: e.target.value as 'expense' | 'income' }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent text-base sm:text-lg"
+                    >
+                      <option value="expense">{t('categories.expense')}</option>
+                      <option value="income">{t('categories.income')}</option>
+                    </select>
                   </div>
 
                   <div>
@@ -832,15 +850,16 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
         )}
       </div>
 
-      {/* Default Categories */}
+      {/* Default Expense Categories */}
       <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
           <Tag className="h-5 w-5 mr-2" />
-          {t('categories.defaultCategories')}
+          {t('categories.defaultExpenseCategories')} 
+          <span className="ml-2 text-sm font-normal text-gray-500">({defaultExpenseCategories.length})</span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {defaultCategories.map(category => (
-            <div key={category.id} className="bg-gray-50 p-3 sm:p-4 rounded-lg border">
+          {defaultExpenseCategories.map(category => (
+            <div key={category.id} className="bg-red-50 p-3 sm:p-4 rounded-lg border border-red-100">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                   <div
@@ -864,8 +883,50 @@ const CategoryManagement: React.FC<CategoryManagementProps> = () => {
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded flex-shrink-0 ml-2">
-                  {t('categories.system')}
+                <span className="text-xs text-red-600 bg-red-200 px-2 py-1 rounded flex-shrink-0 ml-2">
+                  {t('categories.expense')}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Default Income Categories */}
+      <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
+          <DollarSign className="h-5 w-5 mr-2" />
+          {t('categories.defaultIncomeCategories')}
+          <span className="ml-2 text-sm font-normal text-gray-500">({defaultIncomeCategories.length})</span>
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {defaultIncomeCategories.map(category => (
+            <div key={category.id} className="bg-green-50 p-3 sm:p-4 rounded-lg border border-green-100">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                  <div
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${category.color}20` }}
+                  >
+                    <CategoryIcon
+                      iconName={category.icon || 'tag'}
+                      className="w-4 h-4 sm:w-5 sm:h-5"
+                      color={category.color}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">
+                      {tCategory(category.name)}
+                    </h4>
+                    {category.description && (
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">
+                        {tCategoryDescription(category.description, category.name)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs text-green-600 bg-green-200 px-2 py-1 rounded flex-shrink-0 ml-2">
+                  {t('categories.income')}
                 </span>
               </div>
             </div>
