@@ -274,8 +274,12 @@ PRODUCTION-READY.md
 infrastructure-secrets/
 
 # Deployment scripts with sensitive data (keep templates)
-scripts/*
+scripts/deploy-backend.sh
+scripts/run-migrations.sh
 !scripts/*.template.sh
-BACKEND-DEPLOYMENT-GUIDE.md backend/.env.production
+
+# Production environment files and deployment guides
+BACKEND-DEPLOYMENT-GUIDE.md
 *.env.production
+backend/.env.production
 finance-dashboard/.env.production
