@@ -283,3 +283,10 @@ BACKEND-DEPLOYMENT-GUIDE.md
 *.env.production
 backend/.env.production
 finance-dashboard/.env.production
+
+# Additional security - exclude any files with sensitive patterns
+*password*
+*secret*
+*credential*
+*-key.pem
+*-key.key
