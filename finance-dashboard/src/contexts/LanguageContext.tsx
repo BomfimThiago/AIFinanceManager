@@ -20,6 +20,7 @@ interface LanguageContextType {
   translations: Record<string, any>;
   availableLanguages: Record<string, string>;
   isLoading: boolean;
+  isChangingLanguage: boolean; // New field to track language changes
   // Date formatting functions
   formatDate: (date: Date | string, options?: Intl.DateTimeFormatOptions) => string;
   formatShortDate: (date: Date | string) => string;
@@ -74,7 +75,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   });
 
   // Fetch translations for current session language (only when authenticated)
-  const { data: translationData, isLoading } = useQuery({
+  const { data: translationData, isLoading, isFetching } = useQuery({
     queryKey: ['translations', sessionLanguage],
     queryFn: () =>
       apiService.get<{
@@ -92,11 +93,66 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: isAuthenticated && !!sessionLanguage,
+    // Keep previous data while fetching new language to prevent flickering
+    placeholderData: (previousData) => previousData,
   });
 
-  // Fallback translations for unauthenticated state (login/signup page)
+  // Enhanced fallback translations for better initial loading experience
   const fallbackTranslations = {
     en: {
+      common: {
+        loading: 'Loading...',
+        error: 'Error',
+        success: 'Success',
+        cancel: 'Cancel',
+        save: 'Save',
+        delete: 'Delete',
+        edit: 'Edit',
+        add: 'Add',
+        close: 'Close',
+        confirm: 'Confirm',
+        yes: 'Yes',
+        no: 'No',
+        ok: 'OK',
+        back: 'Back',
+        next: 'Next',
+        submit: 'Submit',
+        create: 'Create',
+        update: 'Update',
+        view: 'View',
+        search: 'Search',
+        filter: 'Filter',
+        refresh: 'Refresh',
+        clear: 'Clear',
+        name: 'Name',
+        description: 'Description',
+        amount: 'Amount',
+        date: 'Date',
+        category: 'Category',
+        total: 'Total',
+        income: 'Income',
+        expense: 'Expense',
+        balance: 'Balance',
+        currency: 'Currency',
+        selected: 'selected',
+      },
+      navigation: {
+        dashboard: 'Dashboard',
+        upload: 'Upload',
+        expenses: 'Expenses',
+        goals: 'Goals',
+        categories: 'Categories',
+        insights: 'AI Insights',
+        integrations: 'Integrations',
+        financialOverview: 'Analytics',
+      },
+      header: {
+        title: 'Konta',
+        preferences: 'Preferences',
+        signOut: 'Sign out',
+        hideAmounts: 'Hide amounts',
+        showAmounts: 'Show amounts',
+      },
       auth: {
         login: 'Login',
         signup: 'Sign Up',
@@ -117,8 +173,84 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         loggingIn: 'Logging in...',
         signingUp: 'Signing up...',
       },
+      categories: {
+        title: 'Category Management',
+        categoryType: 'Category Type',
+        expense: 'Expense',
+        income: 'Income',
+        defaultExpenseCategories: 'Default Expense Categories',
+        defaultIncomeCategories: 'Default Income Categories',
+        customCategories: 'Your Custom Categories',
+        addCategory: 'Add Category',
+        addNewCategory: 'Add New Category',
+        editCategory: 'Edit Category',
+        deleteCategory: 'Delete Category',
+        categoryName: 'Category Name',
+        loading: 'Loading categories...',
+        system: 'System',
+      },
+      dashboard: {
+        title: 'Financial Overview',
+        totalExpenses: 'Total Expenses',
+        totalIncome: 'Total Income',
+        netSavings: 'Net Savings',
+        totalGoals: 'Total Goals',
+      },
     },
     es: {
+      common: {
+        loading: 'Cargando...',
+        error: 'Error',
+        success: 'Éxito',
+        cancel: 'Cancelar',
+        save: 'Guardar',
+        delete: 'Eliminar',
+        edit: 'Editar',
+        add: 'Agregar',
+        close: 'Cerrar',
+        confirm: 'Confirmar',
+        yes: 'Sí',
+        no: 'No',
+        ok: 'OK',
+        back: 'Volver',
+        next: 'Siguiente',
+        submit: 'Enviar',
+        create: 'Crear',
+        update: 'Actualizar',
+        view: 'Ver',
+        search: 'Buscar',
+        filter: 'Filtrar',
+        refresh: 'Actualizar',
+        clear: 'Limpiar',
+        name: 'Nombre',
+        description: 'Descripción',
+        amount: 'Monto',
+        date: 'Fecha',
+        category: 'Categoría',
+        total: 'Total',
+        income: 'Ingreso',
+        expense: 'Gasto',
+        balance: 'Balance',
+        currency: 'Moneda',
+        selected: 'seleccionado',
+      },
+      navigation: {
+        dashboard: 'Panel',
+        upload: 'Subir',
+        expenses: 'Gastos',
+        goals: 'Objetivos',
+        categories: 'Categorías',
+        insights: 'Análisis IA',
+        integrations: 'Integraciones',
+        financialOverview: 'Análisis',
+      },
+      header: {
+        title: 'Konta',
+        preferences: 'Preferencias',
+        signOut: 'Cerrar sesión',
+        hideAmounts: 'Ocultar montos',
+        showAmounts: 'Mostrar montos',
+      },
       auth: {
         login: 'Iniciar Sesión',
         signup: 'Registrarse',
@@ -139,8 +271,84 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         loggingIn: 'Iniciando sesión...',
         signingUp: 'Registrando...',
       },
+      categories: {
+        title: 'Gestión de Categorías',
+        categoryType: 'Tipo de Categoría',
+        expense: 'Gasto',
+        income: 'Ingreso',
+        defaultExpenseCategories: 'Categorías de Gastos por Defecto',
+        defaultIncomeCategories: 'Categorías de Ingresos por Defecto',
+        customCategories: 'Tus Categorías Personalizadas',
+        addCategory: 'Agregar Categoría',
+        addNewCategory: 'Agregar Nueva Categoría',
+        editCategory: 'Editar Categoría',
+        deleteCategory: 'Eliminar Categoría',
+        categoryName: 'Nombre de Categoría',
+        loading: 'Cargando categorías...',
+        system: 'Sistema',
+      },
+      dashboard: {
+        title: 'Resumen Financiero',
+        totalExpenses: 'Gastos Totales',
+        totalIncome: 'Ingresos Totales',
+        netSavings: 'Ahorros Netos',
+        totalGoals: 'Objetivos Totales',
+      },
     },
     pt: {
+      common: {
+        loading: 'Carregando...',
+        error: 'Erro',
+        success: 'Sucesso',
+        cancel: 'Cancelar',
+        save: 'Salvar',
+        delete: 'Excluir',
+        edit: 'Editar',
+        add: 'Adicionar',
+        close: 'Fechar',
+        confirm: 'Confirmar',
+        yes: 'Sim',
+        no: 'Não',
+        ok: 'OK',
+        back: 'Voltar',
+        next: 'Próximo',
+        submit: 'Enviar',
+        create: 'Criar',
+        update: 'Atualizar',
+        view: 'Visualizar',
+        search: 'Buscar',
+        filter: 'Filtrar',
+        refresh: 'Atualizar',
+        clear: 'Limpar',
+        name: 'Nome',
+        description: 'Descrição',
+        amount: 'Valor',
+        date: 'Data',
+        category: 'Categoria',
+        total: 'Total',
+        income: 'Receita',
+        expense: 'Despesa',
+        balance: 'Saldo',
+        currency: 'Moeda',
+        selected: 'selecionado',
+      },
+      navigation: {
+        dashboard: 'Painel',
+        upload: 'Upload',
+        expenses: 'Despesas',
+        goals: 'Objetivos',
+        categories: 'Categorias',
+        insights: 'Análise IA',
+        integrations: 'Integrações',
+        financialOverview: 'Análises',
+      },
+      header: {
+        title: 'Konta',
+        preferences: 'Preferências',
+        signOut: 'Sair',
+        hideAmounts: 'Ocultar valores',
+        showAmounts: 'Mostrar valores',
+      },
       auth: {
         login: 'Entrar',
         signup: 'Cadastrar',
@@ -161,13 +369,56 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         loggingIn: 'Entrando...',
         signingUp: 'Cadastrando...',
       },
+      categories: {
+        title: 'Gestão de Categorias',
+        categoryType: 'Tipo de Categoria',
+        expense: 'Despesa',
+        income: 'Receita',
+        defaultExpenseCategories: 'Categorias de Despesas Padrão',
+        defaultIncomeCategories: 'Categorias de Receitas Padrão',
+        customCategories: 'Suas Categorias Personalizadas',
+        addCategory: 'Adicionar Categoria',
+        addNewCategory: 'Adicionar Nova Categoria',
+        editCategory: 'Editar Categoria',
+        deleteCategory: 'Excluir Categoria',
+        categoryName: 'Nome da Categoria',
+        loading: 'Carregando categorias...',
+        system: 'Sistema',
+      },
+      dashboard: {
+        title: 'Resumo Financeiro',
+        totalExpenses: 'Despesas Totais',
+        totalIncome: 'Receitas Totais',    
+        netSavings: 'Economia Líquida',
+        totalGoals: 'Objetivos Totais',
+      },
     },
   };
 
-  const translations = isAuthenticated
-    ? translationData?.translations || {}
-    : fallbackTranslations[sessionLanguage as keyof typeof fallbackTranslations] ||
-      fallbackTranslations.en;
+  // Smart translation merging: Use fallbacks during loading and merge with API data when available
+  const translations = React.useMemo(() => {
+    const fallback = fallbackTranslations[sessionLanguage as keyof typeof fallbackTranslations] || fallbackTranslations.en;
+    
+    if (!isAuthenticated) {
+      return fallback;
+    }
+    
+    // If we're loading translations for the first time, use fallbacks
+    if (isLoading && !translationData) {
+      return fallback;
+    }
+    
+    // If we have API translations, merge them with fallbacks (API takes priority)
+    if (translationData?.translations) {
+      return {
+        ...fallback,
+        ...translationData.translations,
+      };
+    }
+    
+    // Fallback to client-side translations during loading
+    return fallback;
+  }, [isAuthenticated, translationData, isLoading, sessionLanguage]);
 
   // Locale mapping for date formatting
   const getLocale = (): string => {
@@ -440,7 +691,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     tCategoryDescription,
     translations,
     availableLanguages,
-    isLoading,
+    // Only show loading for initial load, not for language switches
+    isLoading: isAuthenticated && isLoading && !translationData,
+    // Track when language is changing to prevent flickering
+    isChangingLanguage: isAuthenticated && isFetching && !!translationData,
     // Date formatting functions
     formatDate,
     formatShortDate,
@@ -491,7 +745,7 @@ export const useTranslation = () => {
 
 // Hook for translation with categories context
 export const useCategoryTranslation = (categories: Category[]) => {
-  const { t, tCategory, tCategoryDescription, isLoading } = useLanguage();
+  const { t, tCategory, tCategoryDescription, isLoading, isChangingLanguage } = useLanguage();
   const translateCategory = (categoryName: string) => tCategory(categoryName, categories);
   const translateCategoryDescription = (categoryDescription: string, categoryName: string) =>
     tCategoryDescription(categoryDescription, categoryName, categories);
@@ -500,5 +754,6 @@ export const useCategoryTranslation = (categories: Category[]) => {
     tCategory: translateCategory,
     tCategoryDescription: translateCategoryDescription,
     isLoading,
+    isChangingLanguage,
   };
 };

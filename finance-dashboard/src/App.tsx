@@ -7,6 +7,7 @@ import React from 'react';
 import FinanceManager from './components/FinanceManager';
 import AuthPage from './components/auth/AuthPage';
 import NotificationContainer from './components/ui/NotificationContainer';
+import TranslationLoadingWrapper from './components/ui/TranslationLoadingWrapper';
 import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
@@ -31,10 +32,10 @@ const App: React.FC = () => {
 
   // Show main finance manager if authenticated
   return (
-    <>
+    <TranslationLoadingWrapper>
       <FinanceManager />
       <NotificationContainer />
-    </>
+    </TranslationLoadingWrapper>
   );
 };
 

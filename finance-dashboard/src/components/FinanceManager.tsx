@@ -17,6 +17,7 @@ import Goals from './pages/Goals';
 import Insights from './pages/Insights';
 import Integrations from './pages/Integrations';
 import Upload from './pages/Upload';
+import LanguageTransition from './ui/LanguageTransition';
 
 // Types
 
@@ -137,16 +138,18 @@ const FinanceManager: React.FC = () => {
   // Clean JSX - only UI rendering logic
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onTogglePrivacy={togglePrivacyMode} hideAmounts={hideAmounts} />
+      <LanguageTransition>
+        <Header onTogglePrivacy={togglePrivacyMode} hideAmounts={hideAmounts} />
 
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Main content area */}
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {renderTabContent()}
-        </div>
-      </main>
+        {/* Main content area */}
+        <main className="flex-1">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {renderTabContent()}
+          </div>
+        </main>
+      </LanguageTransition>
     </div>
   );
 };
