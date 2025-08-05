@@ -172,7 +172,10 @@ class AIService:
                                 - For receipts: group similar items if needed to stay concise
                                 - IMPORTANT: Include "currency" field with detected currency code (USD, EUR, BRL)
                                 - Look for currency symbols ($, €, R$) or currency codes in the document
-                                - If currency is unclear, use EUR as default""",
+                                - If currency is unclear, use EUR as default
+                                - IMPORTANT: Include "type" field as "expense" or "income" based on transaction nature
+                                - Income categories include: Salary, Pix, Bank Transfer, Investment, Bonus, Freelance, Business, Rental, Gift, Other Income
+                                - If detecting income (deposits, transfers in, salary, etc.), use appropriate income category""",
                             },
                         ],
                     }
@@ -303,6 +306,11 @@ class AIService:
                         currency_enum = Currency.EUR
 
                     # Create expense object
+                    # Determine transaction type based on category
+                    transaction_type = expense_data.get("type", "expense")
+                    if expense_data["category"] in ["Salary", "Pix", "Bank Transfer", "Investment", "Bonus", "Freelance", "Business", "Rental", "Gift", "Other Income"]:
+                        transaction_type = "income"
+
                     expense = Expense(
                         id=0,  # Will be set by the API endpoint
                         amount=float(expense_data["amount"]),
@@ -311,7 +319,7 @@ class AIService:
                         category=expense_data["category"],
                         description=expense_data["description"],
                         items=expense_data.get("items", []),
-                        type="expense",
+                        type=transaction_type,
                         source="ai-processed",
                         original_currency=currency_enum.value,
                     )
@@ -788,6 +796,104 @@ Be specific with numbers and percentages. Make insights actionable and personali
             logger.error(f"Error parsing insights response: {e}")
             return []
 
+
+    async def suggest_goal_allocations(
+        self,
+        income_amount: float,
+        income_category: str,
+        income_description: str,
+        user_goals: list[dict[str, Any]],
+        user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """Suggest how to allocate income to user's financial goals using AI."""
+        try:
+            # Build goals summary for AI
+            goals_summary = []
+            for goal in user_goals:
+                goal_info = {
+                    "id": goal.get("id"),
+                    "title": goal.get("title"),
+                    "type": goal.get("goal_type"),  # spending, saving, debt
+                    "priority": goal.get("priority"),  # 1=high, 2=medium, 3=low
+                    "target_amount": goal.get("target_amount"),
+                    "current_amount": goal.get("current_amount"),
+                    "remaining": goal.get("target_amount", 0) - goal.get("current_amount", 0),
+                    "target_date": goal.get("target_date"),
+                    "description": goal.get("description", ""),
+                }
+                goals_summary.append(goal_info)
+
+            prompt = f"""Suggest how to allocate this income to the user's financial goals.
+
+Income Details:
+- Amount: {income_amount}
+- Category: {income_category}
+- Description: {income_description}
+
+User's Financial Goals:
+{json.dumps(goals_summary, indent=2)}
+
+Provide allocation suggestions as a JSON array. Each suggestion should include:
+- goal_id: The ID of the goal
+- amount_allocated: Amount to allocate (must be <= income amount)
+- allocation_percentage: Percentage of income allocated
+- reasoning: Brief explanation why this allocation makes sense
+
+Rules:
+1. Total allocations must not exceed the income amount
+2. Prioritize high-priority goals (priority=1) over lower priorities
+3. Consider goal types: saving goals need regular contributions, debt goals benefit from larger payments
+4. Consider target dates - urgent goals need more allocation
+5. Don't over-allocate to already completed goals
+6. For regular income (salary), suggest balanced allocations
+7. For windfalls (bonus, gifts), can suggest larger allocations to specific goals
+8. Return empty array if no suitable goals exist
+
+Example response:
+[
+  {{"goal_id": 1, "amount_allocated": 500.00, "allocation_percentage": 50.0, "reasoning": "Emergency fund is high priority and needs regular contributions"}},
+  {{"goal_id": 3, "amount_allocated": 300.00, "allocation_percentage": 30.0, "reasoning": "Debt payoff saves on interest costs"}}
+]
+
+Provide ONLY the JSON array, no additional text."""
+
+            message = self.client.messages.create(
+                model="claude-3-5-haiku-20241022",
+                max_tokens=1000,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+            )
+
+            # Parse AI response
+            response_text = self._clean_ai_response(message.content[0].text.strip())
+            allocations = json.loads(response_text)
+
+            # Validate allocations
+            total_allocated = sum(alloc.get("amount_allocated", 0) for alloc in allocations)
+            if total_allocated > income_amount:
+                logger.warning(f"AI suggested allocations exceed income amount: {total_allocated} > {income_amount}")
+                # Scale down proportionally
+                scale_factor = income_amount / total_allocated
+                for alloc in allocations:
+                    alloc["amount_allocated"] = round(alloc["amount_allocated"] * scale_factor, 2)
+                    alloc["allocation_percentage"] = round(
+                        (alloc["amount_allocated"] / income_amount) * 100, 1
+                    )
+
+            # Add AI metadata
+            for alloc in allocations:
+                alloc["ai_suggested"] = True
+                alloc["ai_confidence"] = 0.85  # Can be refined based on various factors
+
+            return allocations
+
+        except Exception as error:
+            logger.error(f"Error suggesting goal allocations: {error}")
+            return []
 
 # Note: AIService instances should be created with category_service dependency
 # No global instance to ensure proper dependency injection

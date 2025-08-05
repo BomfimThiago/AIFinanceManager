@@ -45,7 +45,7 @@ class GoalModel(Base):
     # Configuration
     auto_calculate: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)  # Auto-calc from expenses
     priority: Mapped[int] = mapped_column(nullable=False, default=1)  # 1=high, 2=medium, 3=low
-    
+
     # Visual identification
     color: Mapped[str | None] = mapped_column(String(10), nullable=True)  # Hex color code for goal
     icon: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Icon name for goal

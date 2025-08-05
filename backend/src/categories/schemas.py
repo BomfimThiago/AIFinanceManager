@@ -24,7 +24,7 @@ class CategoryBase(BaseModel):
 class CategoryCreate(CategoryBase):
     """Schema for creating a new category."""
 
-    pass
+    category_type: str = Field("expense", description="Category type (expense or income)")
 
 
 class CategoryUpdate(BaseModel):
@@ -39,6 +39,7 @@ class CategoryUpdate(BaseModel):
     )
     icon: str | None = Field(None, max_length=50, description="Icon name")
     is_active: bool | None = Field(None, description="Whether category is active")
+    category_type: str | None = Field(None, description="Category type (expense or income)")
 
 
 class Category(CategoryBase):
@@ -47,6 +48,7 @@ class Category(CategoryBase):
     id: int = Field(..., description="Category ID")
     is_default: bool = Field(..., description="Whether this is a default category")
     is_active: bool = Field(..., description="Whether category is active")
+    category_type: str = Field(..., description="Category type (expense or income)")
     user_id: int | None = Field(
         None, description="User ID (null for default categories)"
     )

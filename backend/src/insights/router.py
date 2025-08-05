@@ -42,28 +42,28 @@ async def generate_insights(
         # Get expenses and budgets
         expenses = await expense_service.get_all()
         budgets_dict = await budget_service.get_all()
-        
+
         # Filter expenses by date range if provided
         if start_date or end_date:
             from datetime import datetime
             filtered_expenses = []
             for expense in expenses:
                 expense_date = datetime.fromisoformat(expense.date).date()
-                
+
                 # Check start date
                 if start_date:
                     start_date_obj = datetime.fromisoformat(start_date).date()
                     if expense_date < start_date_obj:
                         continue
-                
+
                 # Check end date
                 if end_date:
                     end_date_obj = datetime.fromisoformat(end_date).date()
                     if expense_date > end_date_obj:
                         continue
-                
+
                 filtered_expenses.append(expense)
-            
+
             expenses = filtered_expenses
 
         logger.info(f"📊 Retrieved {len(expenses)} expenses and {len(budgets_dict)} budgets")
@@ -146,7 +146,7 @@ async def get_financial_report(
     try:
         logger.info(f"Generating financial report for user {current_user.id} (dates: {start_date} to {end_date})")
         report = await financial_report_service.generate_comprehensive_report(start_date, end_date)
-        logger.info(f"Financial report generated successfully")
+        logger.info("Financial report generated successfully")
         return report
     except DatabaseError:
         raise

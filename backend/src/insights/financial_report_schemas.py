@@ -6,7 +6,6 @@ This module contains the Pydantic schemas for financial report data structures.
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -37,7 +36,7 @@ class ExecutiveSummary(BaseModel):
     average_daily_spending: float
     total_transactions: int
     financial_health_score: int
-    quick_insights: List[str]
+    quick_insights: list[str]
 
 
 class MonthlyTrendData(BaseModel):
@@ -57,8 +56,8 @@ class CategoryAnalysis(BaseModel):
     percentage: float
     transaction_count: int
     trend: TrendDirection
-    budget_limit: Optional[float] = None
-    budget_percentage: Optional[float] = None
+    budget_limit: float | None = None
+    budget_percentage: float | None = None
     average_transaction: float
 
 
@@ -78,16 +77,16 @@ class TransactionPatterns(BaseModel):
     largest_transaction: float
     smallest_transaction: float
     most_common_day: str
-    transactions_by_day: Dict[str, int]
-    recurring_expenses: List[MerchantAnalysis]
+    transactions_by_day: dict[str, int]
+    recurring_expenses: list[MerchantAnalysis]
 
 
 class BudgetPerformance(BaseModel):
     """Budget performance analysis."""
     overall_adherence_score: float
-    categories_over_budget: List[str]
-    categories_under_budget: List[str]
-    projected_month_end_status: Dict[str, float]
+    categories_over_budget: list[str]
+    categories_under_budget: list[str]
+    projected_month_end_status: dict[str, float]
     total_budget: float
     total_spent: float
 
@@ -98,7 +97,7 @@ class FinancialHealthMetrics(BaseModel):
     expense_ratio_fixed: float
     expense_ratio_variable: float
     emergency_fund_months: float
-    debt_to_income_ratio: Optional[float] = None
+    debt_to_income_ratio: float | None = None
     overall_grade: FinancialHealthGrade
 
 
@@ -109,18 +108,18 @@ class GoalProgress(BaseModel):
     target_amount: float
     current_amount: float
     progress_percentage: float
-    projected_completion_date: Optional[date] = None
+    projected_completion_date: date | None = None
     required_monthly_savings: float
     is_on_track: bool
 
 
 class GoalAlignment(BaseModel):
     """Goal alignment analysis."""
-    active_goals: List[GoalProgress]
+    active_goals: list[GoalProgress]
     total_monthly_required: float
     current_monthly_savings: float
     savings_gap: float
-    recommendations: List[str]
+    recommendations: list[str]
 
 
 class RecommendationPriority(str, Enum):
@@ -136,29 +135,29 @@ class Recommendation(BaseModel):
     description: str
     impact: str
     priority: RecommendationPriority
-    potential_savings: Optional[float] = None
+    potential_savings: float | None = None
     difficulty: str
     timeframe: str
 
 
 class ActionPlan(BaseModel):
     """Action plan with priorities."""
-    top_priorities: List[Recommendation]
+    top_priorities: list[Recommendation]
     monthly_savings_potential: float
-    next_steps: List[str]
+    next_steps: list[str]
 
 
 class ComprehensiveFinancialReport(BaseModel):
     """Complete financial report."""
     executive_summary: ExecutiveSummary
-    monthly_trends: List[MonthlyTrendData]
-    category_analysis: List[CategoryAnalysis]
-    merchant_analysis: List[MerchantAnalysis]
+    monthly_trends: list[MonthlyTrendData]
+    category_analysis: list[CategoryAnalysis]
+    merchant_analysis: list[MerchantAnalysis]
     transaction_patterns: TransactionPatterns
     budget_performance: BudgetPerformance
     financial_health: FinancialHealthMetrics
     goal_alignment: GoalAlignment
-    ai_insights: List[str]
-    recommendations: List[Recommendation]
+    ai_insights: list[str]
+    recommendations: list[Recommendation]
     action_plan: ActionPlan
     generated_at: datetime = Field(default_factory=datetime.now)

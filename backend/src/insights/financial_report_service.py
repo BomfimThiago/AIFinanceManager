@@ -6,11 +6,10 @@ This module provides comprehensive financial analysis and reporting.
 
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import date, datetime
 
-from src.budgets.service import BudgetService
 from src.budgets.goals_service import GoalsService
+from src.budgets.service import BudgetService
 from src.expenses.schemas import Expense
 from src.expenses.service import ExpenseService
 from src.insights.financial_report_schemas import (
@@ -91,7 +90,7 @@ class FinancialReportService:
             action_plan=action_plan,
         )
 
-    def _generate_executive_summary(self, expenses: List[Expense]) -> ExecutiveSummary:
+    def _generate_executive_summary(self, expenses: list[Expense]) -> ExecutiveSummary:
         """Generate executive summary."""
         if not expenses:
             return ExecutiveSummary(
@@ -148,7 +147,7 @@ class FinancialReportService:
             quick_insights=quick_insights,
         )
 
-    def _generate_monthly_trends(self, expenses: List[Expense]) -> List[MonthlyTrendData]:
+    def _generate_monthly_trends(self, expenses: list[Expense]) -> list[MonthlyTrendData]:
         """Generate monthly trend data."""
         monthly_data = defaultdict(lambda: {"income": 0, "expenses": 0, "count": 0})
 
@@ -179,8 +178,8 @@ class FinancialReportService:
         return trends
 
     def _generate_category_analysis(
-        self, expenses: List[Expense], budgets: Dict
-    ) -> List[CategoryAnalysis]:
+        self, expenses: list[Expense], budgets: dict
+    ) -> list[CategoryAnalysis]:
         """Generate category analysis."""
         category_data = defaultdict(lambda: {"amount": 0, "count": 0})
         total_expenses = 0
@@ -214,7 +213,7 @@ class FinancialReportService:
 
         return sorted(analysis, key=lambda x: x.amount, reverse=True)
 
-    def _generate_merchant_analysis(self, expenses: List[Expense]) -> List[MerchantAnalysis]:
+    def _generate_merchant_analysis(self, expenses: list[Expense]) -> list[MerchantAnalysis]:
         """Generate merchant analysis."""
         merchant_data = defaultdict(lambda: {"amount": 0, "count": 0, "last_date": None})
         total_expenses = sum(e.amount for e in expenses if e.type == "expense")
@@ -245,7 +244,7 @@ class FinancialReportService:
 
         return sorted(analysis, key=lambda x: x.total_amount, reverse=True)[:10]
 
-    def _generate_transaction_patterns(self, expenses: List[Expense]) -> TransactionPatterns:
+    def _generate_transaction_patterns(self, expenses: list[Expense]) -> TransactionPatterns:
         """Generate transaction patterns."""
         if not expenses:
             return TransactionPatterns(
@@ -286,7 +285,7 @@ class FinancialReportService:
         )
 
     def _generate_budget_performance(
-        self, expenses: List[Expense], budgets: Dict
+        self, expenses: list[Expense], budgets: dict
     ) -> BudgetPerformance:
         """Generate budget performance analysis."""
         if not budgets:
@@ -335,7 +334,7 @@ class FinancialReportService:
             total_spent=total_spent,
         )
 
-    def _generate_financial_health_metrics(self, expenses: List[Expense]) -> FinancialHealthMetrics:
+    def _generate_financial_health_metrics(self, expenses: list[Expense]) -> FinancialHealthMetrics:
         """Generate financial health metrics."""
         total_income = sum(e.amount for e in expenses if e.type == "income")
         total_expenses = sum(e.amount for e in expenses if e.type == "expense")
@@ -366,7 +365,7 @@ class FinancialReportService:
             overall_grade=grade,
         )
 
-    def _generate_goal_alignment(self, goals: List, expenses: List[Expense]) -> GoalAlignment:
+    def _generate_goal_alignment(self, goals: list, expenses: list[Expense]) -> GoalAlignment:
         """Generate goal alignment analysis."""
         if not goals:
             return GoalAlignment(
@@ -413,7 +412,7 @@ class FinancialReportService:
             recommendations=[],
         )
 
-    def _generate_ai_insights(self, expenses: List[Expense], budgets: Dict, goals: List) -> List[str]:
+    def _generate_ai_insights(self, expenses: list[Expense], budgets: dict, goals: list) -> list[str]:
         """Generate non-AI insights based on financial data analysis."""
         insights = []
 
@@ -444,12 +443,12 @@ class FinancialReportService:
             for expense in expenses:
                 if expense.type == "expense":
                     category_spending[expense.category] = category_spending.get(expense.category, 0) + expense.amount
-            
+
             if category_spending:
                 top_category = max(category_spending.items(), key=lambda x: x[1])
                 total_spending = sum(category_spending.values())
                 pct = (top_category[1] / total_spending * 100) if total_spending > 0 else 0
-                
+
                 if pct > 40:
                     insights.append(f"{top_category[0]} represents {pct:.1f}% of your spending - consider if this aligns with your priorities")
 
@@ -465,11 +464,11 @@ class FinancialReportService:
 
     def _generate_recommendations(
         self,
-        expenses: List[Expense],
-        budgets: Dict,
-        goals: List,
+        expenses: list[Expense],
+        budgets: dict,
+        goals: list,
         financial_health: FinancialHealthMetrics,
-    ) -> List[Recommendation]:
+    ) -> list[Recommendation]:
         """Generate personalized recommendations."""
         recommendations = []
 
@@ -501,17 +500,17 @@ class FinancialReportService:
 
         return recommendations
 
-    def _generate_action_plan(self, recommendations: List[Recommendation]) -> ActionPlan:
+    def _generate_action_plan(self, recommendations: list[Recommendation]) -> ActionPlan:
         """Generate action plan."""
         high_priority = [r for r in recommendations if r.priority == RecommendationPriority.HIGH]
-        
+
         potential_savings = sum(
             r.potential_savings for r in recommendations if r.potential_savings
         )
 
         next_steps = [
             "Review your largest expense categories",
-            "Set up budgets for top spending categories", 
+            "Set up budgets for top spending categories",
             "Identify recurring subscriptions to cancel",
             "Set a monthly savings goal",
         ]
@@ -522,28 +521,28 @@ class FinancialReportService:
             next_steps=next_steps,
         )
 
-    def _filter_expenses_by_date(self, expenses: List[Expense], start_date: str | None = None, end_date: str | None = None) -> List[Expense]:
+    def _filter_expenses_by_date(self, expenses: list[Expense], start_date: str | None = None, end_date: str | None = None) -> list[Expense]:
         """Filter expenses by date range."""
         if not start_date and not end_date:
             return expenses
-        
+
         filtered_expenses = []
-        
+
         for expense in expenses:
             expense_date = datetime.fromisoformat(expense.date).date()
-            
+
             # Check start date
             if start_date:
                 start_date_obj = datetime.fromisoformat(start_date).date()
                 if expense_date < start_date_obj:
                     continue
-            
+
             # Check end date
             if end_date:
                 end_date_obj = datetime.fromisoformat(end_date).date()
                 if expense_date > end_date_obj:
                     continue
-            
+
             filtered_expenses.append(expense)
-        
+
         return filtered_expenses
