@@ -1,5 +1,0 @@
-# Netlify headers file
-# Override CSP to allow connections to our production API
-
-/*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.getkonta.app https://api.frankfurter.app https://frankfurter.app https://api.anthropic.com https://*.belvo.io wss://*.belvo.io https://sandbox.belvo.com https://development.belvo.com https://api.belvo.com wss://api.getkonta.app; frame-src 'self' https://widget.belvo.io https://cdn.belvo.io; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;

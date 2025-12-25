@@ -1,447 +1,801 @@
-# CLAUDE.md
+# AI Finance Manager - Development Guidelines
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Project Overview
 
-## Development Commands
+A home finance management application with AI-powered receipt scanning that extracts spending details automatically.
 
-### Frontend (finance-dashboard/)
-```bash
-cd finance-dashboard
-npm install          # Install dependencies
-npm run dev          # Start development server (Vite)
-npm run build        # Build for production
-npm run lint         # Run ESLint
-npm run typecheck    # Run TypeScript type checking
-npm run preview      # Preview production build
+### Tech Stack
+- **Backend**: FastAPI (Python 3.12+)
+- **Frontend**: React Native + Expo (iOS, Android, and Web from single codebase)
+- **AI/ML**: OCR + LLM for receipt parsing
+- **Database**: PostgreSQL
+- **Package Manager**: uv (Python), npm (JavaScript)
+
+### Why React Native + Expo for All Platforms?
+- **Single codebase**: Write once, deploy to iOS, Android, and Web
+- **Expo Router**: File-based routing that works across all platforms
+- **React Native Web**: Compiles React Native components to web-compatible elements
+- **Shared logic**: Same hooks, state management, and API calls everywhere
+- **Platform flexibility**: Use `Platform.select()` for platform-specific UI when needed
+
+---
+
+## FastAPI Backend Best Practices
+
+### Project Structure
+```
+backend/
+├── src/
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI app initialization
+│   ├── config.py               # Settings and configuration
+│   ├── database.py             # Database connection
+│   ├── dependencies.py         # Shared dependencies
+│   ├── auth/                   # Authentication module
+│   │   ├── __init__.py
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   ├── repository.py
+│   │   ├── schemas.py
+│   │   ├── models.py
+│   │   └── dependencies.py
+│   ├── receipts/               # Receipt processing module
+│   │   ├── __init__.py
+│   │   ├── router.py
+│   │   ├── service.py
+│   │   ├── repository.py
+│   │   ├── schemas.py
+│   │   ├── models.py
+│   │   ├── ocr_service.py      # OCR processing
+│   │   └── ai_parser.py        # AI extraction logic
+│   ├── expenses/               # Expenses module
+│   ├── categories/             # Categories module
+│   └── shared/                 # Shared utilities
+│       ├── exceptions.py
+│       ├── constants.py
+│       └── models.py
+├── tests/
+├── alembic/                    # Database migrations
+├── pyproject.toml
+└── uv.lock
 ```
 
-The development server runs on http://localhost:5173
+### Code Style & Patterns
 
-### Backend (backend/)
+#### 1. Always Use Type Hints
+```python
+from typing import Annotated
+from fastapi import Depends
+
+async def get_receipt(
+    receipt_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ReceiptResponse:
+    ...
+```
+
+#### 2. Use Pydantic Models for All I/O
+```python
+from pydantic import BaseModel, Field
+from decimal import Decimal
+from datetime import datetime
+
+class ReceiptCreate(BaseModel):
+    image_url: str = Field(..., description="URL or base64 of receipt image")
+
+class ReceiptResponse(BaseModel):
+    id: int
+    store_name: str
+    total_amount: Decimal
+    currency: str
+    purchase_date: datetime
+    items: list[ReceiptItemResponse]
+    category: str
+
+    model_config = {"from_attributes": True}
+```
+
+#### 3. Repository Pattern for Database Access
+```python
+class ReceiptRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create(self, receipt: ReceiptCreate, user_id: int) -> Receipt:
+        db_receipt = Receipt(**receipt.model_dump(), user_id=user_id)
+        self.db.add(db_receipt)
+        await self.db.commit()
+        await self.db.refresh(db_receipt)
+        return db_receipt
+
+    async def get_by_id(self, receipt_id: int, user_id: int) -> Receipt | None:
+        result = await self.db.execute(
+            select(Receipt).where(
+                Receipt.id == receipt_id,
+                Receipt.user_id == user_id
+            )
+        )
+        return result.scalar_one_or_none()
+```
+
+#### 4. Service Layer for Business Logic
+```python
+class ReceiptService:
+    def __init__(
+        self,
+        repository: ReceiptRepository,
+        ocr_service: OCRService,
+        ai_parser: AIParser,
+    ):
+        self.repository = repository
+        self.ocr_service = ocr_service
+        self.ai_parser = ai_parser
+
+    async def process_receipt(
+        self,
+        image_data: bytes,
+        user_id: int
+    ) -> ReceiptResponse:
+        # Extract text from image
+        raw_text = await self.ocr_service.extract_text(image_data)
+
+        # Parse with AI
+        parsed_data = await self.ai_parser.parse_receipt(raw_text)
+
+        # Save to database
+        receipt = await self.repository.create(parsed_data, user_id)
+
+        return ReceiptResponse.model_validate(receipt)
+```
+
+#### 5. Dependency Injection
+```python
+# dependencies.py
+def get_receipt_repository(
+    db: Annotated[AsyncSession, Depends(get_db)]
+) -> ReceiptRepository:
+    return ReceiptRepository(db)
+
+def get_receipt_service(
+    repository: Annotated[ReceiptRepository, Depends(get_receipt_repository)],
+    ocr_service: Annotated[OCRService, Depends(get_ocr_service)],
+    ai_parser: Annotated[AIParser, Depends(get_ai_parser)],
+) -> ReceiptService:
+    return ReceiptService(repository, ocr_service, ai_parser)
+```
+
+#### 6. Error Handling with Custom Exceptions
+```python
+# shared/exceptions.py
+from fastapi import HTTPException, status
+
+class ReceiptNotFoundError(HTTPException):
+    def __init__(self, receipt_id: int):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Receipt with ID {receipt_id} not found"
+        )
+
+class ReceiptProcessingError(HTTPException):
+    def __init__(self, message: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Failed to process receipt: {message}"
+        )
+```
+
+#### 7. Use Enums for Constants
+```python
+from enum import StrEnum
+
+class ExpenseCategory(StrEnum):
+    GROCERIES = "groceries"
+    DINING = "dining"
+    TRANSPORTATION = "transportation"
+    UTILITIES = "utilities"
+    ENTERTAINMENT = "entertainment"
+    HEALTHCARE = "healthcare"
+    SHOPPING = "shopping"
+    OTHER = "other"
+
+class Currency(StrEnum):
+    USD = "USD"
+    EUR = "EUR"
+    BRL = "BRL"
+```
+
+#### 8. Background Tasks for Heavy Processing
+```python
+from fastapi import BackgroundTasks
+
+@router.post("/receipts/upload")
+async def upload_receipt(
+    file: UploadFile,
+    background_tasks: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    # Save file and create pending receipt
+    receipt_id = await create_pending_receipt(file, current_user.id)
+
+    # Process in background
+    background_tasks.add_task(process_receipt_async, receipt_id)
+
+    return {"receipt_id": receipt_id, "status": "processing"}
+```
+
+### API Design Guidelines
+
+1. **Use RESTful conventions**:
+   - `GET /receipts` - List receipts
+   - `POST /receipts` - Create/upload receipt
+   - `GET /receipts/{id}` - Get single receipt
+   - `PUT /receipts/{id}` - Update receipt
+   - `DELETE /receipts/{id}` - Delete receipt
+
+2. **Version your API**: `/api/v1/receipts`
+
+3. **Use query parameters for filtering**:
+   ```
+   GET /receipts?start_date=2024-01-01&end_date=2024-12-31&category=groceries
+   ```
+
+4. **Consistent response format**:
+   ```python
+   class APIResponse(BaseModel, Generic[T]):
+       success: bool = True
+       data: T | None = None
+       message: str | None = None
+   ```
+
+### Testing
+```python
+import pytest
+from httpx import AsyncClient
+
+@pytest.fixture
+async def async_client(app):
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+
+@pytest.mark.asyncio
+async def test_upload_receipt(async_client, auth_headers):
+    with open("tests/fixtures/sample_receipt.jpg", "rb") as f:
+        response = await async_client.post(
+            "/api/v1/receipts/upload",
+            files={"file": ("receipt.jpg", f, "image/jpeg")},
+            headers=auth_headers,
+        )
+    assert response.status_code == 201
+    assert "receipt_id" in response.json()
+```
+
+---
+
+## React Native (Expo) - Web, iOS & Android
+
+### Project Structure
+```
+app/
+├── src/
+│   ├── app/                    # Navigation & screens (Expo Router)
+│   │   ├── (tabs)/
+│   │   │   ├── _layout.tsx
+│   │   │   ├── index.tsx       # Home/Dashboard
+│   │   │   ├── receipts.tsx
+│   │   │   ├── expenses.tsx
+│   │   │   └── settings.tsx
+│   │   ├── receipt/
+│   │   │   └── [id].tsx
+│   │   └── _layout.tsx
+│   ├── components/
+│   │   ├── ui/                 # Reusable UI components
+│   │   │   ├── Button.tsx
+│   │   │   ├── Card.tsx
+│   │   │   ├── Input.tsx
+│   │   │   └── index.ts
+│   │   ├── receipts/
+│   │   │   ├── ReceiptCard.tsx
+│   │   │   ├── ReceiptScanner.tsx
+│   │   │   └── ReceiptDetails.tsx
+│   │   └── expenses/
+│   ├── hooks/
+│   │   ├── useReceipts.ts
+│   │   ├── useCamera.ts
+│   │   └── useAuth.ts
+│   ├── services/
+│   │   ├── api.ts
+│   │   └── storage.ts
+│   ├── store/                  # State management (Zustand)
+│   │   ├── authStore.ts
+│   │   └── receiptsStore.ts
+│   ├── types/
+│   │   └── index.ts
+│   ├── utils/
+│   │   ├── formatters.ts
+│   │   └── validators.ts
+│   └── constants/
+│       ├── colors.ts
+│       ├── categories.ts
+│       └── config.ts
+├── assets/
+├── app.json
+├── package.json
+└── tsconfig.json
+```
+
+### Code Style & Patterns
+
+#### 1. Use TypeScript Strictly
+```typescript
+// types/index.ts
+export interface Receipt {
+  id: number;
+  storeName: string;
+  totalAmount: number;
+  currency: string;
+  purchaseDate: string;
+  items: ReceiptItem[];
+  category: ExpenseCategory;
+  imageUrl: string;
+}
+
+export interface ReceiptItem {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export type ExpenseCategory =
+  | 'groceries'
+  | 'dining'
+  | 'transportation'
+  | 'utilities'
+  | 'entertainment'
+  | 'healthcare'
+  | 'shopping'
+  | 'other';
+```
+
+#### 2. Functional Components with Proper Types
+```typescript
+import { View, Text, StyleSheet } from 'react-native';
+
+interface ReceiptCardProps {
+  receipt: Receipt;
+  onPress: (id: number) => void;
+}
+
+export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
+  return (
+    <Pressable
+      style={styles.card}
+      onPress={() => onPress(receipt.id)}
+    >
+      <Text style={styles.storeName}>{receipt.storeName}</Text>
+      <Text style={styles.amount}>
+        {formatCurrency(receipt.totalAmount, receipt.currency)}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  storeName: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  amount: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2563eb',
+  },
+});
+```
+
+#### 3. React Query for Data Fetching
+```typescript
+// hooks/useReceipts.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { receiptsApi } from '@/services/api';
+
+export function useReceipts() {
+  return useQuery({
+    queryKey: ['receipts'],
+    queryFn: receiptsApi.getAll,
+  });
+}
+
+export function useReceipt(id: number) {
+  return useQuery({
+    queryKey: ['receipts', id],
+    queryFn: () => receiptsApi.getById(id),
+    enabled: !!id,
+  });
+}
+
+export function useUploadReceipt() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: receiptsApi.upload,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+    },
+  });
+}
+```
+
+#### 4. Zustand for Global State
+```typescript
+// store/authStore.ts
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      login: async (email, password) => {
+        const { user, token } = await authApi.login(email, password);
+        set({ user, token, isAuthenticated: true });
+      },
+      logout: () => {
+        set({ user: null, token: null, isAuthenticated: false });
+      },
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
+```
+
+#### 5. Camera & Image Handling
+```typescript
+// hooks/useCamera.ts
+import { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+
+export function useCamera() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Camera permission denied');
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+
+    if (result.canceled) return null;
+
+    // Compress image for upload
+    const compressed = await manipulateAsync(
+      result.assets[0].uri,
+      [{ resize: { width: 1200 } }],
+      { compress: 0.7, format: SaveFormat.JPEG }
+    );
+
+    return compressed;
+  };
+
+  const pickFromGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      throw new Error('Gallery permission denied');
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+
+    if (result.canceled) return null;
+    return result.assets[0];
+  };
+
+  return { takePhoto, pickFromGallery, isLoading };
+}
+```
+
+#### 6. API Service with Interceptors
+```typescript
+// services/api.ts
+import axios from 'axios';
+import { useAuthStore } from '@/store/authStore';
+import { API_BASE_URL } from '@/constants/config';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+});
+
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const receiptsApi = {
+  getAll: async (): Promise<Receipt[]> => {
+    const { data } = await api.get('/receipts');
+    return data;
+  },
+
+  getById: async (id: number): Promise<Receipt> => {
+    const { data } = await api.get(`/receipts/${id}`);
+    return data;
+  },
+
+  upload: async (imageUri: string): Promise<Receipt> => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'receipt.jpg',
+    } as any);
+
+    const { data } = await api.post('/receipts/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+};
+```
+
+### Platform-Specific Code
+```typescript
+import { Platform } from 'react-native';
+
+// Platform-specific styles
+const styles = StyleSheet.create({
+  shadow: Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    android: {
+      elevation: 4,
+    },
+    web: {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    },
+  }),
+});
+
+// Platform-specific component rendering
+function ReceiptUploader() {
+  if (Platform.OS === 'web') {
+    return <WebDropzone />;  // Drag & drop for web
+  }
+  return <MobileCamera />;    // Camera for mobile
+}
+```
+
+### Web-Specific: Drag & Drop Upload
+```typescript
+// components/receipts/WebDropzone.tsx
+import { useCallback } from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+
+// Only import on web to avoid mobile bundle issues
+const Dropzone = Platform.OS === 'web'
+  ? require('react-dropzone').default
+  : null;
+
+export function WebDropzone({ onUpload }: { onUpload: (file: File) => void }) {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      onUpload(acceptedFiles[0]);
+    }
+  }, [onUpload]);
+
+  if (!Dropzone) return null;
+
+  return (
+    <Dropzone onDrop={onDrop} accept={{ 'image/*': ['.jpeg', '.jpg', '.png'] }}>
+      {({ getRootProps, getInputProps, isDragActive }) => (
+        <View {...getRootProps()} style={[styles.dropzone, isDragActive && styles.active]}>
+          <input {...getInputProps()} />
+          <Text>{isDragActive ? 'Drop here...' : 'Drag & drop or click to upload'}</Text>
+        </View>
+      )}
+    </Dropzone>
+  );
+}
+```
+
+### Responsive Design
+```typescript
+import { useWindowDimensions } from 'react-native';
+
+export function useResponsive() {
+  const { width } = useWindowDimensions();
+
+  return {
+    isMobile: width < 768,
+    isTablet: width >= 768 && width < 1024,
+    isDesktop: width >= 1024,
+  };
+}
+
+// Usage in components
+function Dashboard() {
+  const { isMobile, isDesktop } = useResponsive();
+
+  return (
+    <View style={[styles.container, isDesktop && styles.desktopLayout]}>
+      {isDesktop && <Sidebar />}
+      <MainContent />
+      {isMobile && <BottomNav />}
+    </View>
+  );
+}
+```
+
+---
+
+## AI Receipt Processing Guidelines
+
+### OCR + LLM Pipeline
+```python
+# receipts/ai_parser.py
+from anthropic import Anthropic
+
+class AIParser:
+    def __init__(self, api_key: str):
+        self.client = Anthropic(api_key=api_key)
+
+    async def parse_receipt(self, ocr_text: str) -> ParsedReceipt:
+        response = await self.client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{
+                "role": "user",
+                "content": f"""Extract the following from this receipt:
+                - Store name
+                - Date of purchase
+                - Total amount
+                - Currency
+                - Individual items with prices
+                - Category (groceries, dining, etc.)
+
+                Receipt text:
+                {ocr_text}
+
+                Return as JSON."""
+            }]
+        )
+        return self._parse_response(response)
+```
+
+### Image Processing for Better OCR
+```python
+from PIL import Image
+import pytesseract
+
+class OCRService:
+    def preprocess_image(self, image_data: bytes) -> Image:
+        image = Image.open(io.BytesIO(image_data))
+        # Convert to grayscale
+        image = image.convert('L')
+        # Increase contrast
+        # Apply thresholding
+        return image
+
+    async def extract_text(self, image_data: bytes) -> str:
+        processed = self.preprocess_image(image_data)
+        return pytesseract.image_to_string(processed)
+```
+
+---
+
+## Development Workflow
+
+### Commands
 ```bash
+# Backend
 cd backend
-uv sync              # Install dependencies with uv
-uv run python run.py # Start FastAPI server
-./scripts/lint.sh    # Run linter and formatter (Ruff)
+uv sync                          # Install dependencies
+uv run uvicorn src.main:app --reload  # Run dev server
+uv run pytest                    # Run tests
+uv run alembic upgrade head      # Run migrations
+
+# Frontend (React Native + Expo - all platforms)
+cd app
+npm install                      # Install dependencies
+npx expo start                   # Start Expo dev server (press w for web, i for iOS, a for Android)
+npx expo start --web             # Start web only
+npx expo run:ios                 # Run on iOS simulator
+npx expo run:android             # Run on Android emulator
+npx expo export --platform web   # Build for web production
+eas build --platform ios         # Build iOS app for store
+eas build --platform android     # Build Android app for store
 ```
 
-The backend server runs on http://localhost:8001
+### Environment Variables
+```bash
+# backend/.env
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/finance
+ANTHROPIC_API_KEY=sk-...
+JWT_SECRET=your-secret-key
+CORS_ORIGINS=["http://localhost:8081","http://localhost:19006"]
 
-### Environment Setup
-
-#### Frontend
-Create `.env` file in `finance-dashboard/` directory:
-```env
-VITE_API_BASE_URL=http://localhost:8001
+# app/.env (Expo - shared across all platforms)
+EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
-#### Backend
-Create `.env` file in `backend/` directory:
-```env
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
-ENVIRONMENT=development
-DATABASE_URL=postgresql://user:password@localhost:5433/finance_db
-```
+---
 
-## Architecture Overview
+## Security Considerations
 
-This is a full-stack application with a React TypeScript frontend and FastAPI Python backend for AI-powered personal finance management.
+1. **Never store API keys in client code** - Use environment variables
+2. **Validate all file uploads** - Check file type, size limits
+3. **Sanitize OCR output** - Before sending to AI or storing
+4. **Use HTTPS in production**
+5. **Implement rate limiting** for receipt uploads
+6. **Secure image storage** - Use signed URLs for S3
 
-### Frontend Technologies
-- **React 19.1.0** with TypeScript and Vite 6.x for development
-- **Tailwind CSS v4** for styling
-- **Recharts** for data visualizations
-- **Lucide React** for icons
-- **TanStack Query v5** for server state management and caching
-- **React Context API** for global state (currency, authentication, toast notifications)
+---
 
-### Backend Technologies
-- **FastAPI** for REST API endpoints with OpenAPI documentation
-- **SQLAlchemy ORM** with AsyncSession for database operations
-- **PostgreSQL** database with Alembic migrations
-- **Pydantic** for data validation and serialization with proper response models
-- **Anthropic Claude API** for AI receipt processing and insights
-- **JWT Authentication** for user authentication and authorization
-- **Frankfurter API** for real-time currency conversion
-- **Belvo API** for bank integrations and transaction data in Latin America
-- **aiohttp** for async HTTP requests
-- **uv** for Python dependency management
-- **Ruff** for code linting and formatting
+## Commit Guidelines
 
-### Application Structure
+Always ask before committing. Use conventional commits:
+- `feat:` New features
+- `fix:` Bug fixes
+- `docs:` Documentation
+- `refactor:` Code refactoring
+- `test:` Adding tests
+- `chore:` Maintenance tasks
 
-#### Frontend
-- **Component-based Architecture**: TypeScript components with proper type safety
-- **Tab-based Navigation**: Dashboard, Upload, Expenses, Budgets, and AI Insights tabs
-- **Global State Management**: React Context for currency selection, authentication, and toast notifications
-- **API Integration**: TanStack Query with intelligent caching and background refetching
-- **UI Components**: Reusable components including modals, confirmation dialogs, and currency selectors
-- **Type Safety**: Full TypeScript coverage with interfaces and proper typing
+---
 
-#### Backend
-- **Modular Structure**: Organized using `src/` package with domain modules:
-  - `src/auth/` - Authentication (JWT, users, permissions)
-  - `src/expenses/` - Expense management and processing
-  - `src/budgets/` - Budget tracking and calculations
-  - `src/insights/` - AI-powered financial insights
-  - `src/integrations/` - Bank integration system (Belvo)
-  - `src/currency/` - Multi-currency support and conversion
-  - `src/user_preferences/` - Unified user preferences management
-  - `src/categories/` - Category management and operations
-  - `src/upload_history/` - File upload tracking and history
-  - `src/shared/` - Shared models, constants, and utilities
-  - `src/database/` - Database configuration and connection
-- **API Layer**: RESTful endpoints with proper HTTP status codes and error handling
-- **Repository Pattern**: Clean separation between data access and business logic
-- **Authentication**: JWT-based authentication with dependency injection
-- **Environment-based Configuration**: Development vs production settings
-- **Code Quality**: Ruff linting and formatting with comprehensive rules
+## Documentation
 
-### Core Features
-
-#### 1. User Authentication & Privacy
-- **JWT-based Authentication**: Secure login/signup system with password hashing
-- **Privacy Mode**: Toggle to hide all financial amounts across the application
-- **User Management**: Profile management with secure session handling
-- **User Preferences**: Unified preference management system for currency, language, UI settings, and category preferences
-
-#### 2. Multi-Currency Support
-- **Currency Selection**: Global currency selector (USD, EUR, BRL) with country flags
-- **AI Currency Detection**: Automatic currency detection from uploaded receipts
-- **Real-time Conversion**: Live exchange rates via Frankfurter API
-- **Historical Rate Freezing**: Exchange rates stored at transaction time for accuracy
-- **Pre-calculated Amounts**: All expenses store amounts in multiple currencies
-
-#### 3. Dashboard & Analytics
-- **Financial Overview**: Summary cards with total income, expenses, net savings, and budget count
-- **Interactive Charts**: Line charts for income vs expenses, pie charts for category breakdown
-- **Currency-aware Calculations**: All amounts displayed in selected currency with conversion notices
-- **Real-time Updates**: Automatic data refresh with TanStack Query caching
-
-#### 4. Receipt Upload & Processing
-- **Drag-and-drop Upload**: Support for PDF receipts and images (JPG, PNG)
-- **AI-powered Extraction**: Automatic expense data extraction using Anthropic Claude
-- **User-aware AI Processing**: AI learns from user's category preferences for better categorization
-- **Currency Detection**: AI identifies receipt currency and applies appropriate conversion
-- **Upload History**: Complete tracking of upload status, success/failure states, and file details
-- **Bulk Processing**: Handle multiple file uploads simultaneously
-
-#### 5. Expense Management
-- **Full CRUD Operations**: Create, read, update, delete expenses with proper validation
-- **Advanced Filtering**: Filter by month, year, category with frontend and backend support
-- **Edit Modal**: In-place editing with form validation and currency conversion
-- **Category Management**: Predefined categories with icons and color coding (all capitalized)
-- **User Category Preferences**: AI learns from user's merchant-category mappings for intelligent auto-categorization
-- **Add New Expenses**: Manual expense creation with category selection
-- **Confirmation Modals**: Safe deletion with custom confirmation dialogs
-- **Running Totals**: Real-time calculation of filtered expense totals
-
-#### 6. Budget Management
-- **Category-based Budgets**: Set spending limits for each expense category
-- **Real-time Spending Calculation**: Backend-calculated actual spending vs stored amounts
-- **Visual Progress Tracking**: Progress bars with percentage indicators and color coding
-- **Overspending Alerts**: Visual warnings and indicators for budget overruns
-- **Currency Conversion**: Budget amounts and spending displayed in selected currency
-- **Budget Creation**: Easy budget setup with category selection and limit setting
-
-#### 7. AI Insights & Analysis
-- **Personalized Recommendations**: AI-generated financial insights and spending analysis
-- **Loading States**: Visual feedback during AI processing with spinners and disabled states
-- **Financial Health Score**: Automated scoring based on spending patterns and savings
-- **Actionable Advice**: Specific recommendations for financial improvement
-- **Interactive Generation**: Manual and automatic insight generation with progress indicators
-
-#### 8. User Preferences System
-- **Unified Management**: Centralized system for all user preference types
-- **General Preferences**: Currency, language, and UI settings with validation
-- **Category Preferences**: Merchant-category mappings for AI learning and auto-categorization
-- **User Data Isolation**: Proper user-scoped data access and security
-- **Extensible Architecture**: Ready for future preference types (notifications, privacy, etc.)
-- **RESTful API**: Complete CRUD operations with proper validation and error handling
-- **Database-backed**: Persistent storage with proper foreign key relationships
-
-#### 9. Bank Integration System (Belvo)
-- **Widget Integration**: Secure Belvo widget for bank connections in Brazil and Mexico
-- **Institution Management**: Automated synchronization of bank institution data from Belvo API
-- **Multi-Bank Support**: Users can connect multiple banks with individual management
-- **Transaction Sync**: Manual and automated transaction fetching with currency conversion
-- **Connection Management**: Complete CRUD operations for bank integrations
-- **Real-time Status**: Live connection status with institution logos and metadata
-- **Webhook Support**: Asynchronous transaction processing via Belvo webhooks
-
-### Data Flow
-- **Frontend → Backend**: REST API communication via TanStack Query for intelligent caching
-- **Currency Conversion**: Real-time exchange rates with Frankfurter API integration
-- **AI Processing**: Server-side processing with Anthropic Claude API for security and performance
-- **Data Storage**: PostgreSQL with SQLAlchemy ORM and AsyncSession for database operations
-- **State Management**: TanStack Query handles server state, React Context for global state
-- **Real-time Updates**: Automatic cache invalidation and background refetching
-- **Multi-currency Flow**: Pre-calculated amounts stored, fallback to real-time conversion
-
-### Technical Implementation Details
-
-#### Currency System
-- **Base Currency**: EUR used as base currency for storage and calculations
-- **Supported Currencies**: USD, EUR, BRL with extensible enum system
-- **Exchange Rate API**: Frankfurter API for free, unlimited currency conversion
-- **Rate Storage**: Historical exchange rates frozen at transaction time
-- **Conversion Logic**: Pre-calculated amounts preferred, current rates as fallback
-- **Frontend Integration**: Global currency context with localStorage persistence
-
-#### Authentication Flow
-- **JWT Tokens**: Secure token-based authentication with expiration
-- **Protected Routes**: Middleware-based route protection on backend
-- **Frontend Guards**: Automatic redirect to login for unauthorized access
-- **Password Security**: bcrypt hashing with salt for password storage
-- **Session Management**: Token storage in localStorage with automatic cleanup
-
-#### Database Architecture
-- **Repository Pattern**: Clean separation between data access and business logic
-- **Async Operations**: Full async/await support for database operations
-- **Migration System**: Alembic for database schema versioning and migrations
-- **Connection Pooling**: Async connection pooling with proper resource management
-- **Data Validation**: Pydantic models for request/response validation
-
-#### Performance Optimizations
-- **Query Caching**: TanStack Query with intelligent cache invalidation
-- **Background Refetching**: Automatic data updates in background
-- **Lazy Loading**: Components and data loaded on demand
-- **Optimistic Updates**: Immediate UI updates with server reconciliation
-- **Debounced Search**: Efficient filtering with debounced input
-- **Connection Pooling**: Database connection optimization
-
-### Development Notes
-- **Frontend**: TypeScript + React 19 + TanStack Query v5 + Tailwind CSS v4
-- **Backend**: FastAPI + Python 3.12 + SQLAlchemy ORM + PostgreSQL + uv
-- **Database**: Async SQLAlchemy with repository pattern and migration support
-- **Authentication**: JWT tokens with secure password hashing and protected routes
-- **API Communication**: RESTful design with automatic OpenAPI documentation
-- **Error Handling**: Comprehensive error boundaries and API error handling with toast notifications
-- **Type Safety**: Full TypeScript frontend and Pydantic backend validation
-- **Development Experience**: Hot reload, automatic type checking, and modern tooling
-- **Code Quality**: ESLint, TypeScript strict mode, and consistent code formatting
-
-### Backend Coding Standards & Best Practices
-
-#### Code Organization
-- **Absolute Imports**: Always use `from src.module` instead of relative imports
-- **Domain Modules**: Group related functionality (auth, expenses, budgets, etc.)
-- **Separation of Concerns**: Models, schemas, repositories, and services in separate files
-- **Dependency Injection**: Use FastAPI's dependency system for database sessions and auth
-
-#### Code Quality Tools
-- **Ruff**: Primary linter and formatter - run `./scripts/lint.sh` before commits
-- **Type Hints**: All functions must have proper type annotations
-- **Pydantic Models**: Use for all API request/response validation
-- **Docstrings**: Document all public functions and classes
-
-#### Database Practices
-- **Async Operations**: Always use `AsyncSession` for database operations
-- **Repository Pattern**: Separate data access logic from business logic
-- **Migrations**: Use Alembic for all schema changes with proper naming conventions
-- **Connection Management**: Proper session handling with context managers
-
-#### Migration Standards
-- **Naming Convention**: Use `YYYY-MM-DD_descriptive_slug.py` format (e.g., `2025-01-29_add_user_preferences.py`)
-- **Static & Revertable**: Migrations must be static and fully revertable
-- **Descriptive Names**: Use clear, descriptive slugs that explain the changes
-- **Data Independence**: If migrations depend on dynamic data, only the data should be dynamic, not the structure
-- **Generation Command**: `uv run alembic revision --autogenerate -m "descriptive_slug"`
-
-#### API Design
-- **HTTP Status Codes**: Use appropriate status codes (200, 201, 400, 401, 404, 500)
-- **Error Responses**: Consistent error format with proper error messages
-- **Request/Response Models**: Pydantic schemas for all endpoints
-- **OpenAPI Documentation**: Proper endpoint descriptions and examples
-- **Environment Configuration**: Show docs only in development mode
-
-#### Security
-- **Authentication**: JWT tokens with proper expiration and validation
-- **Password Hashing**: bcrypt for password storage
-- **CORS Configuration**: Proper CORS settings for frontend integration
-- **Input Validation**: Validate all inputs using Pydantic models
-- **Error Messages**: Don't expose sensitive information in error responses
-
-### Database Schema
-
-#### Core Tables
-- **Users**: Authentication and user management with email/username, password hashing
-- **User Preferences**: General user settings (currency, language, UI preferences)
-- **User Category Preferences**: Merchant-category mappings for AI learning
-- **Categories**: Expense categories with user-scoped custom categories
-- **Expenses**: Transaction records with multi-currency support, categories, amounts, and metadata
-- **Budgets**: Category-based spending limits with actual spending calculation
-- **Insights**: AI-generated financial recommendations and alerts with type classification
-- **Upload History**: File upload tracking with status, error messages, and file metadata
-
-#### Multi-Currency Fields
-- **original_currency**: Currency of the original transaction
-- **amounts**: JSON field storing amounts in all supported currencies
-- **exchange_rates**: JSON field storing historical exchange rates
-- **exchange_date**: Timestamp when exchange rates were captured
-
-### API Endpoints
-
-#### Authentication
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user profile
-
-#### Expenses
-- `GET /api/expenses` - List expenses with filtering (month, year)
-- `POST /api/expenses` - Create single expense
-- `POST /api/expenses/bulk` - Create multiple expenses
-- `PUT /api/expenses/{id}` - Update expense
-- `DELETE /api/expenses/{id}` - Delete expense
-- `POST /api/expenses/upload` - Upload and process receipt files
-- `GET /api/expenses/category-spending` - Get spending by category with currency conversion
-- `GET /api/expenses/summary` - Get expense summary data
-- `GET /api/expenses/charts/categories` - Get category chart data
-- `GET /api/expenses/charts/monthly` - Get monthly trend data
-
-#### Budgets
-- `GET /api/budgets` - List all budgets
-- `POST /api/budgets` - Create or update budget
-- `PUT /api/budgets/{category}/spent` - Update spent amount
-- `DELETE /api/budgets/{category}` - Delete budget
-
-#### AI Insights
-- `POST /api/insights/generate` - Generate AI insights
-
-#### User Preferences
-- `GET /api/user/preferences/` - Get user preferences with available options
-- `PUT /api/user/preferences/` - Update user preferences
-- `PUT /api/user/preferences/currency/{currency}` - Update currency preference
-- `PUT /api/user/preferences/language/{language}` - Update language preference
-- `PUT /api/user/preferences/ui` - Update UI preferences
-- `GET /api/user/preferences/categories` - List category preferences
-- `POST /api/user/preferences/categories` - Create category preference
-- `PUT /api/user/preferences/categories/{id}` - Update category preference
-- `DELETE /api/user/preferences/categories/{id}` - Delete category preference
-- `PUT /api/user/preferences/categories/merchant/{merchant_name}` - Quick merchant mapping
-- `DELETE /api/user/preferences/categories/merchant/{merchant_name}` - Delete merchant mapping
-
-#### Upload History
-- `GET /api/upload-history` - Get upload history
-- `DELETE /api/upload-history/{id}` - Delete upload record
-
-### UI Components
-
-#### Reusable Components
-- **ConfirmationModal**: Generic confirmation dialog with variants (danger, warning, info)
-- **CurrencySelector**: Dropdown with country flags for currency selection
-- **EditExpenseModal**: Modal for editing expense details with validation
-- **Toast**: Notification system for success/error messages
-- **SummaryCard**: Dashboard cards for financial metrics
-- **Chart Components**: Line and pie charts with currency formatting
-
-#### Context Providers
-- **CurrencyContext**: Global currency state with formatting and conversion functions
-- **AuthContext**: Authentication state and user management
-- **ToastContext**: Toast notification management
-
-### Key Features Implemented
-1. ✅ Multi-currency support with real-time conversion
-2. ✅ AI-powered receipt processing with currency detection
-3. ✅ Advanced expense filtering and management
-4. ✅ Budget tracking with real-time spending calculation
-5. ✅ Confirmation modals for safe operations
-6. ✅ Privacy mode for hiding amounts
-7. ✅ Upload history tracking
-8. ✅ AI insights with loading states
-9. ✅ Currency conversion rate displays
-10. ✅ Backend budget calculations for performance
-11. ✅ Unified user preferences system with category learning
-12. ✅ Auto-capitalized category names for consistency
-13. ✅ User-aware AI processing with preference learning
-14. ✅ Database-backed preference storage with proper isolation
-
-### Frontend Coding Standards & Best Practices (React 19 + TypeScript)
-
-#### Modern Component Architecture
-- **Function Components Only**: Use function components exclusively over class components for better hooks integration and simpler code
-- **Component Responsibility**: Components should only render elements based on data and trigger events - business logic belongs elsewhere
-- **Small & Reusable**: Keep components small, focused, and reusable across the application
-- **Single Responsibility**: Each component should have one clear purpose and render based on props/state
-
-#### State Management Principles
-- **State Colocation**: Keep state as close to the components that use it - avoid lifting state higher than necessary
-- **Granular State**: Manage dependencies granularly - split large objects into specific state pieces to minimize re-renders
-- **Single Source of Truth**: Same data should never exist in multiple state management solutions (Context + Redux, etc.)
-- **Context for Global State**: Use Context API for application-wide state (theme, auth, locale) with React 19's `use()` API
-
-#### Custom Hooks & Logic Separation
-- **Custom Hooks as Ports**: Use custom hooks as abstraction layers between business logic and UI components
-- **Logic Extraction**: Extract complex stateful logic into reusable custom hooks following the DRY principle
-- **Business Logic Isolation**: Keep business logic separate from React-specific code for better testability
-- **Hexagonal-Inspired Architecture**: Decouple domain logic from UI rendering using custom hooks as adapters
-
-#### TypeScript Integration
-- **Type-Safe Components**: Define clear interfaces for all component props with proper TypeScript typing
-- **Generic Components**: Use TypeScript generics for highly reusable components that work with different data types
-- **Type-Safe Hooks**: Implement custom hooks with proper generic typing and return type definitions
-- **Strict Type Checking**: Enable strict TypeScript mode and avoid `any` types - use union types and proper interfaces
-
-#### Performance Optimization
-- **Monitor First, Optimize Later**: Use React Profiler, Core Web Vitals, and React Scan before optimizing
-- **Strategic Memoization**: Use `React.memo`, `useCallback`, and `useMemo` only after identifying performance bottlenecks
-- **React 19 Compiler**: Leverage React 19's automatic memoization when available
-- **Key Optimization**: Always use unique, stable keys when rendering lists to prevent unnecessary re-renders
-
-#### Data Fetching & Rendering Strategies
-- **"Don't Make Me Wait" Philosophy**: Prioritize fast user interactions and perceived performance
-- **Hybrid Rendering**: Combine different rendering strategies (SSR, SSG, CSR, ISR) based on content requirements
-- **Server Components**: Use React Server Components for data-heavy, non-interactive content
-- **Client Components**: Mark interactive components with `"use client"` directive
-- **Streaming with Suspense**: Implement loading states with Suspense boundaries and skeleton components
-- **SWR Pattern**: Use stale-while-revalidate for dynamic content that needs periodic updates
-
-#### React 19 Modern Patterns
-- **New Hooks**: Utilize `useActionState`, `useFormStatus`, `useOptimistic`, and `use()` API for better UX
-- **Server Actions**: Implement server-side functions for form submissions and data mutations
-- **Optimistic Updates**: Use `useOptimistic` for immediate UI feedback before server confirmation
-- **Form Enhancement**: Leverage `useFormStatus` and `useActionState` for better form handling
-
-#### Code Quality & Structure
-- **Absolute Imports**: Use absolute imports with path mapping (e.g., `@/components/Button`)
-- **Consistent Naming**: Follow consistent naming conventions (PascalCase for components, camelCase for functions)
-- **Component Organization**: Group related components, hooks, and utilities in feature-based folders
-- **Barrel Exports**: Use index.ts files for clean component exports from folders
-
-#### Error Handling & Resilience
-- **Error Boundaries**: Implement Error Boundaries to catch and handle component errors gracefully
-- **Fallback UI**: Provide meaningful fallback components for error states and loading states
-- **Graceful Degradation**: Ensure app functionality degrades gracefully when features fail
-- **User Feedback**: Display clear error messages and loading indicators to users
-
-#### Security Best Practices
-- **XSS Prevention**: Always sanitize user input and avoid `dangerouslySetInnerHTML`
-- **Environment Variables**: Use environment variables for API keys and sensitive configuration
-- **Dependency Updates**: Keep npm packages updated to patch security vulnerabilities
-- **CSP Headers**: Implement Content Security Policy headers for additional protection
-
-#### Accessibility Standards
-- **Semantic HTML**: Use proper HTML elements for their intended purpose
-- **ARIA Attributes**: Implement ARIA attributes correctly without redundancy
-- **Keyboard Navigation**: Ensure all interactive elements are keyboard accessible
-- **Screen Reader Support**: Test with screen readers and provide proper labels
-- **AA Compliance**: Target WCAG 2.1 AA accessibility standards minimum
-
-#### Testing Strategy
-- **Comprehensive Testing**: Include unit tests, integration tests, E2E tests, and accessibility tests
-- **80%+ Coverage**: Maintain test coverage above 80% for critical application paths
-- **User-Focused Tests**: Write tests that reflect real user interactions and workflows
-- **Component Testing**: Test components in isolation and integration with their dependencies
-
-#### Performance Monitoring
-- **Core Web Vitals**: Monitor LCP (Largest Contentful Paint), INP (Interaction to Next Paint), CLS (Cumulative Layout Shift)
-- **Bundle Analysis**: Regularly analyze and optimize JavaScript bundle sizes
-- **Image Optimization**: Use Next.js `<Image/>` component with proper sizing and lazy loading
-- **Code Splitting**: Implement dynamic imports and route-based code splitting
-
-#### Development Workflow
-- **Linting**: Use ESLint with React-specific rules and accessibility plugins
-- **Formatting**: Implement Prettier for consistent code formatting
-- **Type Checking**: Run TypeScript checks in CI/CD pipeline
-- **Documentation**: Document components with JSDoc and maintain up-to-date README files
+Always ask before creating documentation files. Document:
+- API endpoints with OpenAPI/Swagger
+- Complex business logic
+- Setup instructions in README
