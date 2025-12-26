@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
 
 interface CardProps {
@@ -7,13 +7,16 @@ interface CardProps {
   padding?: 'none' | 'small' | 'medium' | 'large';
 }
 
-export function Card({ children, style, padding = 'medium' }: CardProps) {
+export const Card = forwardRef<View, CardProps>(function Card(
+  { children, style, padding = 'medium' },
+  ref
+) {
   return (
-    <View style={[styles.card, styles[padding], style]}>
+    <View ref={ref} style={[styles.card, styles[padding], style]}>
       {children}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

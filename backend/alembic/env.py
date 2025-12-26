@@ -12,7 +12,7 @@ from src.database import Base
 
 # Import all models so they are registered with Base
 from src.auth.models import User  # noqa: F401
-from src.receipts.models import Receipt, ReceiptItem  # noqa: F401
+from src.receipts.models import Receipt  # noqa: F401
 from src.expenses.models import Expense  # noqa: F401
 
 config = context.config

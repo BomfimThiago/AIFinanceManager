@@ -1,38 +1,28 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
+from src.expenses.schemas import ExpenseResponse
 from src.shared.constants import Currency, ExpenseCategory, ReceiptStatus
 
 
-class ReceiptItemCreate(BaseModel):
+class ParsedItemData(BaseModel):
+    """Data for a single item parsed from a receipt by AI."""
+
     name: str
     quantity: Decimal = Decimal("1")
     unit_price: Decimal
     total_price: Decimal
 
 
-class ReceiptItemResponse(BaseModel):
-    id: int
-    name: str
-    quantity: Decimal
-    unit_price: Decimal
-    total_price: Decimal
-
-    model_config = {"from_attributes": True}
-
-
-class ReceiptCreate(BaseModel):
-    store_name: str | None = None
-    total_amount: Decimal | None = None
-    currency: Currency = Currency.USD
-    purchase_date: datetime | None = None
-    category: ExpenseCategory | None = None
-    items: list[ReceiptItemCreate] = Field(default_factory=list)
-
-
 class ReceiptUpdate(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+
     store_name: str | None = None
     total_amount: Decimal | None = None
     currency: Currency | None = None
@@ -41,6 +31,12 @@ class ReceiptUpdate(BaseModel):
 
 
 class ReceiptResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+
     id: int
     store_name: str | None
     total_amount: Decimal | None
@@ -49,23 +45,25 @@ class ReceiptResponse(BaseModel):
     category: str | None
     status: ReceiptStatus
     image_url: str
-    items: list[ReceiptItemResponse] = Field(default_factory=list)
+    expenses: list[ExpenseResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
-    model_config = {"from_attributes": True}
-
 
 class ReceiptUploadResponse(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     receipt_id: int
     status: ReceiptStatus
     message: str
 
 
 class ParsedReceiptData(BaseModel):
+    """Data parsed from a receipt by AI."""
+
     store_name: str | None = None
     total_amount: Decimal | None = None
     currency: Currency = Currency.USD
     purchase_date: datetime | None = None
     category: ExpenseCategory = ExpenseCategory.OTHER
-    items: list[ReceiptItemCreate] = Field(default_factory=list)
+    items: list[ParsedItemData] = Field(default_factory=list)

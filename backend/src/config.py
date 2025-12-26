@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     )
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/finance_manager"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/finance_manager"
 
     # JWT
     jwt_secret: str = "change-me-in-production"
@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     # Sentry
     sentry_dsn: str = ""
+
+    # Server
+    host: str = "0.0.0.0"
+    port: int = 8003
 
     # CORS
     cors_origins: list[str] = ["http://localhost:8081", "http://localhost:19006"]

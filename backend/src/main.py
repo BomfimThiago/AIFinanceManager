@@ -2,16 +2,24 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.auth.router import router as auth_router
 from src.categories.router import router as categories_router
 from src.config import get_settings
+from src.core.logging import get_logger, setup_logging
+from src.currency.service import CurrencyRatesNotAvailableError
 from src.expenses.router import router as expenses_router
 from src.receipts.router import router as receipts_router
+from src.scheduler import start_scheduler, stop_scheduler
 
 settings = get_settings()
+logger = get_logger(__name__)
+
+# Initialize logging
+setup_logging()
 
 # Initialize Sentry
 if settings.sentry_dsn:
@@ -27,13 +35,20 @@ if settings.sentry_dsn:
         # Send default PII like user IPs (disable in production if needed)
         send_default_pii=settings.environment == "development",
     )
+    logger.info("Sentry initialized successfully")
+else:
+    logger.warning("Sentry DSN not configured - error tracking disabled")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
+    logger.info("Starting AI Finance Manager API")
+    await start_scheduler()
     yield
     # Shutdown
+    stop_scheduler()
+    logger.info("Shutting down AI Finance Manager API")
 
 
 app = FastAPI(
@@ -57,6 +72,21 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(receipts_router, prefix="/api/v1/receipts", tags=["Receipts"])
 app.include_router(expenses_router, prefix="/api/v1/expenses", tags=["Expenses"])
 app.include_router(categories_router, prefix="/api/v1/categories", tags=["Categories"])
+
+
+# Exception handlers
+@app.exception_handler(CurrencyRatesNotAvailableError)
+async def currency_rates_error_handler(
+    request: Request, exc: CurrencyRatesNotAvailableError
+) -> JSONResponse:
+    logger.warning(f"Currency rates not available: {exc}")
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": str(exc),
+            "error_code": "CURRENCY_RATES_UNAVAILABLE",
+        },
+    )
 
 
 @app.get("/health")

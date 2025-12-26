@@ -3,18 +3,30 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.currency.service import CurrencyService, get_currency_service
 from src.expenses.models import Expense
 from src.expenses.schemas import ExpenseCreate, ExpenseUpdate
 
 
 class ExpenseRepository:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, currency_service: CurrencyService | None = None):
         self.db = db
+        self.currency_service = currency_service or get_currency_service()
 
     async def create(self, expense_data: ExpenseCreate, user_id: int) -> Expense:
+        # Convert amount to all supported currencies using historical rates
+        converted = await self.currency_service.convert_amount(
+            amount=expense_data.amount,
+            from_currency=expense_data.currency.value,
+            expense_date=expense_data.expense_date,
+        )
+
         expense = Expense(
             user_id=user_id,
             **expense_data.model_dump(),
+            amount_usd=converted["amount_usd"],
+            amount_eur=converted["amount_eur"],
+            amount_brl=converted["amount_brl"],
         )
         self.db.add(expense)
         await self.db.commit()

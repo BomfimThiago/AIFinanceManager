@@ -17,18 +17,18 @@ def get_expense_repository(db: DbSession) -> ExpenseRepository:
     return ExpenseRepository(db)
 
 
-@router.post("", response_model=ExpenseResponse, status_code=201)
+@router.post("", status_code=201)
 async def create_expense(
     expense_data: ExpenseCreate,
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-) -> ExpenseResponse:
+) -> dict:
     """Create a new expense."""
     expense = await repository.create(expense_data, current_user.id)
-    return ExpenseResponse.model_validate(expense)
+    return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
 
 
-@router.get("", response_model=list[ExpenseResponse])
+@router.get("")
 async def get_expenses(
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
@@ -37,7 +37,7 @@ async def get_expenses(
     start_date: datetime | None = None,
     end_date: datetime | None = None,
     category: ExpenseCategory | None = None,
-) -> list[ExpenseResponse]:
+) -> list[dict]:
     """Get all expenses for the current user."""
     expenses = await repository.get_all_by_user(
         user_id=current_user.id,
@@ -47,35 +47,35 @@ async def get_expenses(
         end_date=end_date,
         category=category,
     )
-    return [ExpenseResponse.model_validate(e) for e in expenses]
+    return [ExpenseResponse.model_validate(e).model_dump(by_alias=True) for e in expenses]
 
 
-@router.get("/{expense_id}", response_model=ExpenseResponse)
+@router.get("/{expense_id}")
 async def get_expense(
     expense_id: int,
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-) -> ExpenseResponse:
+) -> dict:
     """Get a specific expense."""
     expense = await repository.get_by_id(expense_id, current_user.id)
     if not expense:
         raise NotFoundError("Expense", expense_id)
-    return ExpenseResponse.model_validate(expense)
+    return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
 
 
-@router.patch("/{expense_id}", response_model=ExpenseResponse)
+@router.patch("/{expense_id}")
 async def update_expense(
     expense_id: int,
     update_data: ExpenseUpdate,
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-) -> ExpenseResponse:
+) -> dict:
     """Update an expense."""
     expense = await repository.get_by_id(expense_id, current_user.id)
     if not expense:
         raise NotFoundError("Expense", expense_id)
     expense = await repository.update(expense, update_data)
-    return ExpenseResponse.model_validate(expense)
+    return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
 
 
 @router.delete("/{expense_id}", status_code=204)

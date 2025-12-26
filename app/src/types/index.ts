@@ -46,6 +46,10 @@ export interface Expense {
   storeName: string | null;
   notes: string | null;
   receiptId: number | null;
+  // Converted amounts using historical exchange rates
+  amountUsd: number | null;
+  amountEur: number | null;
+  amountBrl: number | null;
   createdAt: string;
   updatedAt: string;
 }

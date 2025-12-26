@@ -1,5 +1,4 @@
-import logging
-
+from src.core.logging import add_breadcrumb, get_logger, log_error, log_info
 from src.receipts.ai_parser import AIParser
 from src.receipts.models import Receipt
 from src.receipts.ocr_service import OCRService
@@ -8,7 +7,7 @@ from src.receipts.schemas import ReceiptUpdate
 from src.shared.constants import ReceiptStatus
 from src.shared.exceptions import NotFoundError
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ReceiptService:
@@ -30,6 +29,14 @@ class ReceiptService:
         is_pdf: bool = False,
     ) -> Receipt:
         """Upload and process a receipt image or PDF."""
+        log_info(
+            "Creating receipt record",
+            user_id=user_id,
+            file_url=file_url,
+            is_pdf=is_pdf,
+            file_size=len(file_data),
+        )
+
         # Create receipt in pending state
         receipt = await self.repository.create(
             user_id=user_id,
@@ -37,23 +44,81 @@ class ReceiptService:
             status=ReceiptStatus.PROCESSING,
         )
 
+        log_info("Receipt record created", receipt_id=receipt.id)
+
         try:
             # Extract text based on file type
+            add_breadcrumb(
+                message="Starting OCR extraction",
+                category="ocr",
+                is_pdf=is_pdf,
+            )
+
+            log_info(
+                "Starting OCR extraction",
+                receipt_id=receipt.id,
+                is_pdf=is_pdf,
+            )
+
             if is_pdf:
                 raw_text = await self.ocr_service.extract_text_from_pdf(file_data)
             else:
                 raw_text = await self.ocr_service.extract_text(file_data)
 
+            text_length = len(raw_text) if raw_text else 0
+            log_info(
+                "OCR extraction completed",
+                receipt_id=receipt.id,
+                text_length=text_length,
+                text_preview=raw_text[:200] if raw_text else "NO TEXT",
+            )
+
+            add_breadcrumb(
+                message="OCR extraction completed",
+                category="ocr",
+                text_length=text_length,
+            )
+
             # Parse with AI
+            log_info("Starting AI parsing", receipt_id=receipt.id)
+            add_breadcrumb(message="Starting AI parsing", category="ai")
+
             parsed_data = await self.ai_parser.parse_receipt(raw_text)
 
+            log_info(
+                "AI parsing completed",
+                receipt_id=receipt.id,
+                parsed_data=parsed_data,
+            )
+
+            add_breadcrumb(
+                message="AI parsing completed",
+                category="ai",
+                has_store_name=bool(parsed_data.store_name),
+                has_total=bool(parsed_data.total_amount),
+            )
+
             # Update receipt with parsed data
+            log_info("Updating receipt with parsed data", receipt_id=receipt.id)
             receipt = await self.repository.update_with_parsed_data(receipt, parsed_data, raw_text)
+
+            log_info(
+                "Receipt processing completed successfully",
+                receipt_id=receipt.id,
+                store_name=receipt.store_name,
+                total_amount=receipt.total_amount,
+            )
 
             return receipt
 
         except Exception as e:
-            logger.error(f"Receipt processing failed: {e}")
+            log_error(
+                "Receipt processing failed",
+                error=e,
+                receipt_id=receipt.id,
+                user_id=user_id,
+                is_pdf=is_pdf,
+            )
             await self.repository.set_failed(receipt, str(e))
             raise
 

@@ -18,7 +18,7 @@ db-up:
 	docker compose up -d
 	@echo "Waiting for database to be ready..."
 	@sleep 3
-	@echo "Database is running on localhost:5432"
+	@echo "Database is running on localhost:5433"
 
 db-down:
 	docker compose down
@@ -38,7 +38,7 @@ migrate-create:
 
 # Development commands
 dev:
-	uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+	uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8003
 
 # Testing commands
 test:

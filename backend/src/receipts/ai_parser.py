@@ -6,7 +6,7 @@ from decimal import Decimal
 from anthropic import Anthropic
 
 from src.config import get_settings
-from src.receipts.schemas import ParsedReceiptData, ReceiptItemCreate
+from src.receipts.schemas import ParsedItemData, ParsedReceiptData
 from src.shared.constants import Currency, ExpenseCategory
 
 settings = get_settings()
@@ -81,7 +81,7 @@ class AIParser:
         for item in data.get("items", []):
             try:
                 items.append(
-                    ReceiptItemCreate(
+                    ParsedItemData(
                         name=item.get("name", "Unknown"),
                         quantity=Decimal(str(item.get("quantity", 1))),
                         unit_price=Decimal(str(item.get("unit_price", 0))),
