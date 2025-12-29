@@ -106,10 +106,14 @@ async def upload_receipt(
             is_pdf=is_pdf,
         )
 
+        status_value = (
+            receipt.status.value if hasattr(receipt.status, "value")
+            else str(receipt.status)
+        )
         log_info(
             "Receipt processed successfully",
             receipt_id=receipt.id,
-            status=receipt.status.value if hasattr(receipt.status, 'value') else str(receipt.status),
+            status=status_value,
             user_id=current_user.id,
         )
 

@@ -97,7 +97,7 @@ class ReceiptRepository:
                 description=item_data.name,
                 amount=item_data.total_price,
                 currency=currency_str,
-                category=parsed_data.category.value if parsed_data.category else "other",
+                category=item_data.category,  # Use item's AI-classified category
                 expense_date=expense_date,
                 store_name=parsed_data.store_name,
                 amount_usd=converted["amount_usd"],

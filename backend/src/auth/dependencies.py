@@ -7,6 +7,7 @@ from jose import JWTError, jwt
 from src.auth.models import User
 from src.auth.repository import UserRepository
 from src.auth.service import AuthService
+from src.categories.repository import CategoryRepository
 from src.config import get_settings
 from src.database import DbSession
 from src.shared.exceptions import UnauthorizedError
@@ -19,10 +20,15 @@ def get_user_repository(db: DbSession) -> UserRepository:
     return UserRepository(db)
 
 
+def get_category_repository(db: DbSession) -> CategoryRepository:
+    return CategoryRepository(db)
+
+
 def get_auth_service(
     repository: Annotated[UserRepository, Depends(get_user_repository)],
+    category_repository: Annotated[CategoryRepository, Depends(get_category_repository)],
 ) -> AuthService:
-    return AuthService(repository)
+    return AuthService(repository, category_repository)
 
 
 async def get_current_user(

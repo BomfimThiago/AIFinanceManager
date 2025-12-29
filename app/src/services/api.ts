@@ -4,6 +4,10 @@ import { API_URL } from '../constants/config';
 import { useAuthStore } from '../store/authStore';
 import {
   AuthToken,
+  Category,
+  CategoryCreate,
+  CategoryType,
+  CategoryUpdate,
   Expense,
   ExpenseCreate,
   LoginCredentials,
@@ -223,8 +227,45 @@ export const expensesApi = {
 
 // Categories API
 export const categoriesApi = {
-  getAll: async (): Promise<{ value: string; label: string }[]> => {
-    const { data } = await api.get('/categories');
+  getAll: async (params?: {
+    type?: CategoryType;
+    includeHidden?: boolean;
+  }): Promise<Category[]> => {
+    const { data } = await api.get<Category[]>('/categories', { params });
+    return data;
+  },
+
+  getById: async (id: number): Promise<Category> => {
+    const { data } = await api.get<Category>(`/categories/${id}`);
+    return data;
+  },
+
+  create: async (category: CategoryCreate): Promise<Category> => {
+    const { data } = await api.post<Category>('/categories', category);
+    return data;
+  },
+
+  update: async (id: number, updateData: CategoryUpdate): Promise<Category> => {
+    const { data } = await api.patch<Category>(`/categories/${id}`, updateData);
+    return data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/categories/${id}`);
+  },
+
+  hide: async (id: number): Promise<Category> => {
+    const { data } = await api.post<Category>(`/categories/${id}/hide`);
+    return data;
+  },
+
+  unhide: async (id: number): Promise<Category> => {
+    const { data } = await api.post<Category>(`/categories/${id}/unhide`);
+    return data;
+  },
+
+  initialize: async (): Promise<Category[]> => {
+    const { data } = await api.post<Category[]>('/categories/initialize');
     return data;
   },
 };

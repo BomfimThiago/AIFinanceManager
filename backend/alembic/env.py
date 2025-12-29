@@ -14,6 +14,7 @@ from src.database import Base
 from src.auth.models import User  # noqa: F401
 from src.receipts.models import Receipt  # noqa: F401
 from src.expenses.models import Expense  # noqa: F401
+from src.categories.models import Category  # noqa: F401
 
 config = context.config
 settings = get_settings()

@@ -41,14 +41,7 @@ export default function RootLayout() {
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="auth" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="receipt/[id]"
-              options={{
-                headerShown: true,
-                title: 'Receipt Details',
-                headerBackTitle: 'Back',
-              }}
-            />
+            <Stack.Screen name="receipt" options={{ headerShown: false }} />
           </Stack>
           <ToastContainer />
         </View>

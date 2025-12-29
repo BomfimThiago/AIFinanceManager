@@ -60,10 +60,12 @@ async def start_scheduler() -> None:
                 log_info("Currency rates fetched successfully on startup")
                 break
             except Exception as e:
+                # Only report to Sentry on final failure
+                should_capture = attempt == max_retries
                 log_error(
                     f"Failed to fetch rates on startup (attempt {attempt}/{max_retries})",
                     error=e,
-                    capture_sentry=(attempt == max_retries),  # Only report to Sentry on final failure
+                    capture_sentry=should_capture,
                 )
                 if attempt < max_retries:
                     await asyncio.sleep(2)  # Wait 2 seconds before retry

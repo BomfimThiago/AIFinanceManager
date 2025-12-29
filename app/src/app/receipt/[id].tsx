@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,8 +41,6 @@ export default function ReceiptDetailScreen() {
     );
   }
 
-  const categoryInfo = receipt.category ? getCategoryInfo(receipt.category) : null;
-
   const getStatusColor = () => {
     switch (receipt.status) {
       case 'completed':
@@ -66,16 +63,6 @@ export default function ReceiptDetailScreen() {
           isDesktop && styles.desktopContent,
         ]}
       >
-        {receipt.imageUrl && (
-          <Card style={styles.imageCard} padding="none">
-            <Image
-              source={{ uri: receipt.imageUrl }}
-              style={styles.receiptImage}
-              resizeMode="contain"
-            />
-          </Card>
-        )}
-
         <Card style={styles.mainCard}>
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -100,39 +87,37 @@ export default function ReceiptDetailScreen() {
           <View style={styles.detailsGrid}>
             <DetailRow label="Date" value={receipt.purchaseDate ? formatDateTime(receipt.purchaseDate) : 'Unknown'} />
             <DetailRow label="Currency" value={receipt.currency} />
-            {categoryInfo && (
-              <DetailRow
-                label="Category"
-                value={`${categoryInfo.icon} ${categoryInfo.label}`}
-              />
-            )}
             <DetailRow label="Uploaded" value={formatDateTime(receipt.createdAt)} />
           </View>
         </Card>
 
-        {receipt.items && receipt.items.length > 0 && (
+        {receipt.expenses && receipt.expenses.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Items</Text>
             <Card>
-              {receipt.items.map((item, index) => (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.itemRow,
-                    index < receipt.items.length - 1 && styles.itemBorder,
-                  ]}
-                >
-                  <View style={styles.itemContent}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemQuantity}>
-                      Qty: {item.quantity} × {formatCurrency(item.unitPrice, receipt.currency as any)}
+              {receipt.expenses.map((expense, index) => {
+                const expenseCategoryInfo = getCategoryInfo(expense.category);
+                return (
+                  <View
+                    key={expense.id}
+                    style={[
+                      styles.itemRow,
+                      index < receipt.expenses.length - 1 && styles.itemBorder,
+                    ]}
+                  >
+                    <View style={[styles.itemCategoryIcon, { backgroundColor: expenseCategoryInfo.color + '20' }]}>
+                      <Text style={styles.itemCategoryEmoji}>{expenseCategoryInfo.icon}</Text>
+                    </View>
+                    <View style={styles.itemContent}>
+                      <Text style={styles.itemName}>{expense.description}</Text>
+                      <Text style={styles.itemCategory}>{expenseCategoryInfo.label}</Text>
+                    </View>
+                    <Text style={styles.itemTotal}>
+                      {formatCurrency(expense.amount, expense.currency as any)}
                     </Text>
                   </View>
-                  <Text style={styles.itemTotal}>
-                    {formatCurrency(item.totalPrice, receipt.currency as any)}
-                  </Text>
-                </View>
-              ))}
+                );
+              })}
             </Card>
           </>
         )}
@@ -188,15 +173,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     color: '#6b7280',
-  },
-  imageCard: {
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  receiptImage: {
-    width: '100%',
-    height: 300,
-    backgroundColor: '#f9fafb',
   },
   mainCard: {
     marginBottom: 16,
@@ -269,6 +245,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  itemCategoryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  itemCategoryEmoji: {
+    fontSize: 18,
+  },
   itemContent: {
     flex: 1,
   },
@@ -278,7 +265,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     marginBottom: 2,
   },
-  itemQuantity: {
+  itemCategory: {
     fontSize: 12,
     color: '#6b7280',
   },

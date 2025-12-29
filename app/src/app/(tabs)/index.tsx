@@ -99,6 +99,15 @@ export default function DashboardScreen() {
               />
             </Link>
           </View>
+          <View style={[styles.actionsRow, { marginTop: 12 }]}>
+            <Link href="/categories" asChild>
+              <Button
+                title="🏷️ Manage Categories"
+                variant="outline"
+                style={styles.actionButton}
+              />
+            </Link>
+          </View>
         </View>
 
         <View style={styles.section}>

@@ -18,9 +18,18 @@ export const CATEGORIES: CategoryInfo[] = [
   { value: 'housing', label: 'Housing', icon: '🏠', color: '#6366f1' },
   { value: 'education', label: 'Education', icon: '📚', color: '#14b8a6' },
   { value: 'travel', label: 'Travel', icon: '✈️', color: '#06b6d4' },
+  { value: 'rent', label: 'Rent', icon: '🔑', color: '#8b5cf6' },
+  { value: 'energy', label: 'Energy/Power', icon: '⚡', color: '#fbbf24' },
+  { value: 'internet', label: 'Internet', icon: '📶', color: '#0ea5e9' },
+  { value: 'insurance', label: 'Insurance', icon: '🛡️', color: '#64748b' },
+  { value: 'subscriptions', label: 'Subscriptions', icon: '🔄', color: '#f43f5e' },
+  { value: 'other_expense', label: 'Other Expense', icon: '📦', color: '#6b7280' },
   { value: 'other', label: 'Other', icon: '📦', color: '#6b7280' },
 ];
 
-export const getCategoryInfo = (category: ExpenseCategory): CategoryInfo => {
-  return CATEGORIES.find((c) => c.value === category) || CATEGORIES[CATEGORIES.length - 1];
+// Map for quick lookup including any dynamic categories
+const categoryMap = new Map(CATEGORIES.map(c => [c.value, c]));
+
+export const getCategoryInfo = (category: string): CategoryInfo => {
+  return categoryMap.get(category as ExpenseCategory) || CATEGORIES[CATEGORIES.length - 1];
 };

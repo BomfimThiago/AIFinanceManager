@@ -7,14 +7,6 @@ export interface User {
 }
 
 // Receipt types
-export interface ReceiptItem {
-  id: number;
-  name: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
 export interface Receipt {
   id: number;
   storeName: string | null;
@@ -24,7 +16,7 @@ export interface Receipt {
   category: ExpenseCategory | null;
   status: ReceiptStatus;
   imageUrl: string;
-  items: ReceiptItem[];
+  expenses: Expense[];  // Items from receipt are stored as expenses
   createdAt: string;
   updatedAt: string;
 }
@@ -68,6 +60,7 @@ export interface ExpenseCreate {
 // Enums
 export type ReceiptStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
+// Expense categories
 export type ExpenseCategory =
   | 'groceries'
   | 'dining'
@@ -79,9 +72,45 @@ export type ExpenseCategory =
   | 'housing'
   | 'education'
   | 'travel'
+  | 'rent'
+  | 'energy'
+  | 'internet'
+  | 'insurance'
+  | 'subscriptions'
+  | 'other_expense'
   | 'other';
 
 export type Currency = 'USD' | 'EUR' | 'BRL' | 'GBP';
+
+// New Category types
+export type CategoryType = 'expense' | 'income';
+
+export interface Category {
+  id: number;
+  name: string;
+  type: CategoryType;
+  icon: string;
+  color: string;
+  isDefault: boolean;
+  isHidden: boolean;
+  defaultCategoryKey: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CategoryCreate {
+  name: string;
+  type: CategoryType;
+  icon: string;
+  color: string;
+}
+
+export interface CategoryUpdate {
+  name?: string;
+  icon?: string;
+  color?: string;
+  isHidden?: boolean;
+}
 
 // Auth types
 export interface LoginCredentials {

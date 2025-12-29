@@ -6,6 +6,7 @@ from jose import jwt
 from src.auth.models import User
 from src.auth.repository import UserRepository
 from src.auth.schemas import Token, UserCreate
+from src.categories.repository import CategoryRepository
 from src.config import get_settings
 from src.shared.exceptions import BadRequestError, UnauthorizedError
 
@@ -28,8 +29,13 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 class AuthService:
-    def __init__(self, repository: UserRepository):
+    def __init__(
+        self,
+        repository: UserRepository,
+        category_repository: CategoryRepository | None = None,
+    ):
         self.repository = repository
+        self.category_repository = category_repository
 
     async def register(self, user_data: UserCreate) -> User:
         existing_user = await self.repository.get_by_email(user_data.email)
@@ -37,7 +43,13 @@ class AuthService:
             raise BadRequestError("Email already registered")
 
         hashed_password = hash_password(user_data.password)
-        return await self.repository.create(user_data, hashed_password)
+        user = await self.repository.create(user_data, hashed_password)
+
+        # Initialize default categories for the new user
+        if self.category_repository:
+            await self.category_repository.create_defaults_for_user(user.id)
+
+        return user
 
     async def authenticate(self, email: str, password: str) -> Token:
         user = await self.repository.get_by_email(email)

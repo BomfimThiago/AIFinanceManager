@@ -5,12 +5,16 @@ import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
 
+from src.auth.models import User
 from src.auth.router import router as auth_router
+from src.categories.repository import CategoryRepository
 from src.categories.router import router as categories_router
 from src.config import get_settings
 from src.core.logging import get_logger, setup_logging
 from src.currency.service import CurrencyRatesNotAvailableError
+from src.database import async_session_maker
 from src.expenses.router import router as expenses_router
 from src.receipts.router import router as receipts_router
 from src.scheduler import start_scheduler, stop_scheduler
@@ -40,11 +44,36 @@ else:
     logger.warning("Sentry DSN not configured - error tracking disabled")
 
 
+async def initialize_categories_for_existing_users() -> None:
+    """Initialize default categories for all users who don't have any."""
+    async with async_session_maker() as db:
+        # Get all users
+        result = await db.execute(select(User))
+        users = result.scalars().all()
+
+        category_repo = CategoryRepository(db)
+        initialized_count = 0
+
+        for user in users:
+            # Check if user has categories
+            has_categories = await category_repo.user_has_categories(user.id)
+            if not has_categories:
+                await category_repo.create_defaults_for_user(user.id)
+                initialized_count += 1
+                logger.info(f"Initialized default categories for user {user.id}")
+
+        if initialized_count > 0:
+            logger.info(f"Initialized categories for {initialized_count} existing users")
+        else:
+            logger.info("All users already have categories")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     logger.info("Starting AI Finance Manager API")
     await start_scheduler()
+    await initialize_categories_for_existing_users()
     yield
     # Shutdown
     stop_scheduler()

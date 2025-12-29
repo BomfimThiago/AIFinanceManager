@@ -15,6 +15,7 @@ class ParsedItemData(BaseModel):
     quantity: Decimal = Decimal("1")
     unit_price: Decimal
     total_price: Decimal
+    category: ExpenseCategory = ExpenseCategory.OTHER_EXPENSE
 
 
 class ReceiptUpdate(BaseModel):

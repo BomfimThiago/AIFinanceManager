@@ -1,14 +1,7 @@
-import { Tabs, Redirect } from 'expo-router';
-import { Platform } from 'react-native';
-import { useResponsive } from '../../hooks/useResponsive';
-import { useAuthStore } from '../../store/authStore';
+import { Tabs } from 'expo-router';
+import { Platform, Text } from 'react-native';
 
 export default function TabsLayout() {
-  const { isDesktop } = useResponsive();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  // Redirect unauthenticated users to auth page (except for dashboard which shows welcome screen)
-  // Individual screens handle showing auth prompts if needed
 
   return (
     <Tabs
@@ -23,11 +16,6 @@ export default function TabsLayout() {
           paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           paddingTop: 8,
           height: Platform.OS === 'ios' ? 88 : 64,
-          ...(isDesktop && {
-            maxWidth: 1200,
-            alignSelf: 'center',
-            width: '100%',
-          }),
         },
         headerStyle: {
           backgroundColor: '#ffffff',
@@ -61,6 +49,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categories',
+          tabBarIcon: ({ color }) => <TabIcon emoji="🏷️" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
@@ -73,8 +68,8 @@ export default function TabsLayout() {
 
 function TabIcon({ emoji, color }: { emoji: string; color: string }) {
   return (
-    <span style={{ fontSize: 24, opacity: color === '#3b82f6' ? 1 : 0.6 }}>
+    <Text style={{ fontSize: 24, opacity: color === '#3b82f6' ? 1 : 0.6 }}>
       {emoji}
-    </span>
+    </Text>
   );
 }

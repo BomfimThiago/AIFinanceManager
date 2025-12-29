@@ -1,6 +1,17 @@
 from enum import StrEnum
 
 
+class TransactionType(StrEnum):
+    EXPENSE = "expense"
+    INCOME = "income"
+
+
+class CategoryType(StrEnum):
+    EXPENSE = "expense"
+    INCOME = "income"
+
+
+# Deprecated: Use Category model instead. Kept for AI parser backward compatibility.
 class ExpenseCategory(StrEnum):
     GROCERIES = "groceries"
     DINING = "dining"
@@ -12,6 +23,12 @@ class ExpenseCategory(StrEnum):
     HOUSING = "housing"
     EDUCATION = "education"
     TRAVEL = "travel"
+    RENT = "rent"
+    ENERGY = "energy"
+    INTERNET = "internet"
+    INSURANCE = "insurance"
+    SUBSCRIPTIONS = "subscriptions"
+    OTHER_EXPENSE = "other_expense"
     OTHER = "other"
 
 

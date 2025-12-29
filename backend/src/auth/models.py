@@ -16,3 +16,4 @@ class User(BaseModel):
     # Relationships
     receipts: Mapped[list["Receipt"]] = relationship(back_populates="user")  # noqa: F821
     expenses: Mapped[list["Expense"]] = relationship(back_populates="user")  # noqa: F821
+    categories: Mapped[list["Category"]] = relationship(back_populates="user")  # noqa: F821
