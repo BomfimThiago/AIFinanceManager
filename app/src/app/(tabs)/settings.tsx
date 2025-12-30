@@ -14,12 +14,12 @@ export default function SettingsScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      'Cerrar Sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Logout',
+          text: 'Cerrar Sesión',
           style: 'destructive',
           onPress: () => {
             logout();
@@ -35,11 +35,11 @@ export default function SettingsScreen() {
       <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={[styles.content, isDesktop && styles.desktopContent]}>
           <Card style={styles.authCard}>
-            <Text style={styles.authTitle}>Not Logged In</Text>
+            <Text style={styles.authTitle}>Sin Iniciar Sesión</Text>
             <Text style={styles.authText}>
-              Sign in to access your account settings
+              Inicia sesión para acceder a la configuración de tu cuenta
             </Text>
-            <Button title="Sign In" onPress={() => router.push('/auth')} />
+            <Button title="Iniciar Sesión" onPress={() => router.push('/auth')} />
           </Card>
         </View>
       </SafeAreaView>
@@ -59,70 +59,70 @@ export default function SettingsScreen() {
           <Text style={styles.userEmail}>{user?.email}</Text>
         </Card>
 
-        <Text style={styles.sectionTitle}>Account</Text>
+        <Text style={styles.sectionTitle}>Cuenta</Text>
         <Card padding="none">
           <SettingsItem
             icon="👤"
-            title="Profile"
-            subtitle="Manage your profile information"
+            title="Perfil"
+            subtitle="Gestiona la información de tu perfil"
             onPress={() => {}}
           />
           <SettingsItem
             icon="🔔"
-            title="Notifications"
-            subtitle="Configure notification preferences"
+            title="Notificaciones"
+            subtitle="Configura las preferencias de notificaciones"
             onPress={() => {}}
           />
           <SettingsItem
             icon="💱"
-            title="Currency"
+            title="Moneda"
             subtitle="USD"
             onPress={() => {}}
           />
           <SettingsItem
             icon="🌐"
-            title="Language"
-            subtitle="English"
+            title="Idioma"
+            subtitle="Español"
             onPress={() => {}}
             isLast
           />
         </Card>
 
-        <Text style={styles.sectionTitle}>Data</Text>
+        <Text style={styles.sectionTitle}>Datos</Text>
         <Card padding="none">
           <SettingsItem
             icon="📤"
-            title="Export Data"
-            subtitle="Download your expense data"
+            title="Exportar Datos"
+            subtitle="Descarga tus datos de gastos"
             onPress={() => {}}
           />
           <SettingsItem
             icon="🗑️"
-            title="Clear Data"
-            subtitle="Remove all local data"
+            title="Borrar Datos"
+            subtitle="Elimina todos los datos locales"
             onPress={() => {}}
             isLast
             isDanger
           />
         </Card>
 
-        <Text style={styles.sectionTitle}>About</Text>
+        <Text style={styles.sectionTitle}>Acerca de</Text>
         <Card padding="none">
           <SettingsItem
             icon="ℹ️"
-            title="Version"
+            title="Versión"
             subtitle="1.0.0"
             onPress={() => {}}
           />
           <SettingsItem
             icon="📜"
-            title="Privacy Policy"
+            title="Política de Privacidad"
             subtitle=""
             onPress={() => {}}
           />
           <SettingsItem
             icon="📋"
-            title="Terms of Service"
+            title="Términos de Servicio"
             subtitle=""
             onPress={() => {}}
             isLast
@@ -130,7 +130,7 @@ export default function SettingsScreen() {
         </Card>
 
         <Button
-          title="Logout"
+          title="Cerrar Sesión"
           variant="danger"
           onPress={handleLogout}
           style={styles.logoutButton}

@@ -30,7 +30,7 @@ const getMonthBounds = (date: Date) => {
 };
 
 const formatMonthYear = (date: Date) => {
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 };
 
 export default function ExpensesScreen() {
@@ -115,7 +115,7 @@ export default function ExpensesScreen() {
   };
 
   const formatShortDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
   };
 
   // Early return for unauthenticated users (after all hooks)
@@ -123,12 +123,12 @@ export default function ExpensesScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authPrompt}>
-          <Text style={styles.authTitle}>Sign in to view expenses</Text>
+          <Text style={styles.authTitle}>Inicia sesión para ver gastos</Text>
           <Text style={styles.authSubtitle}>
-            Track your spending and manage your finances
+            Controla tus gastos y administra tus finanzas
           </Text>
           <Link href="/auth" asChild>
-            <Button title="Sign In" />
+            <Button title="Iniciar Sesión" />
           </Link>
         </View>
       </SafeAreaView>
@@ -248,7 +248,7 @@ export default function ExpensesScreen() {
         onPress={() => setFilterMode('month')}
       >
         <Text style={[styles.filterModeText, filterMode === 'month' && styles.filterModeTextActive]}>
-          Month
+          Mes
         </Text>
       </Pressable>
       <Pressable
@@ -256,7 +256,7 @@ export default function ExpensesScreen() {
         onPress={() => setShowDatePicker(true)}
       >
         <Text style={[styles.filterModeText, filterMode === 'range' && styles.filterModeTextActive]}>
-          Range
+          Rango
         </Text>
       </Pressable>
     </View>
@@ -270,7 +270,7 @@ export default function ExpensesScreen() {
       <Pressable onPress={goToCurrentMonth} style={styles.monthLabel}>
         <Text style={styles.monthText}>{formatMonthYear(selectedMonth)}</Text>
         {!isCurrentMonth && (
-          <Text style={styles.todayHint}>Tap to go to today</Text>
+          <Text style={styles.todayHint}>Toca para ir a hoy</Text>
         )}
       </Pressable>
       <Pressable onPress={goToNextMonth} style={styles.monthArrow}>
@@ -282,15 +282,15 @@ export default function ExpensesScreen() {
   const renderRangeSelector = () => (
     <Pressable style={styles.rangeSelector} onPress={() => setShowDatePicker(true)}>
       <View style={styles.rangeDateBox}>
-        <Text style={styles.rangeDateLabel}>From</Text>
+        <Text style={styles.rangeDateLabel}>Desde</Text>
         <Text style={styles.rangeDateValue}>{formatShortDate(customStartDate)}</Text>
       </View>
       <Text style={styles.rangeArrow}>→</Text>
       <View style={styles.rangeDateBox}>
-        <Text style={styles.rangeDateLabel}>To</Text>
+        <Text style={styles.rangeDateLabel}>Hasta</Text>
         <Text style={styles.rangeDateValue}>{formatShortDate(customEndDate)}</Text>
       </View>
-      <Text style={styles.rangeEditHint}>Tap to edit</Text>
+      <Text style={styles.rangeEditHint}>Toca para editar</Text>
     </Pressable>
   );
 
@@ -305,7 +305,7 @@ export default function ExpensesScreen() {
     <View>
       {renderDateFilter()}
       <Card style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Total Expenses</Text>
+        <Text style={styles.summaryLabel}>Gastos Totales</Text>
         <View style={styles.totalsRow}>
           <View style={styles.totalItem}>
             <Text style={styles.totalCurrency}>USD</Text>
@@ -321,7 +321,7 @@ export default function ExpensesScreen() {
           </View>
         </View>
         <Text style={styles.summarySubtext}>
-          {totals.count} transactions
+          {totals.count} transacciones
         </Text>
       </Card>
     </View>
@@ -330,9 +330,9 @@ export default function ExpensesScreen() {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>💰</Text>
-      <Text style={styles.emptyTitle}>No expenses yet</Text>
+      <Text style={styles.emptyTitle}>Sin gastos aún</Text>
       <Text style={styles.emptyText}>
-        Your expenses will appear here once you start tracking
+        Tus gastos aparecerán aquí cuando comiences a registrarlos
       </Text>
     </View>
   );
@@ -379,16 +379,16 @@ export default function ExpensesScreen() {
             {/* Table Header */}
             <View style={styles.tableHeader}>
               <View style={styles.tableHeaderCell}>
-                <Text style={styles.tableHeaderText}>Date</Text>
+                <Text style={styles.tableHeaderText}>Fecha</Text>
               </View>
               <View style={[styles.tableHeaderCell, styles.tableCellDescription]}>
-                <Text style={styles.tableHeaderText}>Description</Text>
+                <Text style={styles.tableHeaderText}>Descripción</Text>
               </View>
               <View style={styles.tableHeaderCell}>
-                <Text style={styles.tableHeaderText}>Category</Text>
+                <Text style={styles.tableHeaderText}>Categoría</Text>
               </View>
               <View style={styles.tableHeaderCell}>
-                <Text style={styles.tableHeaderText}>Paid with</Text>
+                <Text style={styles.tableHeaderText}>Tienda</Text>
               </View>
               <View style={[styles.tableHeaderCell, styles.tableCellAmount]}>
                 <Text style={styles.tableHeaderText}>USD</Text>

@@ -29,36 +29,36 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarLabel: 'Home',
+          title: 'Inicio',
+          tabBarLabel: 'Inicio',
           tabBarIcon: ({ color }) => <TabIcon emoji="🏠" color={color} />,
         }}
       />
       <Tabs.Screen
         name="receipts"
         options={{
-          title: 'Receipts',
+          title: 'Recibos',
           tabBarIcon: ({ color }) => <TabIcon emoji="🧾" color={color} />,
         }}
       />
       <Tabs.Screen
         name="expenses"
         options={{
-          title: 'Expenses',
+          title: 'Gastos',
           tabBarIcon: ({ color }) => <TabIcon emoji="💰" color={color} />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
-          title: 'Categories',
+          title: 'Categorías',
           tabBarIcon: ({ color }) => <TabIcon emoji="🏷️" color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: 'Ajustes',
           tabBarIcon: ({ color }) => <TabIcon emoji="⚙️" color={color} />,
         }}
       />

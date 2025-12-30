@@ -43,7 +43,7 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
           <View style={styles.content}>
             <View style={styles.header}>
               <Text style={styles.storeName} numberOfLines={1}>
-                {receipt.storeName || 'Unknown Store'}
+                {receipt.storeName || 'Tienda Desconocida'}
               </Text>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
                 <Text style={styles.statusText}>{receipt.status}</Text>

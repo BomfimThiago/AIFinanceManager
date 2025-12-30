@@ -18,8 +18,8 @@ interface DateRangePickerProps {
 }
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
 export function DateRangePicker({
@@ -90,7 +90,7 @@ export function DateRangePicker({
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('es-ES', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -150,7 +150,7 @@ export function DateRangePicker({
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.container}>
-          <Text style={styles.title}>Select Date Range</Text>
+          <Text style={styles.title}>Seleccionar Rango de Fechas</Text>
 
           {/* Selected Range Display */}
           <View style={styles.rangeDisplay}>
@@ -158,7 +158,7 @@ export function DateRangePicker({
               style={[styles.dateBox, selectingStart && styles.dateBoxActive]}
               onPress={() => setSelectingStart(true)}
             >
-              <Text style={styles.dateLabel}>From</Text>
+              <Text style={styles.dateLabel}>Desde</Text>
               <Text style={styles.dateValue}>{formatDate(tempStart)}</Text>
             </Pressable>
             <Text style={styles.rangeSeparator}>→</Text>
@@ -166,7 +166,7 @@ export function DateRangePicker({
               style={[styles.dateBox, !selectingStart && styles.dateBoxActive]}
               onPress={() => setSelectingStart(false)}
             >
-              <Text style={styles.dateLabel}>To</Text>
+              <Text style={styles.dateLabel}>Hasta</Text>
               <Text style={styles.dateValue}>{formatDate(tempEnd)}</Text>
             </Pressable>
           </View>
@@ -225,7 +225,7 @@ export function DateRangePicker({
           {/* Calendar Grid */}
           <View style={styles.calendar}>
             <View style={styles.weekDays}>
-              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+              {['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'].map((day) => (
                 <Text key={day} style={styles.weekDay}>
                   {day}
                 </Text>
@@ -239,10 +239,10 @@ export function DateRangePicker({
           {/* Actions */}
           <View style={styles.actions}>
             <Pressable style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
             </Pressable>
             <Pressable style={styles.applyButton} onPress={handleApply}>
-              <Text style={styles.applyButtonText}>Apply</Text>
+              <Text style={styles.applyButtonText}>Aplicar</Text>
             </Pressable>
           </View>
         </View>

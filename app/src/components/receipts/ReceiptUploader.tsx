@@ -38,7 +38,7 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3b82f6" />
           <Text style={styles.loadingText}>
-            {uploadMutation.isPending ? 'Processing receipt...' : 'Loading...'}
+            {uploadMutation.isPending ? 'Procesando recibo...' : 'Cargando...'}
           </Text>
         </View>
       </Card>
@@ -47,13 +47,13 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
 
   return (
     <Card style={styles.card}>
-      <Text style={styles.title}>Upload Receipt</Text>
+      <Text style={styles.title}>Subir Recibo</Text>
       <Text style={styles.subtitle}>
-        Supports images (JPG, PNG, WEBP) and PDF files
+        Soporta imágenes (JPG, PNG, WEBP) y archivos PDF
       </Text>
 
       <Button
-        title="📤 Select File"
+        title="📤 Seleccionar Archivo"
         onPress={handlePickFile}
         style={styles.button}
         size="large"
@@ -61,7 +61,7 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
 
       {uploadMutation.isError && (
         <Text style={styles.errorText}>
-          Failed to process receipt. Please try again.
+          Error al procesar el recibo. Por favor intenta de nuevo.
         </Text>
       )}
     </Card>

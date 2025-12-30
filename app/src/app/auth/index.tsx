@@ -34,21 +34,21 @@ export default function AuthScreen() {
     clearError();
 
     if (!email || !password) {
-      toast.error('Please fill in all required fields');
+      toast.error('Por favor completa todos los campos requeridos');
       return;
     }
 
     if (mode === 'register') {
       if (!fullName) {
-        toast.error('Please enter your full name');
+        toast.error('Por favor ingresa tu nombre completo');
         return;
       }
       if (password !== confirmPassword) {
-        toast.error('Passwords do not match');
+        toast.error('Las contraseñas no coinciden');
         return;
       }
       if (password.length < 6) {
-        toast.error('Password must be at least 6 characters');
+        toast.error('La contraseña debe tener al menos 6 caracteres');
         return;
       }
     }
@@ -59,10 +59,10 @@ export default function AuthScreen() {
       } else {
         await register(email, password, fullName);
       }
-      toast.success(mode === 'login' ? 'Welcome back!' : 'Account created successfully!');
+      toast.success(mode === 'login' ? '¡Bienvenido de nuevo!' : '¡Cuenta creada exitosamente!');
       router.replace('/');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : error || 'Authentication failed';
+      const errorMessage = err instanceof Error ? err.message : error || 'Error de autenticación';
       toast.error(errorMessage);
     }
   };
@@ -90,16 +90,16 @@ export default function AuthScreen() {
             <Text style={styles.title}>AI Finance Manager</Text>
             <Text style={styles.subtitle}>
               {mode === 'login'
-                ? 'Welcome back! Sign in to continue.'
-                : 'Create an account to get started.'}
+                ? '¡Bienvenido de nuevo! Inicia sesión para continuar.'
+                : 'Crea una cuenta para comenzar.'}
             </Text>
           </View>
 
           <Card style={styles.formCard}>
             {mode === 'register' && (
               <Input
-                label="Full Name"
-                placeholder="Enter your full name"
+                label="Nombre Completo"
+                placeholder="Ingresa tu nombre completo"
                 value={fullName}
                 onChangeText={setFullName}
                 autoCapitalize="words"
@@ -107,8 +107,8 @@ export default function AuthScreen() {
             )}
 
             <Input
-              label="Email"
-              placeholder="Enter your email"
+              label="Correo Electrónico"
+              placeholder="Ingresa tu correo electrónico"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -117,8 +117,8 @@ export default function AuthScreen() {
             />
 
             <Input
-              label="Password"
-              placeholder="Enter your password"
+              label="Contraseña"
+              placeholder="Ingresa tu contraseña"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -127,8 +127,8 @@ export default function AuthScreen() {
 
             {mode === 'register' && (
               <Input
-                label="Confirm Password"
-                placeholder="Confirm your password"
+                label="Confirmar Contraseña"
+                placeholder="Confirma tu contraseña"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -137,7 +137,7 @@ export default function AuthScreen() {
             )}
 
             <Button
-              title={mode === 'login' ? 'Sign In' : 'Create Account'}
+              title={mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
               onPress={handleSubmit}
               loading={isLoading}
               style={styles.submitButton}
@@ -146,11 +146,11 @@ export default function AuthScreen() {
             <View style={styles.toggleContainer}>
               <Text style={styles.toggleText}>
                 {mode === 'login'
-                  ? "Don't have an account? "
-                  : 'Already have an account? '}
+                  ? '¿No tienes una cuenta? '
+                  : '¿Ya tienes una cuenta? '}
               </Text>
               <Text style={styles.toggleLink} onPress={toggleMode}>
-                {mode === 'login' ? 'Sign Up' : 'Sign In'}
+                {mode === 'login' ? 'Regístrate' : 'Inicia Sesión'}
               </Text>
             </View>
           </Card>

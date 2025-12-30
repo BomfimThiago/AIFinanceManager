@@ -35,12 +35,12 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authPrompt}>
-          <Text style={styles.welcomeTitle}>Welcome to AI Finance Manager</Text>
+          <Text style={styles.welcomeTitle}>Bienvenido a AI Finance Manager</Text>
           <Text style={styles.welcomeSubtitle}>
-            Track your expenses effortlessly with AI-powered receipt scanning
+            Controla tus gastos fácilmente con escaneo de recibos con IA
           </Text>
           <Link href="/auth" asChild>
-            <Button title="Get Started" />
+            <Button title="Comenzar" />
           </Link>
         </View>
       </SafeAreaView>
@@ -60,40 +60,40 @@ export default function DashboardScreen() {
         }
       >
         <Text style={styles.greeting}>
-          Hello, {user?.fullName?.split(' ')[0] || 'there'}!
+          ¡Hola, {user?.fullName?.split(' ')[0] || 'usuario'}!
         </Text>
 
         <View style={[styles.statsGrid, isDesktop && styles.desktopGrid]}>
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Total Expenses</Text>
+            <Text style={styles.statLabel}>Gastos Totales</Text>
             <Text style={styles.statValue}>{formatCurrency(totalExpenses)}</Text>
-            <Text style={styles.statSubtext}>This month</Text>
+            <Text style={styles.statSubtext}>Este mes</Text>
           </Card>
 
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Receipts</Text>
+            <Text style={styles.statLabel}>Recibos</Text>
             <Text style={styles.statValue}>{completedReceipts}</Text>
-            <Text style={styles.statSubtext}>Processed</Text>
+            <Text style={styles.statSubtext}>Procesados</Text>
           </Card>
 
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Pending</Text>
+            <Text style={styles.statLabel}>Pendientes</Text>
             <Text style={[styles.statValue, { color: '#f59e0b' }]}>
               {pendingReceipts}
             </Text>
-            <Text style={styles.statSubtext}>Processing</Text>
+            <Text style={styles.statSubtext}>Procesando</Text>
           </Card>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
           <View style={styles.actionsRow}>
             <Link href="/receipts" asChild>
-              <Button title="📷 Scan Receipt" style={styles.actionButton} />
+              <Button title="📷 Escanear Recibo" style={styles.actionButton} />
             </Link>
             <Link href="/expenses" asChild>
               <Button
-                title="➕ Add Expense"
+                title="➕ Agregar Gasto"
                 variant="outline"
                 style={styles.actionButton}
               />
@@ -102,7 +102,7 @@ export default function DashboardScreen() {
           <View style={[styles.actionsRow, { marginTop: 12 }]}>
             <Link href="/categories" asChild>
               <Button
-                title="🏷️ Manage Categories"
+                title="🏷️ Gestionar Categorías"
                 variant="outline"
                 style={styles.actionButton}
               />
@@ -111,10 +111,10 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={styles.sectionTitle}>Actividad Reciente</Text>
           {receiptsLoading || expensesLoading ? (
             <Card>
-              <Text style={styles.loadingText}>Loading...</Text>
+              <Text style={styles.loadingText}>Cargando...</Text>
             </Card>
           ) : receipts && receipts.length > 0 ? (
             receipts.slice(0, 3).map((receipt) => (
@@ -124,7 +124,7 @@ export default function DashboardScreen() {
                     <Text style={styles.activityIcon}>🧾</Text>
                     <View style={styles.activityContent}>
                       <Text style={styles.activityTitle}>
-                        {receipt.storeName || 'Unknown Store'}
+                        {receipt.storeName || 'Tienda Desconocida'}
                       </Text>
                       <Text style={styles.activitySubtitle}>
                         {receipt.status}
@@ -142,7 +142,7 @@ export default function DashboardScreen() {
           ) : (
             <Card>
               <Text style={styles.emptyText}>
-                No recent activity. Scan a receipt to get started!
+                Sin actividad reciente. ¡Escanea un recibo para comenzar!
               </Text>
             </Card>
           )}

@@ -24,7 +24,7 @@ export default function ReceiptDetailScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Loading receipt...</Text>
+          <Text style={styles.loadingText}>Cargando recibo...</Text>
         </View>
       </SafeAreaView>
     );
@@ -35,7 +35,7 @@ export default function ReceiptDetailScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorIcon}>❌</Text>
-          <Text style={styles.errorText}>Failed to load receipt</Text>
+          <Text style={styles.errorText}>Error al cargar el recibo</Text>
         </View>
       </SafeAreaView>
     );
@@ -67,7 +67,7 @@ export default function ReceiptDetailScreen() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Text style={styles.storeName}>
-                {receipt.storeName || 'Unknown Store'}
+                {receipt.storeName || 'Tienda Desconocida'}
               </Text>
               <View
                 style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}
@@ -85,15 +85,15 @@ export default function ReceiptDetailScreen() {
           <View style={styles.divider} />
 
           <View style={styles.detailsGrid}>
-            <DetailRow label="Date" value={receipt.purchaseDate ? formatDateTime(receipt.purchaseDate) : 'Unknown'} />
-            <DetailRow label="Currency" value={receipt.currency} />
-            <DetailRow label="Uploaded" value={formatDateTime(receipt.createdAt)} />
+            <DetailRow label="Fecha" value={receipt.purchaseDate ? formatDateTime(receipt.purchaseDate) : 'Desconocida'} />
+            <DetailRow label="Moneda" value={receipt.currency} />
+            <DetailRow label="Subido" value={formatDateTime(receipt.createdAt)} />
           </View>
         </Card>
 
         {receipt.expenses && receipt.expenses.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Items</Text>
+            <Text style={styles.sectionTitle}>Artículos</Text>
             <Card>
               {receipt.expenses.map((expense, index) => {
                 const expenseCategoryInfo = getCategoryInfo(expense.category);

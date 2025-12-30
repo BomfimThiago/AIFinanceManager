@@ -22,12 +22,12 @@ export default function ReceiptsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authPrompt}>
-          <Text style={styles.authTitle}>Sign in to scan receipts</Text>
+          <Text style={styles.authTitle}>Inicia sesión para escanear recibos</Text>
           <Text style={styles.authSubtitle}>
-            Upload receipts and let AI extract expense details
+            Sube recibos y deja que la IA extraiga los detalles de gastos
           </Text>
           <Link href="/auth" asChild>
-            <Button title="Sign In" />
+            <Button title="Iniciar Sesión" />
           </Link>
         </View>
       </SafeAreaView>
@@ -45,12 +45,12 @@ export default function ReceiptsScreen() {
   };
 
   const handleUploadSuccess = () => {
-    Alert.alert('Success', 'Receipt uploaded and processing!');
+    Alert.alert('Éxito', '¡Recibo subido y procesando!');
     refetch();
   };
 
   const handleUploadError = (error: Error) => {
-    Alert.alert('Error', error.message || 'Failed to upload receipt');
+    Alert.alert('Error', error.message || 'Error al subir el recibo');
   };
 
   return (
@@ -73,9 +73,9 @@ export default function ReceiptsScreen() {
           !isLoading ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🧾</Text>
-              <Text style={styles.emptyTitle}>No receipts yet</Text>
+              <Text style={styles.emptyTitle}>Sin recibos aún</Text>
               <Text style={styles.emptyText}>
-                Upload your first receipt to get started
+                Sube tu primer recibo para comenzar
               </Text>
             </View>
           ) : null

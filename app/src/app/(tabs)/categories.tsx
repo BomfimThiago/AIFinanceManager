@@ -109,7 +109,7 @@ export default function CategoriesScreen() {
 
   const openEditModal = (category: Category) => {
     if (category.isDefault) {
-      Alert.alert('Cannot Edit', 'Default categories cannot be edited. You can hide them instead.');
+      Alert.alert('No se puede editar', 'Las categorías predeterminadas no se pueden editar. Puedes ocultarlas.');
       return;
     }
     setEditingCategory(category);
@@ -122,7 +122,7 @@ export default function CategoriesScreen() {
 
   const handleSave = async () => {
     if (!formName.trim()) {
-      Alert.alert('Error', 'Category name is required');
+      Alert.alert('Error', 'El nombre de la categoría es obligatorio');
       return;
     }
 
@@ -143,29 +143,29 @@ export default function CategoriesScreen() {
       }
       setModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to save category');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Error al guardar la categoría');
     }
   };
 
   const handleDelete = async (category: Category) => {
     if (category.isDefault) {
-      Alert.alert('Cannot Delete', 'Default categories cannot be deleted. You can hide them instead.');
+      Alert.alert('No se puede eliminar', 'Las categorías predeterminadas no se pueden eliminar. Puedes ocultarlas.');
       return;
     }
 
     Alert.alert(
-      'Delete Category',
-      `Are you sure you want to delete "${category.name}"?`,
+      'Eliminar Categoría',
+      `¿Estás seguro de que quieres eliminar "${category.name}"?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteCategory.mutateAsync(category.id);
             } catch (error) {
-              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to delete category');
+              Alert.alert('Error', error instanceof Error ? error.message : 'Error al eliminar la categoría');
             }
           },
         },
@@ -181,16 +181,16 @@ export default function CategoriesScreen() {
         await hideCategory.mutateAsync(category.id);
       }
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update category');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Error al actualizar la categoría');
     }
   };
 
   const handleInitialize = async () => {
     try {
       await initializeCategories.mutateAsync();
-      Alert.alert('Success', 'Categories initialized successfully');
+      Alert.alert('Éxito', 'Categorías inicializadas exitosamente');
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to initialize categories');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Error al inicializar las categorías');
     }
   };
 
@@ -198,7 +198,7 @@ export default function CategoriesScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authPrompt}>
-          <Text style={styles.authText}>Please log in to manage categories</Text>
+          <Text style={styles.authText}>Inicia sesión para gestionar categorías</Text>
         </View>
       </SafeAreaView>
     );
@@ -217,12 +217,12 @@ export default function CategoriesScreen() {
           <View style={styles.badges}>
             {item.isDefault && (
               <View style={styles.defaultBadge}>
-                <Text style={styles.defaultBadgeText}>Default</Text>
+                <Text style={styles.defaultBadgeText}>Predeterminada</Text>
               </View>
             )}
             {item.isHidden && (
               <View style={styles.hiddenBadge}>
-                <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                <Text style={styles.hiddenBadgeText}>Oculta</Text>
               </View>
             )}
           </View>
@@ -264,7 +264,7 @@ export default function CategoriesScreen() {
           onPress={() => setActiveTab('expense')}
         >
           <Text style={[styles.tabText, activeTab === 'expense' && styles.activeTabText]}>
-            Expenses ({expenseCount})
+            Gastos ({expenseCount})
           </Text>
         </Pressable>
         <Pressable
@@ -272,7 +272,7 @@ export default function CategoriesScreen() {
           onPress={() => setActiveTab('income')}
         >
           <Text style={[styles.tabText, activeTab === 'income' && styles.activeTabText]}>
-            Income ({incomeCount})
+            Ingresos ({incomeCount})
           </Text>
         </Pressable>
       </View>
@@ -280,12 +280,12 @@ export default function CategoriesScreen() {
       {/* Add Category Button */}
       <View style={styles.addButtonContainer}>
         <Button
-          title={`+ Add ${activeTab === 'expense' ? 'Expense' : 'Income'} Category`}
+          title={`+ Agregar Categoría de ${activeTab === 'expense' ? 'Gasto' : 'Ingreso'}`}
           onPress={openCreateModal}
         />
         {(!categories || categories.length === 0) && (
           <Button
-            title="Initialize Default Categories"
+            title="Inicializar Categorías por Defecto"
             variant="outline"
             onPress={handleInitialize}
             style={{ marginTop: 8 }}
@@ -305,7 +305,7 @@ export default function CategoriesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              No {activeTab} categories yet.
+              Sin categorías de {activeTab === 'expense' ? 'gasto' : 'ingreso'} aún.
             </Text>
           </View>
         }
@@ -321,27 +321,27 @@ export default function CategoriesScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              {editingCategory ? 'Edit Category' : 'New Category'}
+              {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
             </Text>
 
-            <Text style={styles.inputLabel}>Name</Text>
+            <Text style={styles.inputLabel}>Nombre</Text>
             <TextInput
               style={styles.textInput}
               value={formName}
               onChangeText={setFormName}
-              placeholder="Category name"
+              placeholder="Nombre de la categoría"
             />
 
             {!editingCategory && (
               <>
-                <Text style={styles.inputLabel}>Type</Text>
+                <Text style={styles.inputLabel}>Tipo</Text>
                 <View style={styles.typeSelector}>
                   <Pressable
                     style={[styles.typeButton, formType === 'expense' && styles.typeButtonActive]}
                     onPress={() => setFormType('expense')}
                   >
                     <Text style={[styles.typeButtonText, formType === 'expense' && styles.typeButtonTextActive]}>
-                      Expense
+                      Gasto
                     </Text>
                   </Pressable>
                   <Pressable
@@ -349,7 +349,7 @@ export default function CategoriesScreen() {
                     onPress={() => setFormType('income')}
                   >
                     <Text style={[styles.typeButtonText, formType === 'income' && styles.typeButtonTextActive]}>
-                      Income
+                      Ingreso
                     </Text>
                   </Pressable>
                 </View>
@@ -371,7 +371,7 @@ export default function CategoriesScreen() {
               ))}
             </View>
 
-            <Text style={styles.inputLabel}>Icon</Text>
+            <Text style={styles.inputLabel}>Icono</Text>
             <View style={styles.iconGrid}>
               {CATEGORY_ICONS.slice(0, 12).map((icon) => (
                 <Pressable
@@ -389,13 +389,13 @@ export default function CategoriesScreen() {
 
             <View style={styles.modalButtons}>
               <Button
-                title="Cancel"
+                title="Cancelar"
                 variant="outline"
                 onPress={() => setModalVisible(false)}
                 style={{ flex: 1, marginRight: 8 }}
               />
               <Button
-                title="Save"
+                title="Guardar"
                 onPress={handleSave}
                 style={{ flex: 1, marginLeft: 8 }}
               />
