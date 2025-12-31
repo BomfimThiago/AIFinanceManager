@@ -6,6 +6,7 @@ import { Logo } from '../../components/ui/Logo';
 export default function TabsLayout() {
   const { isDark } = useColorMode();
   const { width } = useWindowDimensions();
+  const isVerySmall = width < 340;  // iPhone SE, very small devices
   const isSmallScreen = width < 375;
 
   const colors = {
@@ -23,16 +24,20 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
-          fontSize: isSmallScreen ? 10 : 11,
+          fontSize: isVerySmall ? 8 : isSmallScreen ? 9 : 11,
           fontWeight: '500',
+          marginTop: isVerySmall ? -2 : 0,
+        },
+        tabBarItemStyle: {
+          paddingHorizontal: isVerySmall ? 2 : isSmallScreen ? 4 : 8,
         },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 6,
-          paddingTop: 6,
-          height: Platform.OS === 'ios' ? 85 : 60,
+          paddingBottom: Platform.OS === 'ios' ? (isVerySmall ? 16 : 20) : (isVerySmall ? 4 : 6),
+          paddingTop: isVerySmall ? 4 : 6,
+          height: Platform.OS === 'ios' ? (isVerySmall ? 75 : 85) : (isVerySmall ? 52 : 60),
         },
         headerStyle: {
           backgroundColor: colors.surface,
@@ -50,49 +55,51 @@ export default function TabsLayout() {
           title: '',
           headerTitle: () => (
             <View style={{ marginLeft: Platform.OS === 'ios' ? 0 : -16 }}>
-              <Logo size={isSmallScreen ? 26 : 30} variant="horizontal" textColor={colors.textPrimary} />
+              <Logo size={isVerySmall ? 22 : isSmallScreen ? 26 : 30} variant="horizontal" textColor={colors.textPrimary} />
             </View>
           ),
           tabBarLabel: 'Inicio',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} small={isSmallScreen} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} size={isVerySmall ? 16 : isSmallScreen ? 18 : 22} />,
         }}
       />
       <Tabs.Screen
         name="receipts"
         options={{
           title: 'Recibos',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🧾" focused={focused} small={isSmallScreen} />,
+          tabBarLabel: isVerySmall ? 'Recib.' : 'Recibos',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🧾" focused={focused} size={isVerySmall ? 16 : isSmallScreen ? 18 : 22} />,
         }}
       />
       <Tabs.Screen
         name="expenses"
         options={{
           title: 'Gastos',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="💰" focused={focused} small={isSmallScreen} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💰" focused={focused} size={isVerySmall ? 16 : isSmallScreen ? 18 : 22} />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
           title: 'Categorías',
-          tabBarLabel: isSmallScreen ? 'Categ.' : 'Categorías',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏷️" focused={focused} small={isSmallScreen} />,
+          tabBarLabel: isVerySmall ? 'Cat.' : isSmallScreen ? 'Categ.' : 'Categorías',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏷️" focused={focused} size={isVerySmall ? 16 : isSmallScreen ? 18 : 22} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Ajustes',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" focused={focused} small={isSmallScreen} />,
+          tabBarLabel: isVerySmall ? 'Ajust.' : 'Ajustes',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" focused={focused} size={isVerySmall ? 16 : isSmallScreen ? 18 : 22} />,
         }}
       />
     </Tabs>
   );
 }
 
-function TabIcon({ emoji, focused, small }: { emoji: string; focused: boolean; small?: boolean }) {
+function TabIcon({ emoji, focused, size }: { emoji: string; focused: boolean; size: number }) {
   return (
-    <Text style={{ fontSize: small ? 20 : 22, opacity: focused ? 1 : 0.5 }}>
+    <Text style={{ fontSize: size, opacity: focused ? 1 : 0.5 }}>
       {emoji}
     </Text>
   );
