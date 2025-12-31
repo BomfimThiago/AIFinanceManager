@@ -55,11 +55,6 @@ export default function DashboardScreen() {
     setRefreshing(false);
   };
 
-  const totalExpenses = expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
-  const pendingReceipts = receipts?.filter((r) => r.status === 'processing').length || 0;
-  const completedReceipts = receipts?.filter((r) => r.status === 'completed').length || 0;
-  const totalReceipts = receipts?.length || 0;
-
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'completed':
@@ -147,34 +142,6 @@ export default function DashboardScreen() {
             <Text style={styles.avatarText}>
               {(user?.fullName?.charAt(0) || 'U').toUpperCase()}
             </Text>
-          </View>
-        </View>
-
-        {/* Main Balance Card */}
-        <View style={[
-          styles.balanceCard,
-          { backgroundColor: colors.primary },
-          Platform.OS === 'ios' && styles.shadowIOS,
-          Platform.OS === 'android' && styles.shadowAndroid,
-          Platform.OS === 'web' && styles.shadowWeb,
-        ]}>
-          <Text style={styles.balanceLabel}>Gastos del Mes</Text>
-          <Text style={styles.balanceAmount}>{formatCurrency(totalExpenses)}</Text>
-          <View style={styles.balanceStats}>
-            <View style={styles.balanceStat}>
-              <Text style={styles.balanceStatValue}>{totalReceipts}</Text>
-              <Text style={styles.balanceStatLabel}>Recibos</Text>
-            </View>
-            <View style={[styles.balanceDivider, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
-            <View style={styles.balanceStat}>
-              <Text style={styles.balanceStatValue}>{completedReceipts}</Text>
-              <Text style={styles.balanceStatLabel}>Procesados</Text>
-            </View>
-            <View style={[styles.balanceDivider, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
-            <View style={styles.balanceStat}>
-              <Text style={styles.balanceStatValue}>{pendingReceipts}</Text>
-              <Text style={styles.balanceStatLabel}>Pendientes</Text>
-            </View>
           </View>
         </View>
 
@@ -461,45 +428,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#7c3aed',
-  },
-  // Balance Card
-  balanceCard: {
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-  },
-  balanceLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  balanceAmount: {
-    color: '#ffffff',
-    fontSize: 36,
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  balanceStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  balanceStat: {
-    alignItems: 'center',
-  },
-  balanceStatValue: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  balanceStatLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  balanceDivider: {
-    width: 1,
-    height: 32,
   },
   // Shadows
   shadowIOS: {
