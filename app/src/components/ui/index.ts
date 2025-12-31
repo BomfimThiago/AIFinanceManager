@@ -5,3 +5,4 @@ export { Text } from './Text';
 export { AmountDisplay } from './AmountDisplay';
 export { CategoryBadge } from './CategoryBadge';
 export { Toast } from './Toast';
+export { Logo, LogoCompact, LogoWithTagline } from './Logo';

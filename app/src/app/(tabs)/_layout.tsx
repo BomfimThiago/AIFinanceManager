@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { useColorMode } from '../../providers/GluestackUIProvider';
+import { Logo, LogoCompact } from '../../components/ui/Logo';
 
 export default function TabsLayout() {
   const { isDark } = useColorMode();
@@ -40,7 +41,12 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Konta',
+          title: '',
+          headerTitle: () => (
+            <View style={{ marginLeft: Platform.OS === 'ios' ? 0 : -16 }}>
+              <Logo size={32} variant="horizontal" textColor={colors.textPrimary} />
+            </View>
+          ),
           tabBarLabel: 'Inicio',
           tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
         }}

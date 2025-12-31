@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import { Button } from '../../components/ui/Button';
+import { Logo, LogoCompact } from '../../components/ui/Logo';
 import { useReceipts } from '../../hooks/useReceipts';
 import { useExpenses } from '../../hooks/useExpenses';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -78,13 +79,8 @@ export default function DashboardScreen() {
         <ScrollView contentContainerStyle={styles.welcomeContent}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            <View style={[styles.heroIconContainer, { backgroundColor: colors.primaryLight }]}>
-              <Text style={styles.heroIcon}>💰</Text>
-            </View>
-            <Text style={[styles.welcomeTitle, { color: colors.text }]}>
-              Bienvenido a Konta
-            </Text>
-            <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>
+            <Logo size={80} variant="vertical" textColor={colors.text} />
+            <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary, marginTop: 16 }]}>
               Tu asistente financiero personal con IA
             </Text>
           </View>
@@ -395,23 +391,6 @@ const styles = StyleSheet.create({
   heroSection: {
     alignItems: 'center',
     marginBottom: 40,
-  },
-  heroIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  heroIcon: {
-    fontSize: 48,
-  },
-  welcomeTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 12,
   },
   welcomeSubtitle: {
     fontSize: 18,

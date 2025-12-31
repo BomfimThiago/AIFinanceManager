@@ -12,15 +12,18 @@ import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Logo } from '../../components/ui/Logo';
 import { useAuthStore } from '../../store/authStore';
 import { useToastStore } from '../../store/toastStore';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useColorMode } from '../../providers/GluestackUIProvider';
 
 type AuthMode = 'login' | 'register';
 
 export default function AuthScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const { isDark } = useColorMode();
   const { login, register, isLoading, error, clearError } = useAuthStore();
   const toast = useToastStore();
 
@@ -29,6 +32,15 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const colors = {
+    background: isDark ? '#111827' : '#f3f4f6',
+    surface: isDark ? '#1f2937' : '#ffffff',
+    text: isDark ? '#f9fafb' : '#1f2937',
+    textSecondary: isDark ? '#9ca3af' : '#6b7280',
+    border: isDark ? '#374151' : '#e5e7eb',
+    primary: '#7c3aed',
+  };
 
   const handleSubmit = async () => {
     clearError();
@@ -73,7 +85,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -86,16 +98,21 @@ export default function AuthScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Text style={styles.logo}>💰</Text>
-            <Text style={styles.title}>AI Finance Manager</Text>
-            <Text style={styles.subtitle}>
+            <Logo size={64} variant="vertical" textColor={colors.text} />
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {mode === 'login'
                 ? '¡Bienvenido de nuevo! Inicia sesión para continuar.'
                 : 'Crea una cuenta para comenzar.'}
             </Text>
           </View>
 
-          <Card style={styles.formCard}>
+          <View style={[
+            styles.formCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            Platform.OS === 'ios' && styles.shadowIOS,
+            Platform.OS === 'android' && styles.shadowAndroid,
+            Platform.OS === 'web' && styles.shadowWeb,
+          ]}>
             {mode === 'register' && (
               <Input
                 label="Nombre Completo"
@@ -141,19 +158,20 @@ export default function AuthScreen() {
               onPress={handleSubmit}
               loading={isLoading}
               style={styles.submitButton}
+              fullWidth
             />
 
             <View style={styles.toggleContainer}>
-              <Text style={styles.toggleText}>
+              <Text style={[styles.toggleText, { color: colors.textSecondary }]}>
                 {mode === 'login'
                   ? '¿No tienes una cuenta? '
                   : '¿Ya tienes una cuenta? '}
               </Text>
-              <Text style={styles.toggleLink} onPress={toggleMode}>
+              <Text style={[styles.toggleLink, { color: colors.primary }]} onPress={toggleMode}>
                 {mode === 'login' ? 'Regístrate' : 'Inicia Sesión'}
               </Text>
             </View>
-          </Card>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -163,7 +181,6 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
   },
   keyboardView: {
     flex: 1,
@@ -182,23 +199,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  logo: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
     textAlign: 'center',
+    marginTop: 16,
   },
   formCard: {
     padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  shadowIOS: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  shadowAndroid: {
+    elevation: 4,
+  },
+  shadowWeb: {
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
   },
   submitButton: {
     marginTop: 8,
@@ -209,10 +230,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   toggleText: {
-    color: '#6b7280',
+    fontSize: 14,
   },
   toggleLink: {
-    color: '#3b82f6',
+    fontSize: 14,
     fontWeight: '600',
   },
 });
