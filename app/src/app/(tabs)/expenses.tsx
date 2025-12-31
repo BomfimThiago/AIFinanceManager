@@ -7,13 +7,15 @@ import {
   RefreshControl,
   Pressable,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
-import { useExpenses } from '../../hooks/useExpenses';
+import { useExpenses, useUpdateExpense } from '../../hooks/useExpenses';
+import { useCategories } from '../../hooks/useCategories';
 import { useResponsive } from '../../hooks/useResponsive';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getCategoryInfo } from '../../constants/categories';
@@ -21,6 +23,36 @@ import { Expense } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 
 type FilterMode = 'month' | 'range';
+
+// Helper function to convert icon name to emoji
+function getIconEmoji(iconName: string): string {
+  const iconMap: Record<string, string> = {
+    'cart': '🛒',
+    'utensils': '🍽️',
+    'car': '🚗',
+    'lightbulb': '💡',
+    'film': '🎬',
+    'heart-pulse': '🏥',
+    'shopping-bag': '🛍️',
+    'home': '🏠',
+    'book-open': '📚',
+    'plane': '✈️',
+    'key': '🔑',
+    'zap': '⚡',
+    'wifi': '📶',
+    'shield': '🛡️',
+    'repeat': '🔄',
+    'briefcase': '💼',
+    'laptop': '💻',
+    'gift': '🎁',
+    'trending-up': '📈',
+    'plus-circle': '➕',
+    'package': '📦',
+    'arrow-down-circle': '⬇️',
+    'rotate-ccw': '↩️',
+  };
+  return iconMap[iconName] || '📦';
+}
 
 // Helper functions for date handling
 const getMonthBounds = (date: Date) => {
@@ -37,7 +69,16 @@ export default function ExpensesScreen() {
   const { isMobile } = useResponsive();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: expenses, isLoading, refetch } = useExpenses({ enabled: isAuthenticated });
+  const { data: categories } = useCategories({
+    filters: { type: 'expense' },
+    enabled: isAuthenticated,
+  });
+  const updateExpense = useUpdateExpense();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Category picker state
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   // Date filter state
   const [filterMode, setFilterMode] = useState<FilterMode>('month');
@@ -114,6 +155,30 @@ export default function ExpensesScreen() {
     setFilterMode('range');
   };
 
+  const handleOpenCategoryPicker = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setShowCategoryPicker(true);
+  };
+
+  const handleCategorySelect = async (categoryKey: string) => {
+    console.log('handleCategorySelect called with:', categoryKey);
+    console.log('selectedExpense:', selectedExpense);
+    if (!selectedExpense) return;
+
+    try {
+      console.log('Updating expense', selectedExpense.id, 'to category:', categoryKey);
+      await updateExpense.mutateAsync({
+        id: selectedExpense.id,
+        data: { category: categoryKey },
+      });
+      console.log('Update successful');
+      setShowCategoryPicker(false);
+      setSelectedExpense(null);
+    } catch (error) {
+      console.error('Failed to update category:', error);
+    }
+  };
+
   const formatShortDate = (date: Date) => {
     return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
   };
@@ -141,11 +206,33 @@ export default function ExpensesScreen() {
     setRefreshing(false);
   };
 
+  // Helper to get category info from fetched categories or fallback to static
+  const getExpenseCategoryInfo = (categoryKey: string) => {
+    // First try to find in fetched categories
+    const fetchedCat = categories?.find(
+      (cat) => cat.defaultCategoryKey === categoryKey || cat.name.toLowerCase() === categoryKey
+    );
+    if (fetchedCat) {
+      return {
+        label: fetchedCat.name,
+        icon: getIconEmoji(fetchedCat.icon),
+        color: fetchedCat.color,
+      };
+    }
+    // Fallback to static categories
+    const staticInfo = getCategoryInfo(categoryKey);
+    return {
+      label: staticInfo.label,
+      icon: staticInfo.icon,
+      color: staticInfo.color,
+    };
+  };
+
   const renderExpenseCard = ({ item }: { item: Expense }) => {
-    const categoryInfo = getCategoryInfo(item.category);
+    const categoryInfo = getExpenseCategoryInfo(item.category);
 
     return (
-      <Pressable>
+      <Pressable onPress={() => handleOpenCategoryPicker(item)}>
         <Card style={styles.expenseCard}>
           <View style={styles.expenseRow}>
             <View
@@ -193,13 +280,14 @@ export default function ExpensesScreen() {
   };
 
   const renderTableRow = (item: Expense, index: number) => {
-    const categoryInfo = getCategoryInfo(item.category);
+    const categoryInfo = getExpenseCategoryInfo(item.category);
     const isEven = index % 2 === 0;
 
     return (
-      <View
+      <Pressable
         key={item.id}
         style={[styles.tableRow, isEven && styles.tableRowEven]}
+        onPress={() => handleOpenCategoryPicker(item)}
       >
         <View style={styles.tableCell}>
           <Text style={styles.tableCellText}>{formatDate(item.expenseDate)}</Text>
@@ -233,7 +321,7 @@ export default function ExpensesScreen() {
             {item.amountBrl != null ? formatCurrency(item.amountBrl, 'BRL') : '-'}
           </Text>
         </View>
-      </View>
+      </Pressable>
     );
   };
 
@@ -337,6 +425,79 @@ export default function ExpensesScreen() {
     </View>
   );
 
+  const renderCategoryPicker = () => (
+    <Modal
+      visible={showCategoryPicker}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowCategoryPicker(false)}
+    >
+      <Pressable
+        style={styles.modalOverlay}
+        onPress={() => setShowCategoryPicker(false)}
+      >
+        <View
+          style={styles.modalContent}
+          onStartShouldSetResponder={() => true}
+        >
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Cambiar Categoría</Text>
+            {selectedExpense && (
+              <Text style={styles.modalSubtitle} numberOfLines={1}>
+                {selectedExpense.description}
+              </Text>
+            )}
+          </View>
+          <ScrollView style={styles.categoryList}>
+            {categories?.filter(cat => !cat.isHidden).map((cat) => {
+              const categoryKey = cat.defaultCategoryKey || cat.name.toLowerCase();
+              const isSelected = selectedExpense?.category === categoryKey;
+              return (
+                <Pressable
+                  key={cat.id}
+                  style={[
+                    styles.categoryOption,
+                    isSelected && styles.categoryOptionSelected,
+                  ]}
+                  onPress={() => {
+                    console.log('Category pressed:', categoryKey);
+                    handleCategorySelect(categoryKey);
+                  }}
+                >
+                  <View
+                    style={[
+                      styles.categoryOptionIcon,
+                      { backgroundColor: cat.color + '20' },
+                    ]}
+                  >
+                    <Text style={styles.categoryOptionEmoji}>{getIconEmoji(cat.icon)}</Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.categoryOptionLabel,
+                      isSelected && styles.categoryOptionLabelSelected,
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                  {isSelected && (
+                    <Text style={styles.categoryCheckmark}>✓</Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <Pressable
+            style={styles.modalCloseButton}
+            onPress={() => setShowCategoryPicker(false)}
+          >
+            <Text style={styles.modalCloseText}>Cancelar</Text>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+
   // Mobile: Card view
   if (isMobile) {
     return (
@@ -359,6 +520,7 @@ export default function ExpensesScreen() {
           onRangeChange={handleRangeChange}
           onClose={() => setShowDatePicker(false)}
         />
+        {renderCategoryPicker()}
       </SafeAreaView>
     );
   }
@@ -415,6 +577,7 @@ export default function ExpensesScreen() {
         onRangeChange={handleRangeChange}
         onClose={() => setShowDatePicker(false)}
       />
+      {renderCategoryPicker()}
     </SafeAreaView>
   );
 }
@@ -748,5 +911,82 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     marginBottom: 32,
+  },
+  // Category picker modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: 34,
+  },
+  modalHeader: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  categoryList: {
+    maxHeight: 400,
+  },
+  categoryOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  categoryOptionSelected: {
+    backgroundColor: '#eff6ff',
+  },
+  categoryOptionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  categoryOptionEmoji: {
+    fontSize: 18,
+  },
+  categoryOptionLabel: {
+    flex: 1,
+    fontSize: 16,
+    color: '#374151',
+  },
+  categoryOptionLabelSelected: {
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  categoryCheckmark: {
+    fontSize: 18,
+    color: '#2563eb',
+    fontWeight: '600',
+  },
+  modalCloseButton: {
+    alignItems: 'center',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '500',
   },
 });

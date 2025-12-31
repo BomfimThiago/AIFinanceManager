@@ -57,6 +57,16 @@ export interface ExpenseCreate {
   receiptId?: number;
 }
 
+export interface ExpenseUpdate {
+  description?: string;
+  amount?: number;
+  currency?: Currency;
+  category?: string;  // Accepts both default and custom category keys
+  expenseDate?: string;
+  storeName?: string;
+  notes?: string;
+}
+
 // Enums
 export type ReceiptStatus = 'pending' | 'processing' | 'completed' | 'failed';
 

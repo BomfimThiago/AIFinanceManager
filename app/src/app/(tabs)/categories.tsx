@@ -205,7 +205,7 @@ export default function CategoriesScreen() {
   }
 
   const renderCategoryItem = ({ item }: { item: Category }) => (
-    <Card style={[styles.categoryCard, item.isHidden && styles.hiddenCard]}>
+    <Card style={[styles.categoryCard, item.isHidden ? styles.hiddenCard : undefined]}>
       <View style={styles.categoryRow}>
         <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
           <Text style={styles.iconText}>{getIconEmoji(item.icon)}</Text>

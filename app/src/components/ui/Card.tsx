@@ -1,9 +1,9 @@
 import React, { forwardRef } from 'react';
-import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, ViewStyle, Platform, StyleProp } from 'react-native';
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   padding?: 'none' | 'small' | 'medium' | 'large';
 }
 

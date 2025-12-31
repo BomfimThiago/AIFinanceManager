@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { expensesApi } from '../services/api';
-import { Expense, ExpenseCreate } from '../types';
+import { Expense, ExpenseCreate, ExpenseUpdate } from '../types';
 
 interface ExpenseFilters {
   skip?: number;
@@ -47,11 +47,14 @@ export function useUpdateExpense() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Expense> }) =>
+    mutationFn: ({ id, data }: { id: number; data: ExpenseUpdate }) =>
       expensesApi.update(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['expenses', variables.id] });
+    onSuccess: async () => {
+      // Invalidate and immediately refetch all expenses queries
+      await queryClient.refetchQueries({
+        queryKey: ['expenses'],
+        type: 'active',
+      });
     },
   });
 }

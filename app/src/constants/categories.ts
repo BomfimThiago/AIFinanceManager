@@ -31,5 +31,14 @@ export const CATEGORIES: CategoryInfo[] = [
 const categoryMap = new Map(CATEGORIES.map(c => [c.value, c]));
 
 export const getCategoryInfo = (category: string): CategoryInfo => {
-  return categoryMap.get(category as ExpenseCategory) || CATEGORIES[CATEGORIES.length - 1];
+  const found = categoryMap.get(category as ExpenseCategory);
+  if (found) return found;
+
+  // For custom categories, return a dynamic CategoryInfo with the category name
+  return {
+    value: category as ExpenseCategory,
+    label: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize first letter
+    icon: '📦',
+    color: '#6b7280',
+  };
 };

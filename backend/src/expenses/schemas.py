@@ -26,7 +26,7 @@ class ExpenseUpdate(BaseModel):
     description: str | None = None
     amount: Decimal | None = None
     currency: Currency | None = None
-    category: ExpenseCategory | None = None
+    category: str | None = None  # Accepts both default and custom category keys
     expense_date: datetime | None = None
     store_name: str | None = None
     notes: str | None = None

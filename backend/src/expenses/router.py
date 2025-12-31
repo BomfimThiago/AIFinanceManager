@@ -4,6 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from src.auth.dependencies import CurrentUser
+from src.categories.dependencies import get_preference_service
+from src.categories.preference_service import CategoryPreferenceService
 from src.database import DbSession
 from src.expenses.repository import ExpenseRepository
 from src.expenses.schemas import ExpenseCreate, ExpenseResponse, ExpenseUpdate
@@ -69,11 +71,30 @@ async def update_expense(
     update_data: ExpenseUpdate,
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
+    preference_service: Annotated[
+        CategoryPreferenceService, Depends(get_preference_service)
+    ],
 ) -> dict:
-    """Update an expense."""
+    """Update an expense.
+
+    If the category is changed, we learn this as a user preference for future
+    AI classifications.
+    """
     expense = await repository.get_by_id(expense_id, current_user.id)
     if not expense:
         raise NotFoundError("Expense", expense_id)
+
+    # Detect category correction and learn from it
+    if update_data.category and update_data.category != expense.category:
+        await preference_service.learn_from_correction(
+            user_id=current_user.id,
+            item_name=expense.description,
+            corrected_category=update_data.category,
+            store_name=expense.store_name,
+            original_category=expense.category,
+            source_expense_id=expense_id,
+        )
+
     expense = await repository.update(expense, update_data)
     return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
 

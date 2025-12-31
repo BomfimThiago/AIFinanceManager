@@ -10,6 +10,7 @@ import {
   CategoryUpdate,
   Expense,
   ExpenseCreate,
+  ExpenseUpdate,
   LoginCredentials,
   Receipt,
   ReceiptUploadResponse,
@@ -215,7 +216,7 @@ export const expensesApi = {
     return data;
   },
 
-  update: async (id: number, updateData: Partial<Expense>): Promise<Expense> => {
+  update: async (id: number, updateData: ExpenseUpdate): Promise<Expense> => {
     const { data } = await api.patch<Expense>(`/expenses/${id}`, updateData);
     return data;
   },

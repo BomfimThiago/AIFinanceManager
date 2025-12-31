@@ -1,10 +1,12 @@
+from src.categories.preference_service import CategoryPreferenceService
+from src.categories.repository import CategoryRepository
 from src.core.logging import add_breadcrumb, get_logger, log_error, log_info
-from src.receipts.ai_parser import AIParser
+from src.receipts.ai_parser import AIParser, UserCategoryContext
 from src.receipts.models import Receipt
 from src.receipts.ocr_service import OCRService
 from src.receipts.repository import ReceiptRepository
 from src.receipts.schemas import ReceiptUpdate
-from src.shared.constants import ReceiptStatus
+from src.shared.constants import CategoryType, ReceiptStatus
 from src.shared.exceptions import NotFoundError
 
 logger = get_logger(__name__)
@@ -16,10 +18,14 @@ class ReceiptService:
         repository: ReceiptRepository,
         ocr_service: OCRService,
         ai_parser: AIParser,
+        category_repository: CategoryRepository,
+        preference_service: CategoryPreferenceService,
     ):
         self.repository = repository
         self.ocr_service = ocr_service
         self.ai_parser = ai_parser
+        self.category_repository = category_repository
+        self.preference_service = preference_service
 
     async def upload_and_process(
         self,
@@ -79,11 +85,14 @@ class ReceiptService:
                 text_length=text_length,
             )
 
+            # Build user context for personalized AI classification
+            user_context = await self._build_user_context(user_id)
+
             # Parse with AI
             log_info("Starting AI parsing", receipt_id=receipt.id)
             add_breadcrumb(message="Starting AI parsing", category="ai")
 
-            parsed_data = await self.ai_parser.parse_receipt(raw_text)
+            parsed_data = await self.ai_parser.parse_receipt(raw_text, user_context)
 
             log_info(
                 "AI parsing completed",
@@ -152,3 +161,51 @@ class ReceiptService:
         """Delete a receipt."""
         receipt = await self.get_receipt(receipt_id, user_id)
         await self.repository.delete(receipt)
+
+    async def _build_user_context(self, user_id: int) -> UserCategoryContext:
+        """Build user-specific context for AI classification.
+
+        Fetches user's custom categories and learned preferences to personalize
+        the AI's classification decisions.
+
+        Args:
+            user_id: The user ID to build context for
+
+        Returns:
+            UserCategoryContext with custom categories and learned mappings
+        """
+        # Get user's custom categories (non-default, not hidden)
+        all_categories = await self.category_repository.get_all_by_user(
+            user_id,
+            category_type=CategoryType.EXPENSE,
+            include_hidden=False,
+        )
+
+        custom_categories = [
+            {
+                "key": cat.name.lower(),  # Use lowercase name as key (matches preferences)
+                "name": cat.name,
+            }
+            for cat in all_categories
+            if not cat.is_default
+        ]
+
+        # Get learned preferences (top 50 by confidence)
+        preferences = await self.preference_service.get_preferences_for_ai_prompt(
+            user_id, limit=50
+        )
+
+        learned_mappings = [
+            {
+                "item_name": pref.item_name_pattern,
+                "store_name": pref.store_name_pattern,
+                "target_category": pref.target_category,
+                "confidence": pref.confidence_score,
+            }
+            for pref in preferences
+        ]
+
+        return UserCategoryContext(
+            custom_categories=custom_categories,
+            learned_mappings=learned_mappings,
+        )

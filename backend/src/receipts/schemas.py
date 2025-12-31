@@ -15,7 +15,7 @@ class ParsedItemData(BaseModel):
     quantity: Decimal = Decimal("1")
     unit_price: Decimal
     total_price: Decimal
-    category: ExpenseCategory = ExpenseCategory.OTHER_EXPENSE
+    category: str = "other_expense"  # Supports both default and custom categories
 
 
 class ReceiptUpdate(BaseModel):
@@ -66,5 +66,5 @@ class ParsedReceiptData(BaseModel):
     total_amount: Decimal | None = None
     currency: Currency = Currency.USD
     purchase_date: datetime | None = None
-    category: ExpenseCategory = ExpenseCategory.OTHER
+    category: str = "other"  # Supports both default and custom categories
     items: list[ParsedItemData] = Field(default_factory=list)

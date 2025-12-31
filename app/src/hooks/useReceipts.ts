@@ -34,8 +34,12 @@ export function useUploadReceipt() {
   return useMutation({
     mutationFn: ({ uri, mimeType }: UploadReceiptParams) =>
       receiptsApi.upload(uri, mimeType),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+    onSuccess: async () => {
+      // Refetch both receipts and expenses since upload creates expenses
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['receipts'], type: 'active' }),
+        queryClient.refetchQueries({ queryKey: ['expenses'], type: 'active' }),
+      ]);
     },
   });
 }
