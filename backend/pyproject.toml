@@ -58,5 +58,6 @@ strict = true
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.22.1",
     "ruff>=0.14.10",
 ]
