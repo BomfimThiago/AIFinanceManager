@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Image, Platform } from 'react-native';
 import { Receipt } from '../../types';
-import { Card } from '../ui/Card';
 import { formatCurrency, formatRelativeTime } from '../../utils/formatters';
 import { getCategoryInfo } from '../../constants/categories';
+import { useColorMode } from '../../providers/GluestackUIProvider';
 
 interface ReceiptCardProps {
   receipt: Receipt;
@@ -11,65 +11,97 @@ interface ReceiptCardProps {
 }
 
 export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
+  const { isDark } = useColorMode();
   const categoryInfo = receipt.category ? getCategoryInfo(receipt.category) : null;
 
-  const getStatusColor = () => {
+  const colors = {
+    surface: isDark ? '#1f2937' : '#ffffff',
+    text: isDark ? '#f9fafb' : '#1f2937',
+    textSecondary: isDark ? '#9ca3af' : '#6b7280',
+    border: isDark ? '#374151' : '#e5e7eb',
+    imageBg: isDark ? '#374151' : '#f3f4f6',
+    primary: '#7c3aed',
+  };
+
+  const getStatusConfig = () => {
     switch (receipt.status) {
       case 'completed':
-        return '#22c55e';
+        return { color: '#22c55e', bg: isDark ? '#22c55e20' : '#dcfce7', label: 'Completado' };
       case 'processing':
-        return '#f59e0b';
+        return { color: '#f59e0b', bg: isDark ? '#f59e0b20' : '#fef3c7', label: 'Procesando' };
       case 'failed':
-        return '#ef4444';
+        return { color: '#ef4444', bg: isDark ? '#ef444420' : '#fee2e2', label: 'Error' };
       default:
-        return '#6b7280';
+        return { color: '#6b7280', bg: isDark ? '#6b728020' : '#f3f4f6', label: 'Pendiente' };
     }
   };
 
+  const statusConfig = getStatusConfig();
+
   return (
-    <Pressable onPress={() => onPress(receipt)}>
-      <Card style={styles.card}>
-        <View style={styles.row}>
-          <View style={styles.imageContainer}>
-            {receipt.imageUrl ? (
-              <Image source={{ uri: receipt.imageUrl }} style={styles.image} />
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Text style={styles.imagePlaceholderText}>📄</Text>
-              </View>
-            )}
+    <Pressable
+      onPress={() => onPress(receipt)}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+        pressed && styles.cardPressed,
+        Platform.OS === 'ios' && styles.shadowIOS,
+        Platform.OS === 'android' && styles.shadowAndroid,
+        Platform.OS === 'web' && styles.shadowWeb,
+      ]}
+    >
+      <View style={styles.row}>
+        {/* Image/Thumbnail */}
+        <View style={[styles.imageContainer, { backgroundColor: colors.imageBg }]}>
+          {receipt.imageUrl ? (
+            <Image source={{ uri: receipt.imageUrl }} style={styles.image} />
+          ) : (
+            <Text style={styles.imagePlaceholderText}>🧾</Text>
+          )}
+        </View>
+
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Header row: Store name + Status */}
+          <View style={styles.header}>
+            <Text style={[styles.storeName, { color: colors.text }]} numberOfLines={1}>
+              {receipt.storeName || 'Tienda Desconocida'}
+            </Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+              <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                {statusConfig.label}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <Text style={styles.storeName} numberOfLines={1}>
-                {receipt.storeName || 'Tienda Desconocida'}
-              </Text>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
-                <Text style={styles.statusText}>{receipt.status}</Text>
+          {/* Amount */}
+          {receipt.totalAmount !== null && (
+            <Text style={[styles.amount, { color: colors.primary }]}>
+              {formatCurrency(receipt.totalAmount, receipt.currency as any)}
+            </Text>
+          )}
+
+          {/* Footer: Category + Date */}
+          <View style={styles.footer}>
+            {categoryInfo ? (
+              <View style={[styles.categoryBadge, { backgroundColor: categoryInfo.color + '20' }]}>
+                <Text style={styles.categoryIcon}>{categoryInfo.icon}</Text>
+                <Text style={[styles.categoryText, { color: categoryInfo.color }]}>
+                  {categoryInfo.label}
+                </Text>
               </View>
-            </View>
-
-            {receipt.totalAmount !== null && (
-              <Text style={styles.amount}>
-                {formatCurrency(receipt.totalAmount, receipt.currency as any)}
-              </Text>
+            ) : (
+              <View />
             )}
-
-            <View style={styles.footer}>
-              {categoryInfo && (
-                <View style={[styles.categoryBadge, { backgroundColor: categoryInfo.color + '20' }]}>
-                  <Text style={styles.categoryIcon}>{categoryInfo.icon}</Text>
-                  <Text style={[styles.categoryText, { color: categoryInfo.color }]}>
-                    {categoryInfo.label}
-                  </Text>
-                </View>
-              )}
-              <Text style={styles.date}>{formatRelativeTime(receipt.createdAt)}</Text>
-            </View>
+            <Text style={[styles.date, { color: colors.textSecondary }]}>
+              {formatRelativeTime(receipt.createdAt)}
+            </Text>
           </View>
         </View>
-      </Card>
+
+        {/* Chevron */}
+        <Text style={[styles.chevron, { color: colors.textSecondary }]}>›</Text>
+      </View>
     </Pressable>
   );
 }
@@ -78,29 +110,45 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
     marginVertical: 6,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+  },
+  cardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+  shadowIOS: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+  shadowAndroid: {
+    elevation: 3,
+  },
+  shadowWeb: {
+    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
   },
   row: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   imageContainer: {
-    marginRight: 12,
-  },
-  image: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-  },
-  imagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    marginRight: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  image: {
+    width: 56,
+    height: 56,
   },
   imagePlaceholderText: {
-    fontSize: 24,
+    fontSize: 28,
   },
   content: {
     flex: 1,
@@ -114,26 +162,22 @@ const styles = StyleSheet.create({
   storeName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
     flex: 1,
     marginRight: 8,
   },
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#ffffff',
-    textTransform: 'uppercase',
   },
   amount: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#3b82f6',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   footer: {
     flexDirection: 'row',
@@ -145,7 +189,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   categoryIcon: {
     fontSize: 12,
@@ -153,10 +197,13 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   date: {
     fontSize: 12,
-    color: '#6b7280',
+  },
+  chevron: {
+    fontSize: 24,
+    marginLeft: 8,
   },
 });
