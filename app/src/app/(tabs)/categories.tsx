@@ -9,6 +9,8 @@ import {
   Modal,
   TextInput,
   Alert,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../components/ui/Card';
@@ -23,8 +25,9 @@ import {
   useInitializeCategories,
 } from '../../hooks/useCategories';
 import { useResponsive } from '../../hooks/useResponsive';
-import { Category, CategoryCreate, CategoryType, CategoryUpdate } from '../../types';
+import { Category, CategoryCreate, CategoryType } from '../../types';
 import { useAuthStore } from '../../store/authStore';
+import { useColorMode } from '../../providers/GluestackUIProvider';
 
 // Predefined colors for category selection
 const CATEGORY_COLORS = [
@@ -36,34 +39,57 @@ const CATEGORY_COLORS = [
 
 // Predefined icons (using icon names that match the backend)
 const CATEGORY_ICONS = [
-  { name: 'cart', label: 'Cart' },
-  { name: 'utensils', label: 'Dining' },
-  { name: 'car', label: 'Car' },
-  { name: 'lightbulb', label: 'Utilities' },
-  { name: 'film', label: 'Entertainment' },
-  { name: 'heart-pulse', label: 'Health' },
-  { name: 'shopping-bag', label: 'Shopping' },
-  { name: 'home', label: 'Home' },
-  { name: 'book-open', label: 'Education' },
-  { name: 'plane', label: 'Travel' },
-  { name: 'key', label: 'Key' },
-  { name: 'zap', label: 'Energy' },
-  { name: 'wifi', label: 'Internet' },
-  { name: 'shield', label: 'Shield' },
-  { name: 'repeat', label: 'Repeat' },
-  { name: 'briefcase', label: 'Work' },
-  { name: 'laptop', label: 'Laptop' },
-  { name: 'gift', label: 'Gift' },
-  { name: 'trending-up', label: 'Growth' },
-  { name: 'plus-circle', label: 'Plus' },
-  { name: 'package', label: 'Package' },
+  { name: 'cart', emoji: '🛒' },
+  { name: 'utensils', emoji: '🍽️' },
+  { name: 'car', emoji: '🚗' },
+  { name: 'lightbulb', emoji: '💡' },
+  { name: 'film', emoji: '🎬' },
+  { name: 'heart-pulse', emoji: '🏥' },
+  { name: 'shopping-bag', emoji: '🛍️' },
+  { name: 'home', emoji: '🏠' },
+  { name: 'book-open', emoji: '📚' },
+  { name: 'plane', emoji: '✈️' },
+  { name: 'key', emoji: '🔑' },
+  { name: 'zap', emoji: '⚡' },
+  { name: 'wifi', emoji: '📶' },
+  { name: 'shield', emoji: '🛡️' },
+  { name: 'repeat', emoji: '🔄' },
+  { name: 'briefcase', emoji: '💼' },
+  { name: 'laptop', emoji: '💻' },
+  { name: 'gift', emoji: '🎁' },
+  { name: 'trending-up', emoji: '📈' },
+  { name: 'plus-circle', emoji: '➕' },
+  { name: 'package', emoji: '📦' },
 ];
 
 type TabType = 'expense' | 'income';
 
+// Helper function to convert icon name to emoji
+function getIconEmoji(iconName: string): string {
+  const icon = CATEGORY_ICONS.find(i => i.name === iconName);
+  return icon?.emoji || '📦';
+}
+
 export default function CategoriesScreen() {
-  const { isMobile } = useResponsive();
+  const { isMobile, isDesktop } = useResponsive();
+  const { isDark } = useColorMode();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Theme colors
+  const colors = {
+    background: isDark ? '#111827' : '#f3f4f6',
+    surface: isDark ? '#1f2937' : '#ffffff',
+    surfaceSecondary: isDark ? '#374151' : '#f9fafb',
+    text: isDark ? '#f9fafb' : '#1f2937',
+    textSecondary: isDark ? '#9ca3af' : '#6b7280',
+    textMuted: isDark ? '#6b7280' : '#9ca3af',
+    border: isDark ? '#374151' : '#e5e7eb',
+    primary: '#7c3aed',
+    primaryLight: isDark ? '#7c3aed30' : '#ede9fe',
+    danger: '#ef4444',
+    dangerLight: isDark ? '#ef444430' : '#fee2e2',
+    success: '#10b981',
+  };
 
   const { data: categories, isLoading, refetch } = useCategories({
     filters: { includeHidden: true },
@@ -97,13 +123,15 @@ export default function CategoriesScreen() {
   const filteredCategories = categories?.filter((c) => c.type === activeTab) || [];
   const expenseCount = categories?.filter((c) => c.type === 'expense').length || 0;
   const incomeCount = categories?.filter((c) => c.type === 'income').length || 0;
+  const visibleCount = filteredCategories.filter(c => !c.isHidden).length;
+  const hiddenCount = filteredCategories.filter(c => c.isHidden).length;
 
   const openCreateModal = () => {
     setEditingCategory(null);
     setFormName('');
     setFormType(activeTab);
     setFormIcon('package');
-    setFormColor('#6b7280');
+    setFormColor('#7c3aed');
     setModalVisible(true);
   };
 
@@ -196,101 +224,163 @@ export default function CategoriesScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.authPrompt}>
-          <Text style={styles.authText}>Inicia sesión para gestionar categorías</Text>
+          <Text style={[styles.authIcon]}>🏷️</Text>
+          <Text style={[styles.authTitle, { color: colors.text }]}>Gestiona tus Categorías</Text>
+          <Text style={[styles.authText, { color: colors.textSecondary }]}>
+            Inicia sesión para crear y organizar categorías personalizadas
+          </Text>
+          <Button title="Iniciar Sesión" onPress={() => {}} />
         </View>
       </SafeAreaView>
     );
   }
 
   const renderCategoryItem = ({ item }: { item: Category }) => (
-    <Card style={[styles.categoryCard, item.isHidden ? styles.hiddenCard : undefined]}>
+    <Pressable
+      onPress={() => openEditModal(item)}
+      style={({ pressed }) => [
+        styles.categoryCard,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          opacity: item.isHidden ? 0.6 : (pressed ? 0.9 : 1),
+        },
+        Platform.OS === 'ios' && styles.shadowIOS,
+        Platform.OS === 'android' && styles.shadowAndroid,
+        Platform.OS === 'web' && styles.shadowWeb,
+      ]}
+    >
       <View style={styles.categoryRow}>
-        <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
+        {/* Icon with color background */}
+        <View style={[styles.iconContainer, { backgroundColor: item.color + '25' }]}>
           <Text style={styles.iconText}>{getIconEmoji(item.icon)}</Text>
         </View>
+
+        {/* Category info */}
         <View style={styles.categoryInfo}>
-          <Text style={[styles.categoryName, item.isHidden && styles.hiddenText]}>
+          <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={1}>
             {item.name}
           </Text>
           <View style={styles.badges}>
             {item.isDefault && (
-              <View style={styles.defaultBadge}>
-                <Text style={styles.defaultBadgeText}>Predeterminada</Text>
+              <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[styles.badgeText, { color: colors.primary }]}>Sistema</Text>
               </View>
             )}
             {item.isHidden && (
-              <View style={styles.hiddenBadge}>
-                <Text style={styles.hiddenBadgeText}>Oculta</Text>
+              <View style={[styles.badge, { backgroundColor: colors.dangerLight }]}>
+                <Text style={[styles.badgeText, { color: colors.danger }]}>Oculta</Text>
               </View>
             )}
           </View>
         </View>
+
+        {/* Color indicator */}
+        <View style={[styles.colorDot, { backgroundColor: item.color }]} />
+
+        {/* Actions */}
         <View style={styles.actions}>
           <Pressable
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.surfaceSecondary }]}
             onPress={() => handleToggleVisibility(item)}
           >
-            <Text>{item.isHidden ? '👁️' : '🙈'}</Text>
+            <Text style={styles.actionIcon}>{item.isHidden ? '👁️' : '🙈'}</Text>
           </Pressable>
           {!item.isDefault && (
-            <>
-              <Pressable
-                style={styles.actionButton}
-                onPress={() => openEditModal(item)}
-              >
-                <Text>✏️</Text>
-              </Pressable>
-              <Pressable
-                style={styles.actionButton}
-                onPress={() => handleDelete(item)}
-              >
-                <Text>🗑️</Text>
-              </Pressable>
-            </>
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: colors.dangerLight }]}
+              onPress={() => handleDelete(item)}
+            >
+              <Text style={styles.actionIcon}>🗑️</Text>
+            </Pressable>
           )}
         </View>
       </View>
-    </Card>
+    </Pressable>
+  );
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      {/* Stats Summary */}
+      <View style={[styles.statsContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.primary }]}>{visibleCount}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Activas</Text>
+        </View>
+        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.textMuted }]}>{hiddenCount}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Ocultas</Text>
+        </View>
+        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.success }]}>{filteredCategories.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total</Text>
+        </View>
+      </View>
+
+      {/* Add Button */}
+      <Button
+        title={`+ Nueva Categoría`}
+        onPress={openCreateModal}
+        fullWidth
+      />
+
+      {(!categories || categories.length === 0) && (
+        <Button
+          title="Inicializar Categorías por Defecto"
+          variant="outline"
+          onPress={handleInitialize}
+          fullWidth
+          style={{ marginTop: 8 }}
+        />
+      )}
+
+      {/* Section Title */}
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+        {activeTab === 'expense' ? 'CATEGORÍAS DE GASTO' : 'CATEGORÍAS DE INGRESO'}
+      </Text>
+    </View>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        <Pressable
-          style={[styles.tab, activeTab === 'expense' && styles.activeTab]}
-          onPress={() => setActiveTab('expense')}
-        >
-          <Text style={[styles.tabText, activeTab === 'expense' && styles.activeTabText]}>
-            Gastos ({expenseCount})
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tab, activeTab === 'income' && styles.activeTab]}
-          onPress={() => setActiveTab('income')}
-        >
-          <Text style={[styles.tabText, activeTab === 'income' && styles.activeTabText]}>
-            Ingresos ({incomeCount})
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Add Category Button */}
-      <View style={styles.addButtonContainer}>
-        <Button
-          title={`+ Agregar Categoría de ${activeTab === 'expense' ? 'Gasto' : 'Ingreso'}`}
-          onPress={openCreateModal}
-        />
-        {(!categories || categories.length === 0) && (
-          <Button
-            title="Inicializar Categorías por Defecto"
-            variant="outline"
-            onPress={handleInitialize}
-            style={{ marginTop: 8 }}
-          />
-        )}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+      {/* Segmented Tabs */}
+      <View style={[styles.tabsWrapper, { backgroundColor: colors.background }]}>
+        <View style={[styles.tabsContainer, { backgroundColor: colors.surfaceSecondary }]}>
+          <Pressable
+            style={[
+              styles.tab,
+              activeTab === 'expense' && [styles.activeTab, { backgroundColor: colors.surface }],
+            ]}
+            onPress={() => setActiveTab('expense')}
+          >
+            <Text style={styles.tabIcon}>💸</Text>
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'expense' ? colors.text : colors.textSecondary }
+            ]}>
+              Gastos ({expenseCount})
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.tab,
+              activeTab === 'income' && [styles.activeTab, { backgroundColor: colors.surface }],
+            ]}
+            onPress={() => setActiveTab('income')}
+          >
+            <Text style={styles.tabIcon}>💰</Text>
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'income' ? colors.text : colors.textSecondary }
+            ]}>
+              Ingresos ({incomeCount})
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Categories List */}
@@ -298,14 +388,17 @@ export default function CategoriesScreen() {
         data={filteredCategories}
         renderItem={renderCategoryItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, isDesktop && styles.desktopContent]}
+        ListHeaderComponent={renderHeader}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              Sin categorías de {activeTab === 'expense' ? 'gasto' : 'ingreso'} aún.
+            <Text style={styles.emptyIcon}>📂</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin categorías</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              Crea tu primera categoría de {activeTab === 'expense' ? 'gasto' : 'ingreso'}
             </Text>
           </View>
         }
@@ -319,84 +412,133 @@ export default function CategoriesScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
-            </Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            {/* Modal Header */}
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
+              </Text>
+              <Pressable onPress={() => setModalVisible(false)} style={styles.modalClose}>
+                <Text style={[styles.modalCloseText, { color: colors.textSecondary }]}>✕</Text>
+              </Pressable>
+            </View>
 
-            <Text style={styles.inputLabel}>Nombre</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formName}
-              onChangeText={setFormName}
-              placeholder="Nombre de la categoría"
-            />
-
-            {!editingCategory && (
-              <>
-                <Text style={styles.inputLabel}>Tipo</Text>
-                <View style={styles.typeSelector}>
-                  <Pressable
-                    style={[styles.typeButton, formType === 'expense' && styles.typeButtonActive]}
-                    onPress={() => setFormType('expense')}
-                  >
-                    <Text style={[styles.typeButtonText, formType === 'expense' && styles.typeButtonTextActive]}>
-                      Gasto
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.typeButton, formType === 'income' && styles.typeButtonActive]}
-                    onPress={() => setFormType('income')}
-                  >
-                    <Text style={[styles.typeButtonText, formType === 'income' && styles.typeButtonTextActive]}>
-                      Ingreso
-                    </Text>
-                  </Pressable>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {/* Preview */}
+              <View style={styles.previewSection}>
+                <View style={[styles.previewCard, { backgroundColor: colors.surfaceSecondary }]}>
+                  <View style={[styles.previewIcon, { backgroundColor: formColor + '25' }]}>
+                    <Text style={styles.previewIconText}>{getIconEmoji(formIcon)}</Text>
+                  </View>
+                  <Text style={[styles.previewName, { color: colors.text }]}>
+                    {formName || 'Nombre de categoría'}
+                  </Text>
+                  <View style={[styles.previewColorDot, { backgroundColor: formColor }]} />
                 </View>
-              </>
-            )}
+              </View>
 
-            <Text style={styles.inputLabel}>Color</Text>
-            <View style={styles.colorGrid}>
-              {CATEGORY_COLORS.map((color) => (
-                <Pressable
-                  key={color}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: color },
-                    formColor === color && styles.colorOptionSelected,
-                  ]}
-                  onPress={() => setFormColor(color)}
-                />
-              ))}
-            </View>
+              {/* Name Input */}
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nombre</Text>
+              <TextInput
+                style={[styles.textInput, {
+                  backgroundColor: colors.surfaceSecondary,
+                  borderColor: colors.border,
+                  color: colors.text,
+                }]}
+                value={formName}
+                onChangeText={setFormName}
+                placeholder="Nombre de la categoría"
+                placeholderTextColor={colors.textMuted}
+              />
 
-            <Text style={styles.inputLabel}>Icono</Text>
-            <View style={styles.iconGrid}>
-              {CATEGORY_ICONS.slice(0, 12).map((icon) => (
-                <Pressable
-                  key={icon.name}
-                  style={[
-                    styles.iconOption,
-                    formIcon === icon.name && styles.iconOptionSelected,
-                  ]}
-                  onPress={() => setFormIcon(icon.name)}
-                >
-                  <Text style={styles.iconOptionText}>{getIconEmoji(icon.name)}</Text>
-                </Pressable>
-              ))}
-            </View>
+              {/* Type Selector (only for new categories) */}
+              {!editingCategory && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Tipo</Text>
+                  <View style={[styles.typeSelector, { backgroundColor: colors.surfaceSecondary }]}>
+                    <Pressable
+                      style={[
+                        styles.typeButton,
+                        formType === 'expense' && [styles.typeButtonActive, { backgroundColor: colors.surface }]
+                      ]}
+                      onPress={() => setFormType('expense')}
+                    >
+                      <Text style={styles.typeButtonIcon}>💸</Text>
+                      <Text style={[
+                        styles.typeButtonText,
+                        { color: formType === 'expense' ? colors.text : colors.textSecondary }
+                      ]}>
+                        Gasto
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[
+                        styles.typeButton,
+                        formType === 'income' && [styles.typeButtonActive, { backgroundColor: colors.surface }]
+                      ]}
+                      onPress={() => setFormType('income')}
+                    >
+                      <Text style={styles.typeButtonIcon}>💰</Text>
+                      <Text style={[
+                        styles.typeButtonText,
+                        { color: formType === 'income' ? colors.text : colors.textSecondary }
+                      ]}>
+                        Ingreso
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
 
-            <View style={styles.modalButtons}>
+              {/* Color Picker */}
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Color</Text>
+              <View style={styles.colorGrid}>
+                {CATEGORY_COLORS.map((color) => (
+                  <Pressable
+                    key={color}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color },
+                      formColor === color && styles.colorOptionSelected,
+                    ]}
+                    onPress={() => setFormColor(color)}
+                  >
+                    {formColor === color && <Text style={styles.colorCheck}>✓</Text>}
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Icon Picker */}
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Icono</Text>
+              <View style={styles.iconGrid}>
+                {CATEGORY_ICONS.map((icon) => (
+                  <Pressable
+                    key={icon.name}
+                    style={[
+                      styles.iconOption,
+                      { backgroundColor: colors.surfaceSecondary },
+                      formIcon === icon.name && [styles.iconOptionSelected, { backgroundColor: formColor + '25', borderColor: formColor }],
+                    ]}
+                    onPress={() => setFormIcon(icon.name)}
+                  >
+                    <Text style={styles.iconOptionText}>{icon.emoji}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+
+            {/* Modal Footer */}
+            <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
               <Button
                 title="Cancelar"
-                variant="outline"
+                variant="ghost"
                 onPress={() => setModalVisible(false)}
                 style={{ flex: 1, marginRight: 8 }}
               />
               <Button
-                title="Guardar"
+                title={editingCategory ? 'Guardar' : 'Crear'}
                 onPress={handleSave}
+                loading={createCategory.isPending || updateCategory.isPending}
                 style={{ flex: 1, marginLeft: 8 }}
               />
             </View>
@@ -407,107 +549,143 @@ export default function CategoriesScreen() {
   );
 }
 
-// Helper function to convert icon name to emoji
-function getIconEmoji(iconName: string): string {
-  const iconMap: Record<string, string> = {
-    'cart': '🛒',
-    'utensils': '🍽️',
-    'car': '🚗',
-    'lightbulb': '💡',
-    'film': '🎬',
-    'heart-pulse': '🏥',
-    'shopping-bag': '🛍️',
-    'home': '🏠',
-    'book-open': '📚',
-    'plane': '✈️',
-    'key': '🔑',
-    'zap': '⚡',
-    'wifi': '📶',
-    'shield': '🛡️',
-    'repeat': '🔄',
-    'briefcase': '💼',
-    'laptop': '💻',
-    'gift': '🎁',
-    'trending-up': '📈',
-    'plus-circle': '➕',
-    'package': '📦',
-    'arrow-down-circle': '⬇️',
-    'rotate-ccw': '↩️',
-  };
-  return iconMap[iconName] || '📦';
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
   },
+  // Auth prompt
   authPrompt: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
+  authIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  authTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
   authText: {
     fontSize: 16,
-    color: '#6b7280',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  // Tabs
+  tabsWrapper: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   tabsContainer: {
     flexDirection: 'row',
-    padding: 16,
-    paddingBottom: 8,
-    gap: 8,
+    borderRadius: 12,
+    padding: 4,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    gap: 6,
   },
   activeTab: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabIcon: {
+    fontSize: 16,
   },
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
   },
-  activeTabText: {
-    color: '#ffffff',
+  // Header
+  header: {
+    marginBottom: 16,
   },
-  addButtonContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  listContent: {
+  statsContainer: {
+    flexDirection: 'row',
+    borderRadius: 12,
     padding: 16,
-    paddingTop: 8,
+    marginBottom: 16,
+    borderWidth: 1,
   },
-  categoryCard: {
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    marginHorizontal: 8,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginTop: 16,
     marginBottom: 8,
   },
-  hiddenCard: {
-    opacity: 0.6,
+  // List
+  listContent: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  desktopContent: {
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  // Category Card
+  categoryCard: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  shadowIOS: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  shadowAndroid: {
+    elevation: 2,
+  },
+  shadowWeb: {
+    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   iconText: {
-    fontSize: 20,
+    fontSize: 24,
   },
   categoryInfo: {
     flex: 1,
@@ -515,148 +693,217 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
-  },
-  hiddenText: {
-    color: '#9ca3af',
+    marginBottom: 4,
   },
   badges: {
     flexDirection: 'row',
-    marginTop: 4,
     gap: 6,
   },
-  defaultBadge: {
-    backgroundColor: '#dbeafe',
+  badge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  defaultBadgeText: {
+  badgeText: {
     fontSize: 11,
-    color: '#3b82f6',
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  hiddenBadge: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  hiddenBadgeText: {
-    fontSize: 11,
-    color: '#ef4444',
-    fontWeight: '500',
+  colorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 12,
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   actionButton: {
-    padding: 8,
-  },
-  emptyContainer: {
-    padding: 32,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  actionIcon: {
+    fontSize: 16,
+  },
+  // Empty
+  emptyContainer: {
+    padding: 48,
+    alignItems: 'center',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    textAlign: 'center',
   },
+  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 20,
-    textAlign: 'center',
   },
+  modalClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+  },
+  modalScroll: {
+    padding: 20,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 20,
+    borderTopWidth: 1,
+  },
+  // Preview
+  previewSection: {
+    marginBottom: 20,
+  },
+  previewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+  },
+  previewIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  previewIconText: {
+    fontSize: 24,
+  },
+  previewName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  previewColorDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  // Inputs
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 16,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 10,
+    padding: 14,
     fontSize: 16,
   },
+  // Type selector
   typeSelector: {
     flexDirection: 'row',
-    gap: 8,
+    borderRadius: 10,
+    padding: 4,
   },
   typeButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 6,
   },
   typeButtonActive: {
-    backgroundColor: '#3b82f6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  typeButtonIcon: {
+    fontSize: 16,
   },
   typeButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
   },
-  typeButtonTextActive: {
-    color: '#ffffff',
-  },
+  // Color picker
   colorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   colorOption: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   colorOptionSelected: {
     borderWidth: 3,
-    borderColor: '#1f2937',
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
   },
+  colorCheck: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  // Icon picker
   iconGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 20,
   },
   iconOption: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    width: 48,
+    height: 48,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconOptionSelected: {
-    backgroundColor: '#dbeafe',
     borderWidth: 2,
-    borderColor: '#3b82f6',
   },
   iconOptionText: {
-    fontSize: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    marginTop: 24,
+    fontSize: 22,
   },
 });
