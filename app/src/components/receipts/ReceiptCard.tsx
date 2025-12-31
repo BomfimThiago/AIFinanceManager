@@ -4,6 +4,7 @@ import { Receipt } from '../../types';
 import { formatCurrency, formatRelativeTime } from '../../utils/formatters';
 import { getCategoryInfo } from '../../constants/categories';
 import { useColorMode } from '../../providers/GluestackUIProvider';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface ReceiptCardProps {
   receipt: Receipt;
@@ -12,6 +13,7 @@ interface ReceiptCardProps {
 
 export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
   const { isDark } = useColorMode();
+  const { isSmallMobile, horizontalPadding } = useResponsive();
   const categoryInfo = receipt.category ? getCategoryInfo(receipt.category) : null;
 
   const colors = {
@@ -43,7 +45,8 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
       onPress={() => onPress(receipt)}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border },
+        { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: horizontalPadding },
+        isSmallMobile && { padding: 10, borderRadius: 10 },
         pressed && styles.cardPressed,
         Platform.OS === 'ios' && styles.shadowIOS,
         Platform.OS === 'android' && styles.shadowAndroid,
@@ -52,11 +55,11 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
     >
       <View style={styles.row}>
         {/* Image/Thumbnail */}
-        <View style={[styles.imageContainer, { backgroundColor: colors.imageBg }]}>
+        <View style={[styles.imageContainer, { backgroundColor: colors.imageBg }, isSmallMobile && { width: 44, height: 44, borderRadius: 10, marginRight: 10 }]}>
           {receipt.imageUrl ? (
-            <Image source={{ uri: receipt.imageUrl }} style={styles.image} />
+            <Image source={{ uri: receipt.imageUrl }} style={[styles.image, isSmallMobile && { width: 44, height: 44 }]} />
           ) : (
-            <Text style={styles.imagePlaceholderText}>🧾</Text>
+            <Text style={[styles.imagePlaceholderText, isSmallMobile && { fontSize: 22 }]}>🧾</Text>
           )}
         </View>
 
@@ -64,11 +67,11 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
         <View style={styles.content}>
           {/* Header row: Store name + Status */}
           <View style={styles.header}>
-            <Text style={[styles.storeName, { color: colors.text }]} numberOfLines={1}>
+            <Text style={[styles.storeName, { color: colors.text }, isSmallMobile && { fontSize: 14 }]} numberOfLines={1}>
               {receipt.storeName || 'Tienda Desconocida'}
             </Text>
-            <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-              <Text style={[styles.statusText, { color: statusConfig.color }]}>
+            <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }, isSmallMobile && { paddingHorizontal: 6, paddingVertical: 2 }]}>
+              <Text style={[styles.statusText, { color: statusConfig.color }, isSmallMobile && { fontSize: 9 }]}>
                 {statusConfig.label}
               </Text>
             </View>
@@ -76,7 +79,7 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
 
           {/* Amount */}
           {receipt.totalAmount !== null && (
-            <Text style={[styles.amount, { color: colors.primary }]}>
+            <Text style={[styles.amount, { color: colors.primary }, isSmallMobile && { fontSize: 18, marginBottom: 4 }]}>
               {formatCurrency(receipt.totalAmount, receipt.currency as any)}
             </Text>
           )}
@@ -84,23 +87,23 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
           {/* Footer: Category + Date */}
           <View style={styles.footer}>
             {categoryInfo ? (
-              <View style={[styles.categoryBadge, { backgroundColor: categoryInfo.color + '20' }]}>
-                <Text style={styles.categoryIcon}>{categoryInfo.icon}</Text>
-                <Text style={[styles.categoryText, { color: categoryInfo.color }]}>
+              <View style={[styles.categoryBadge, { backgroundColor: categoryInfo.color + '20' }, isSmallMobile && { paddingHorizontal: 6, paddingVertical: 3 }]}>
+                <Text style={[styles.categoryIcon, isSmallMobile && { fontSize: 10 }]}>{categoryInfo.icon}</Text>
+                <Text style={[styles.categoryText, { color: categoryInfo.color }, isSmallMobile && { fontSize: 10 }]}>
                   {categoryInfo.label}
                 </Text>
               </View>
             ) : (
               <View />
             )}
-            <Text style={[styles.date, { color: colors.textSecondary }]}>
+            <Text style={[styles.date, { color: colors.textSecondary }, isSmallMobile && { fontSize: 10 }]}>
               {formatRelativeTime(receipt.createdAt)}
             </Text>
           </View>
         </View>
 
         {/* Chevron */}
-        <Text style={[styles.chevron, { color: colors.textSecondary }]}>›</Text>
+        <Text style={[styles.chevron, { color: colors.textSecondary }, isSmallMobile && { fontSize: 20, marginLeft: 4 }]}>›</Text>
       </View>
     </Pressable>
   );
@@ -108,7 +111,6 @@ export function ReceiptCard({ receipt, onPress }: ReceiptCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
     marginVertical: 6,
     borderRadius: 14,
     padding: 14,

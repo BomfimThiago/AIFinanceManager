@@ -71,7 +71,7 @@ function getIconEmoji(iconName: string): string {
 }
 
 export default function CategoriesScreen() {
-  const { isMobile, isDesktop } = useResponsive();
+  const { isMobile, isDesktop, isSmallMobile, horizontalPadding } = useResponsive();
   const { isDark } = useColorMode();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -348,36 +348,38 @@ export default function CategoriesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       {/* Segmented Tabs */}
-      <View style={[styles.tabsWrapper, { backgroundColor: colors.background }]}>
+      <View style={[styles.tabsWrapper, { backgroundColor: colors.background, paddingHorizontal: horizontalPadding }]}>
         <View style={[styles.tabsContainer, { backgroundColor: colors.surfaceSecondary }]}>
           <Pressable
             style={[
               styles.tab,
+              { paddingVertical: isSmallMobile ? 8 : 10, paddingHorizontal: isSmallMobile ? 8 : 12 },
               activeTab === 'expense' && [styles.activeTab, { backgroundColor: colors.surface }],
             ]}
             onPress={() => setActiveTab('expense')}
           >
-            <Text style={styles.tabIcon}>💸</Text>
+            <Text style={[styles.tabIcon, { fontSize: isSmallMobile ? 14 : 16 }]}>💸</Text>
             <Text style={[
               styles.tabText,
-              { color: activeTab === 'expense' ? colors.text : colors.textSecondary }
+              { color: activeTab === 'expense' ? colors.text : colors.textSecondary, fontSize: isSmallMobile ? 12 : 14 }
             ]}>
-              Gastos ({expenseCount})
+              {isSmallMobile ? `Gastos (${expenseCount})` : `Gastos (${expenseCount})`}
             </Text>
           </Pressable>
           <Pressable
             style={[
               styles.tab,
+              { paddingVertical: isSmallMobile ? 8 : 10, paddingHorizontal: isSmallMobile ? 8 : 12 },
               activeTab === 'income' && [styles.activeTab, { backgroundColor: colors.surface }],
             ]}
             onPress={() => setActiveTab('income')}
           >
-            <Text style={styles.tabIcon}>💰</Text>
+            <Text style={[styles.tabIcon, { fontSize: isSmallMobile ? 14 : 16 }]}>💰</Text>
             <Text style={[
               styles.tabText,
-              { color: activeTab === 'income' ? colors.text : colors.textSecondary }
+              { color: activeTab === 'income' ? colors.text : colors.textSecondary, fontSize: isSmallMobile ? 12 : 14 }
             ]}>
-              Ingresos ({incomeCount})
+              {isSmallMobile ? `Ingresos (${incomeCount})` : `Ingresos (${incomeCount})`}
             </Text>
           </Pressable>
         </View>
@@ -388,7 +390,7 @@ export default function CategoriesScreen() {
         data={filteredCategories}
         renderItem={renderCategoryItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={[styles.listContent, isDesktop && styles.desktopContent]}
+        contentContainerStyle={[styles.listContent, { paddingHorizontal: horizontalPadding }, isDesktop && styles.desktopContent]}
         ListHeaderComponent={renderHeader}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />

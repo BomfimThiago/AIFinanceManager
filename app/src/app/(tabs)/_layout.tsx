@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
-import { Platform, Text, View } from 'react-native';
+import { Platform, Text, View, useWindowDimensions } from 'react-native';
 import { useColorMode } from '../../providers/GluestackUIProvider';
-import { Logo, LogoCompact } from '../../components/ui/Logo';
+import { Logo } from '../../components/ui/Logo';
 
 export default function TabsLayout() {
   const { isDark } = useColorMode();
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 375;
 
   const colors = {
     primary: '#7c3aed',
@@ -20,13 +22,17 @@ export default function TabsLayout() {
         headerShown: true,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: isSmallScreen ? 10 : 11,
+          fontWeight: '500',
+        },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 6,
+          paddingTop: 6,
+          height: Platform.OS === 'ios' ? 85 : 60,
         },
         headerStyle: {
           backgroundColor: colors.surface,
@@ -44,48 +50,49 @@ export default function TabsLayout() {
           title: '',
           headerTitle: () => (
             <View style={{ marginLeft: Platform.OS === 'ios' ? 0 : -16 }}>
-              <Logo size={32} variant="horizontal" textColor={colors.textPrimary} />
+              <Logo size={isSmallScreen ? 26 : 30} variant="horizontal" textColor={colors.textPrimary} />
             </View>
           ),
           tabBarLabel: 'Inicio',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} small={isSmallScreen} />,
         }}
       />
       <Tabs.Screen
         name="receipts"
         options={{
           title: 'Recibos',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🧾" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🧾" focused={focused} small={isSmallScreen} />,
         }}
       />
       <Tabs.Screen
         name="expenses"
         options={{
           title: 'Gastos',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="💰" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💰" focused={focused} small={isSmallScreen} />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
           title: 'Categorías',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏷️" focused={focused} />,
+          tabBarLabel: isSmallScreen ? 'Categ.' : 'Categorías',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏷️" focused={focused} small={isSmallScreen} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Ajustes',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" focused={focused} small={isSmallScreen} />,
         }}
       />
     </Tabs>
   );
 }
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
+function TabIcon({ emoji, focused, small }: { emoji: string; focused: boolean; small?: boolean }) {
   return (
-    <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.5 }}>
+    <Text style={{ fontSize: small ? 20 : 22, opacity: focused ? 1 : 0.5 }}>
       {emoji}
     </Text>
   );

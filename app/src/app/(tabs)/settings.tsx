@@ -9,7 +9,7 @@ import { useColorMode } from '../../providers/GluestackUIProvider';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isSmallMobile, horizontalPadding } = useResponsive();
   const { user, isAuthenticated, logout } = useAuthStore();
   const { isDark, toggleColorMode } = useColorMode();
 
@@ -44,7 +44,7 @@ export default function SettingsScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-        <View style={[styles.content, isDesktop && styles.desktopContent]}>
+        <View style={[styles.content, { paddingHorizontal: horizontalPadding }, isDesktop && styles.desktopContent]}>
           {/* Dark Mode Card - Available without login */}
           <View style={[
             styles.card,
@@ -53,13 +53,13 @@ export default function SettingsScreen() {
             Platform.OS === 'android' && styles.shadowAndroid,
             Platform.OS === 'web' && styles.shadowWeb,
           ]}>
-            <View style={styles.settingsItem}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
-                <Text style={styles.icon}>🌙</Text>
+            <View style={[styles.settingsItem, isSmallMobile && { padding: 12 }]}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }, isSmallMobile && { width: 38, height: 38, borderRadius: 10 }]}>
+                <Text style={[styles.icon, isSmallMobile && { fontSize: 16 }]}>🌙</Text>
               </View>
               <View style={styles.settingsContent}>
-                <Text style={[styles.settingsTitle, { color: colors.text }]}>Modo Oscuro</Text>
-                <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>
+                <Text style={[styles.settingsTitle, { color: colors.text }, isSmallMobile && { fontSize: 14 }]}>Modo Oscuro</Text>
+                <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }, isSmallMobile && { fontSize: 11 }]}>
                   {isDark ? 'Activado' : 'Desactivado'}
                 </Text>
               </View>
@@ -77,12 +77,13 @@ export default function SettingsScreen() {
             styles.card,
             styles.authCard,
             { backgroundColor: colors.surface, borderColor: colors.border },
+            isSmallMobile && { padding: 24 },
             Platform.OS === 'ios' && styles.shadowIOS,
             Platform.OS === 'android' && styles.shadowAndroid,
             Platform.OS === 'web' && styles.shadowWeb,
           ]}>
-            <Text style={[styles.authTitle, { color: colors.text }]}>Sin Iniciar Sesión</Text>
-            <Text style={[styles.authText, { color: colors.textSecondary }]}>
+            <Text style={[styles.authTitle, { color: colors.text }, isSmallMobile && { fontSize: 16 }]}>Sin Iniciar Sesión</Text>
+            <Text style={[styles.authText, { color: colors.textSecondary }, isSmallMobile && { fontSize: 13 }]}>
               Inicia sesión para acceder a más opciones
             </Text>
             <Button title="Iniciar Sesión" onPress={() => router.push('/auth')} />
@@ -94,27 +95,28 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-      <View style={[styles.content, isDesktop && styles.desktopContent]}>
+      <View style={[styles.content, { paddingHorizontal: horizontalPadding }, isDesktop && styles.desktopContent]}>
         {/* Profile Card */}
         <View style={[
           styles.card,
           styles.profileCard,
           { backgroundColor: colors.surface, borderColor: colors.border },
+          isSmallMobile && { padding: 16 },
           Platform.OS === 'ios' && styles.shadowIOS,
           Platform.OS === 'android' && styles.shadowAndroid,
           Platform.OS === 'web' && styles.shadowWeb,
         ]}>
-          <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>
+          <View style={[styles.avatarContainer, { backgroundColor: colors.primary }, isSmallMobile && { width: 64, height: 64, borderRadius: 32 }]}>
+            <Text style={[styles.avatarText, isSmallMobile && { fontSize: 26 }]}>
               {user?.fullName?.charAt(0).toUpperCase() || '?'}
             </Text>
           </View>
-          <Text style={[styles.userName, { color: colors.text }]}>{user?.fullName}</Text>
-          <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
+          <Text style={[styles.userName, { color: colors.text }, isSmallMobile && { fontSize: 18 }]}>{user?.fullName}</Text>
+          <Text style={[styles.userEmail, { color: colors.textSecondary }, isSmallMobile && { fontSize: 12 }]}>{user?.email}</Text>
         </View>
 
         {/* Dark Mode Setting */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Apariencia</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }, isSmallMobile && { fontSize: 11 }]}>Apariencia</Text>
         <View style={[
           styles.card,
           { backgroundColor: colors.surface, borderColor: colors.border },
@@ -122,13 +124,13 @@ export default function SettingsScreen() {
           Platform.OS === 'android' && styles.shadowAndroid,
           Platform.OS === 'web' && styles.shadowWeb,
         ]}>
-          <View style={styles.settingsItem}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
-              <Text style={styles.icon}>🌙</Text>
+          <View style={[styles.settingsItem, isSmallMobile && { padding: 12 }]}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }, isSmallMobile && { width: 38, height: 38, borderRadius: 10 }]}>
+              <Text style={[styles.icon, isSmallMobile && { fontSize: 16 }]}>🌙</Text>
             </View>
             <View style={styles.settingsContent}>
-              <Text style={[styles.settingsTitle, { color: colors.text }]}>Modo Oscuro</Text>
-              <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>
+              <Text style={[styles.settingsTitle, { color: colors.text }, isSmallMobile && { fontSize: 14 }]}>Modo Oscuro</Text>
+              <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }, isSmallMobile && { fontSize: 11 }]}>
                 {isDark ? 'Activado' : 'Desactivado'}
               </Text>
             </View>
@@ -146,7 +148,7 @@ export default function SettingsScreen() {
           title="Cerrar Sesión"
           variant="danger"
           onPress={handleLogout}
-          style={styles.logoutButton}
+          style={[styles.logoutButton, isSmallMobile && { marginTop: 24 }]}
           fullWidth
         />
       </View>
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    paddingVertical: 16,
   },
   desktopContent: {
     maxWidth: 500,

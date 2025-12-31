@@ -22,7 +22,7 @@ import { useColorMode } from '../../providers/GluestackUIProvider';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isMobile, isSmallMobile, horizontalPadding, width } = useResponsive();
   const { isDark } = useColorMode();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -68,37 +68,43 @@ export default function DashboardScreen() {
     }
   };
 
+  // Calculate quick action width for 2x2 grid on mobile
+  const quickActionWidth = isMobile ? (width - (horizontalPadding * 2) - 12) / 2 : undefined;
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <ScrollView contentContainerStyle={styles.welcomeContent}>
+        <ScrollView contentContainerStyle={[styles.welcomeContent, { padding: horizontalPadding }]}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            <Logo size={80} variant="vertical" textColor={colors.text} />
+            <Logo size={isSmallMobile ? 60 : 80} variant="vertical" textColor={colors.text} />
             <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary, marginTop: 16 }]}>
               Tu asistente financiero personal con IA
             </Text>
           </View>
 
           {/* Features */}
-          <View style={styles.featuresSection}>
+          <View style={[styles.featuresSection, { gap: isSmallMobile ? 12 : 16 }]}>
             <FeatureCard
               icon="🧾"
               title="Escanea Recibos"
               description="Sube una foto y la IA extrae todos los detalles"
               colors={colors}
+              isSmall={isSmallMobile}
             />
             <FeatureCard
               icon="📊"
               title="Rastrea Gastos"
               description="Visualiza tus gastos por categoría"
               colors={colors}
+              isSmall={isSmallMobile}
             />
             <FeatureCard
               icon="🎯"
               title="Metas Financieras"
               description="Establece y alcanza tus objetivos de ahorro"
               colors={colors}
+              isSmall={isSmallMobile}
             />
           </View>
 
@@ -122,6 +128,7 @@ export default function DashboardScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
+          { paddingHorizontal: horizontalPadding },
           isDesktop && styles.desktopContent,
         ]}
         refreshControl={
@@ -131,15 +138,15 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greetingSmall, { color: colors.textSecondary }]}>
+            <Text style={[styles.greetingSmall, { color: colors.textSecondary, fontSize: isSmallMobile ? 12 : 14 }]}>
               ¡Hola de nuevo!
             </Text>
-            <Text style={[styles.greeting, { color: colors.text }]}>
+            <Text style={[styles.greeting, { color: colors.text, fontSize: isSmallMobile ? 22 : 26 }]}>
               {user?.fullName?.split(' ')[0] || 'Usuario'}
             </Text>
           </View>
-          <View style={[styles.avatarContainer, { backgroundColor: colors.primaryLight }]}>
-            <Text style={styles.avatarText}>
+          <View style={[styles.avatarContainer, { backgroundColor: colors.primaryLight, width: isSmallMobile ? 40 : 48, height: isSmallMobile ? 40 : 48 }]}>
+            <Text style={[styles.avatarText, { fontSize: isSmallMobile ? 16 : 20 }]}>
               {(user?.fullName?.charAt(0) || 'U').toUpperCase()}
             </Text>
           </View>
@@ -147,12 +154,13 @@ export default function DashboardScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Acciones Rápidas</Text>
-          <View style={styles.quickActionsGrid}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: isSmallMobile ? 16 : 18 }]}>Acciones Rápidas</Text>
+          <View style={[styles.quickActionsGrid, { gap: isSmallMobile ? 8 : 12 }]}>
             <Pressable
               style={({ pressed }) => [
                 styles.quickAction,
                 { backgroundColor: colors.surface, borderColor: colors.border },
+                quickActionWidth && { width: quickActionWidth, minWidth: undefined, flex: undefined },
                 pressed && styles.quickActionPressed,
                 Platform.OS === 'ios' && styles.shadowIOSSmall,
                 Platform.OS === 'android' && styles.shadowAndroidSmall,
@@ -160,17 +168,18 @@ export default function DashboardScreen() {
               ]}
               onPress={() => router.push('/receipts')}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.primaryLight }]}>
-                <Text style={styles.quickActionEmoji}>📷</Text>
+              <View style={[styles.quickActionIcon, { backgroundColor: colors.primaryLight, width: isSmallMobile ? 40 : 48, height: isSmallMobile ? 40 : 48 }]}>
+                <Text style={[styles.quickActionEmoji, { fontSize: isSmallMobile ? 18 : 22 }]}>📷</Text>
               </View>
-              <Text style={[styles.quickActionLabel, { color: colors.text }]}>Escanear</Text>
-              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary }]}>Recibo</Text>
+              <Text style={[styles.quickActionLabel, { color: colors.text, fontSize: isSmallMobile ? 13 : 15 }]}>Escanear</Text>
+              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary, fontSize: isSmallMobile ? 10 : 12 }]}>Recibo</Text>
             </Pressable>
 
             <Pressable
               style={({ pressed }) => [
                 styles.quickAction,
                 { backgroundColor: colors.surface, borderColor: colors.border },
+                quickActionWidth && { width: quickActionWidth, minWidth: undefined, flex: undefined },
                 pressed && styles.quickActionPressed,
                 Platform.OS === 'ios' && styles.shadowIOSSmall,
                 Platform.OS === 'android' && styles.shadowAndroidSmall,
@@ -178,17 +187,18 @@ export default function DashboardScreen() {
               ]}
               onPress={() => router.push('/expenses')}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.successLight }]}>
-                <Text style={styles.quickActionEmoji}>➕</Text>
+              <View style={[styles.quickActionIcon, { backgroundColor: colors.successLight, width: isSmallMobile ? 40 : 48, height: isSmallMobile ? 40 : 48 }]}>
+                <Text style={[styles.quickActionEmoji, { fontSize: isSmallMobile ? 18 : 22 }]}>➕</Text>
               </View>
-              <Text style={[styles.quickActionLabel, { color: colors.text }]}>Agregar</Text>
-              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary }]}>Gasto</Text>
+              <Text style={[styles.quickActionLabel, { color: colors.text, fontSize: isSmallMobile ? 13 : 15 }]}>Agregar</Text>
+              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary, fontSize: isSmallMobile ? 10 : 12 }]}>Gasto</Text>
             </Pressable>
 
             <Pressable
               style={({ pressed }) => [
                 styles.quickAction,
                 { backgroundColor: colors.surface, borderColor: colors.border },
+                quickActionWidth && { width: quickActionWidth, minWidth: undefined, flex: undefined },
                 pressed && styles.quickActionPressed,
                 Platform.OS === 'ios' && styles.shadowIOSSmall,
                 Platform.OS === 'android' && styles.shadowAndroidSmall,
@@ -196,17 +206,18 @@ export default function DashboardScreen() {
               ]}
               onPress={() => router.push('/categories')}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.infoLight }]}>
-                <Text style={styles.quickActionEmoji}>🏷️</Text>
+              <View style={[styles.quickActionIcon, { backgroundColor: colors.infoLight, width: isSmallMobile ? 40 : 48, height: isSmallMobile ? 40 : 48 }]}>
+                <Text style={[styles.quickActionEmoji, { fontSize: isSmallMobile ? 18 : 22 }]}>🏷️</Text>
               </View>
-              <Text style={[styles.quickActionLabel, { color: colors.text }]}>Categorías</Text>
-              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary }]}>Gestionar</Text>
+              <Text style={[styles.quickActionLabel, { color: colors.text, fontSize: isSmallMobile ? 13 : 15 }]}>Categorías</Text>
+              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary, fontSize: isSmallMobile ? 10 : 12 }]}>Gestionar</Text>
             </Pressable>
 
             <Pressable
               style={({ pressed }) => [
                 styles.quickAction,
                 { backgroundColor: colors.surface, borderColor: colors.border },
+                quickActionWidth && { width: quickActionWidth, minWidth: undefined, flex: undefined },
                 pressed && styles.quickActionPressed,
                 Platform.OS === 'ios' && styles.shadowIOSSmall,
                 Platform.OS === 'android' && styles.shadowAndroidSmall,
@@ -214,11 +225,11 @@ export default function DashboardScreen() {
               ]}
               onPress={() => router.push('/settings')}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.warningLight }]}>
-                <Text style={styles.quickActionEmoji}>⚙️</Text>
+              <View style={[styles.quickActionIcon, { backgroundColor: colors.warningLight, width: isSmallMobile ? 40 : 48, height: isSmallMobile ? 40 : 48 }]}>
+                <Text style={[styles.quickActionEmoji, { fontSize: isSmallMobile ? 18 : 22 }]}>⚙️</Text>
               </View>
-              <Text style={[styles.quickActionLabel, { color: colors.text }]}>Ajustes</Text>
-              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary }]}>Configurar</Text>
+              <Text style={[styles.quickActionLabel, { color: colors.text, fontSize: isSmallMobile ? 13 : 15 }]}>Ajustes</Text>
+              <Text style={[styles.quickActionSubLabel, { color: colors.textSecondary, fontSize: isSmallMobile ? 10 : 12 }]}>Configurar</Text>
             </Pressable>
           </View>
         </View>
@@ -314,22 +325,25 @@ interface FeatureCardProps {
   title: string;
   description: string;
   colors: { surface: string; text: string; textSecondary: string; border: string; primaryLight: string };
+  isSmall?: boolean;
 }
 
-function FeatureCard({ icon, title, description, colors }: FeatureCardProps) {
+function FeatureCard({ icon, title, description, colors, isSmall }: FeatureCardProps) {
   return (
     <View style={[
       styles.featureCard,
-      { backgroundColor: colors.surface, borderColor: colors.border },
+      { backgroundColor: colors.surface, borderColor: colors.border, padding: isSmall ? 14 : 20, gap: isSmall ? 12 : 16 },
       Platform.OS === 'ios' && styles.shadowIOSSmall,
       Platform.OS === 'android' && styles.shadowAndroidSmall,
       Platform.OS === 'web' && styles.shadowWebSmall,
     ]}>
-      <View style={[styles.featureIconContainer, { backgroundColor: colors.primaryLight }]}>
-        <Text style={styles.featureIcon}>{icon}</Text>
+      <View style={[styles.featureIconContainer, { backgroundColor: colors.primaryLight, width: isSmall ? 44 : 52, height: isSmall ? 44 : 52 }]}>
+        <Text style={[styles.featureIcon, { fontSize: isSmall ? 20 : 24 }]}>{icon}</Text>
       </View>
-      <Text style={[styles.featureTitle, { color: colors.text }]}>{title}</Text>
-      <Text style={[styles.featureDescription, { color: colors.textSecondary }]}>{description}</Text>
+      <View style={styles.featureTextContainer}>
+        <Text style={[styles.featureTitle, { color: colors.text, fontSize: isSmall ? 14 : 16 }]}>{title}</Text>
+        <Text style={[styles.featureDescription, { color: colors.textSecondary, fontSize: isSmall ? 12 : 14 }]}>{description}</Text>
+      </View>
     </View>
   );
 }
@@ -369,30 +383,25 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   featureCard: {
-    padding: 20,
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
   },
   featureIconContainer: {
-    width: 52,
-    height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  featureIcon: {
-    fontSize: 24,
+  featureIcon: {},
+  featureTextContainer: {
+    flex: 1,
   },
   featureTitle: {
-    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   featureDescription: {
-    fontSize: 14,
     flex: 1,
   },
   ctaSection: {

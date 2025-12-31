@@ -22,7 +22,7 @@ type AuthMode = 'login' | 'register';
 
 export default function AuthScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isSmallMobile, horizontalPadding } = useResponsive();
   const { isDark } = useColorMode();
   const { login, register, isLoading, error, clearError } = useAuthStore();
   const toast = useToastStore();
@@ -93,13 +93,14 @@ export default function AuthScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.content,
+            { paddingHorizontal: horizontalPadding },
             isDesktop && styles.desktopContent,
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Logo size={64} variant="vertical" textColor={colors.text} />
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <View style={[styles.header, isSmallMobile && { marginBottom: 24 }]}>
+            <Logo size={isSmallMobile ? 48 : 64} variant="vertical" textColor={colors.text} />
+            <Text style={[styles.subtitle, { color: colors.textSecondary }, isSmallMobile && { fontSize: 14, marginTop: 12 }]}>
               {mode === 'login'
                 ? '¡Bienvenido de nuevo! Inicia sesión para continuar.'
                 : 'Crea una cuenta para comenzar.'}
@@ -109,6 +110,7 @@ export default function AuthScreen() {
           <View style={[
             styles.formCard,
             { backgroundColor: colors.surface, borderColor: colors.border },
+            isSmallMobile && { padding: 16, borderRadius: 12 },
             Platform.OS === 'ios' && styles.shadowIOS,
             Platform.OS === 'android' && styles.shadowAndroid,
             Platform.OS === 'web' && styles.shadowWeb,
@@ -161,13 +163,13 @@ export default function AuthScreen() {
               fullWidth
             />
 
-            <View style={styles.toggleContainer}>
-              <Text style={[styles.toggleText, { color: colors.textSecondary }]}>
+            <View style={[styles.toggleContainer, isSmallMobile && { marginTop: 16 }]}>
+              <Text style={[styles.toggleText, { color: colors.textSecondary }, isSmallMobile && { fontSize: 13 }]}>
                 {mode === 'login'
                   ? '¿No tienes una cuenta? '
                   : '¿Ya tienes una cuenta? '}
               </Text>
-              <Text style={[styles.toggleLink, { color: colors.primary }]} onPress={toggleMode}>
+              <Text style={[styles.toggleLink, { color: colors.primary }, isSmallMobile && { fontSize: 13 }]} onPress={toggleMode}>
                 {mode === 'login' ? 'Regístrate' : 'Inicia Sesión'}
               </Text>
             </View>
@@ -188,7 +190,7 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    paddingVertical: 24,
   },
   desktopContent: {
     maxWidth: 440,

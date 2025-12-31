@@ -5,6 +5,7 @@ import { PickedFile } from '../../hooks/useCamera';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useColorMode } from '../../providers/GluestackUIProvider';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface ReceiptUploaderProps {
   onSuccess?: () => void;
@@ -13,6 +14,7 @@ interface ReceiptUploaderProps {
 
 export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
   const { isDark } = useColorMode();
+  const { isSmallMobile, horizontalPadding } = useResponsive();
   const { pickFile, isLoading: isPickerLoading } = useCamera();
   const uploadMutation = useUploadReceipt();
 
@@ -47,16 +49,16 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
 
   if (isLoading) {
     return (
-      <View style={styles.card}>
-        <View style={[styles.uploadContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.card, { marginHorizontal: horizontalPadding }]}>
+        <View style={[styles.uploadContainer, { backgroundColor: colors.surface, borderColor: colors.border }, isSmallMobile && { padding: 16 }]}>
           <View style={styles.loadingContainer}>
-            <View style={[styles.loadingIconContainer, { backgroundColor: colors.primaryLight }]}>
-              <ActivityIndicator size="large" color={colors.primary} />
+            <View style={[styles.loadingIconContainer, { backgroundColor: colors.primaryLight }, isSmallMobile && { width: 64, height: 64, borderRadius: 32 }]}>
+              <ActivityIndicator size={isSmallMobile ? 'small' : 'large'} color={colors.primary} />
             </View>
-            <Text style={[styles.loadingTitle, { color: colors.text }]}>
+            <Text style={[styles.loadingTitle, { color: colors.text }, isSmallMobile && { fontSize: 16 }]}>
               {uploadMutation.isPending ? 'Procesando recibo...' : 'Cargando...'}
             </Text>
-            <Text style={[styles.loadingSubtitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.loadingSubtitle, { color: colors.textSecondary }, isSmallMobile && { fontSize: 12 }]}>
               La IA está extrayendo los datos
             </Text>
           </View>
@@ -66,32 +68,33 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
   }
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { marginHorizontal: horizontalPadding }]}>
       <View style={[
         styles.uploadContainer,
-        { backgroundColor: colors.surface, borderColor: colors.border }
+        { backgroundColor: colors.surface, borderColor: colors.border },
+        isSmallMobile && { padding: 16, borderRadius: 12 }
       ]}>
         {/* Icon */}
-        <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
-          <Text style={styles.icon}>🧾</Text>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }, isSmallMobile && { width: 56, height: 56, borderRadius: 28, marginBottom: 12 }]}>
+          <Text style={[styles.icon, isSmallMobile && { fontSize: 28 }]}>🧾</Text>
         </View>
 
         {/* Text */}
-        <Text style={[styles.title, { color: colors.text }]}>Subir Recibo</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        <Text style={[styles.title, { color: colors.text }, isSmallMobile && { fontSize: 18, marginBottom: 6 }]}>Subir Recibo</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }, isSmallMobile && { fontSize: 12, marginBottom: 12 }]}>
           Soporta imágenes (JPG, PNG, WEBP) y archivos PDF
         </Text>
 
         {/* Supported formats */}
-        <View style={styles.formatsContainer}>
-          <View style={[styles.formatBadge, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.formatText, { color: colors.primary }]}>📷 JPG</Text>
+        <View style={[styles.formatsContainer, isSmallMobile && { gap: 6, marginBottom: 16 }]}>
+          <View style={[styles.formatBadge, { backgroundColor: colors.primaryLight }, isSmallMobile && { paddingHorizontal: 8, paddingVertical: 4 }]}>
+            <Text style={[styles.formatText, { color: colors.primary }, isSmallMobile && { fontSize: 10 }]}>📷 JPG</Text>
           </View>
-          <View style={[styles.formatBadge, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.formatText, { color: colors.primary }]}>🖼️ PNG</Text>
+          <View style={[styles.formatBadge, { backgroundColor: colors.primaryLight }, isSmallMobile && { paddingHorizontal: 8, paddingVertical: 4 }]}>
+            <Text style={[styles.formatText, { color: colors.primary }, isSmallMobile && { fontSize: 10 }]}>🖼️ PNG</Text>
           </View>
-          <View style={[styles.formatBadge, { backgroundColor: colors.primaryLight }]}>
-            <Text style={[styles.formatText, { color: colors.primary }]}>📄 PDF</Text>
+          <View style={[styles.formatBadge, { backgroundColor: colors.primaryLight }, isSmallMobile && { paddingHorizontal: 8, paddingVertical: 4 }]}>
+            <Text style={[styles.formatText, { color: colors.primary }, isSmallMobile && { fontSize: 10 }]}>📄 PDF</Text>
           </View>
         </View>
 
@@ -100,12 +103,12 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
           title="📤 Seleccionar Archivo"
           onPress={handlePickFile}
           fullWidth
-          size="large"
+          size={isSmallMobile ? 'medium' : 'large'}
         />
 
         {uploadMutation.isError && (
-          <View style={[styles.errorContainer, { backgroundColor: colors.error + '15' }]}>
-            <Text style={[styles.errorText, { color: colors.error }]}>
+          <View style={[styles.errorContainer, { backgroundColor: colors.error + '15' }, isSmallMobile && { marginTop: 12, padding: 10 }]}>
+            <Text style={[styles.errorText, { color: colors.error }, isSmallMobile && { fontSize: 12 }]}>
               ❌ Error al procesar el recibo. Por favor intenta de nuevo.
             </Text>
           </View>
@@ -117,7 +120,7 @@ export function ReceiptUploader({ onSuccess, onError }: ReceiptUploaderProps) {
 
 const styles = StyleSheet.create({
   card: {
-    margin: 16,
+    marginVertical: 16,
   },
   uploadContainer: {
     borderRadius: 16,

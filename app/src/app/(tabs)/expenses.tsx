@@ -67,7 +67,7 @@ const formatMonthYear = (date: Date) => {
 
 export default function ExpensesScreen() {
   const { isDark } = useColorMode();
-  const { isMobile } = useResponsive();
+  const { isMobile, isSmallMobile, horizontalPadding, isDesktop } = useResponsive();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: expenses, isLoading, refetch } = useExpenses({ enabled: isAuthenticated });
   const { data: categories } = useCategories({
@@ -190,11 +190,11 @@ export default function ExpensesScreen() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.authPrompt}>
-          <Text variant="displayMd" style={{ textAlign: 'center', marginBottom: 12 }}>
+        <View style={[styles.authPrompt, { paddingHorizontal: horizontalPadding }]}>
+          <Text variant={isSmallMobile ? 'displaySm' : 'displayMd'} style={{ textAlign: 'center', marginBottom: 12 }}>
             Inicia sesión para ver gastos
           </Text>
-          <Text variant="bodyLg" color="secondary" style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Text variant={isSmallMobile ? 'bodyMd' : 'bodyLg'} color="secondary" style={{ textAlign: 'center', marginBottom: isSmallMobile ? 24 : 32 }}>
             Controla tus gastos y administra tus finanzas
           </Text>
           <Link href="/auth" asChild>
@@ -418,7 +418,7 @@ export default function ExpensesScreen() {
           renderItem={renderExpenseCard}
           ListHeaderComponent={renderSummary}
           ListEmptyComponent={!isLoading ? renderEmpty : null}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: horizontalPadding }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         />
         <DateRangePicker visible={showDatePicker} startDate={customStartDate} endDate={customEndDate} onRangeChange={handleRangeChange} onClose={() => setShowDatePicker(false)} />
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   tableCellAmount: { alignItems: 'flex-end' },
   emptyContainer: { alignItems: 'center', paddingVertical: 48 },
   emptyIcon: { fontSize: 64, marginBottom: 16 },
-  authPrompt: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  authPrompt: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
   modalContent: { maxHeight: '70%', paddingBottom: 34 },
   modalHeader: { padding: 20, borderBottomWidth: 1 },
