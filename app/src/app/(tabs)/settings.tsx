@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, Alert, Switch, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../store/authStore';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -16,10 +15,12 @@ export default function SettingsScreen() {
 
   const colors = {
     background: isDark ? '#111827' : '#f3f4f6',
+    surface: isDark ? '#1f2937' : '#ffffff',
     text: isDark ? '#f9fafb' : '#1f2937',
     textSecondary: isDark ? '#9ca3af' : '#6b7280',
     border: isDark ? '#374151' : '#e5e7eb',
     primary: '#7c3aed',
+    primaryLight: isDark ? '#7c3aed20' : '#ede9fe',
   };
 
   const handleLogout = () => {
@@ -44,13 +45,48 @@ export default function SettingsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
         <View style={[styles.content, isDesktop && styles.desktopContent]}>
-          <Card style={styles.authCard}>
+          {/* Dark Mode Card - Available without login */}
+          <View style={[
+            styles.card,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            Platform.OS === 'ios' && styles.shadowIOS,
+            Platform.OS === 'android' && styles.shadowAndroid,
+            Platform.OS === 'web' && styles.shadowWeb,
+          ]}>
+            <View style={styles.settingsItem}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
+                <Text style={styles.icon}>🌙</Text>
+              </View>
+              <View style={styles.settingsContent}>
+                <Text style={[styles.settingsTitle, { color: colors.text }]}>Modo Oscuro</Text>
+                <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>
+                  {isDark ? 'Activado' : 'Desactivado'}
+                </Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleColorMode}
+                trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+                thumbColor="#ffffff"
+              />
+            </View>
+          </View>
+
+          {/* Login Prompt */}
+          <View style={[
+            styles.card,
+            styles.authCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            Platform.OS === 'ios' && styles.shadowIOS,
+            Platform.OS === 'android' && styles.shadowAndroid,
+            Platform.OS === 'web' && styles.shadowWeb,
+          ]}>
             <Text style={[styles.authTitle, { color: colors.text }]}>Sin Iniciar Sesión</Text>
             <Text style={[styles.authText, { color: colors.textSecondary }]}>
-              Inicia sesión para acceder a la configuración de tu cuenta
+              Inicia sesión para acceder a más opciones
             </Text>
             <Button title="Iniciar Sesión" onPress={() => router.push('/auth')} />
-          </Card>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -59,7 +95,15 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <View style={[styles.content, isDesktop && styles.desktopContent]}>
-        <Card style={styles.profileCard}>
+        {/* Profile Card */}
+        <View style={[
+          styles.card,
+          styles.profileCard,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+          Platform.OS === 'ios' && styles.shadowIOS,
+          Platform.OS === 'android' && styles.shadowAndroid,
+          Platform.OS === 'web' && styles.shadowWeb,
+        ]}>
           <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
             <Text style={styles.avatarText}>
               {user?.fullName?.charAt(0).toUpperCase() || '?'}
@@ -67,12 +111,21 @@ export default function SettingsScreen() {
           </View>
           <Text style={[styles.userName, { color: colors.text }]}>{user?.fullName}</Text>
           <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
-        </Card>
+        </View>
 
+        {/* Dark Mode Setting */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Apariencia</Text>
-        <Card padding="none">
-          <View style={[styles.settingsItem, styles.settingsItemBorder, { borderBottomColor: colors.border }]}>
-            <Text style={styles.settingsIcon}>🌙</Text>
+        <View style={[
+          styles.card,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+          Platform.OS === 'ios' && styles.shadowIOS,
+          Platform.OS === 'android' && styles.shadowAndroid,
+          Platform.OS === 'web' && styles.shadowWeb,
+        ]}>
+          <View style={styles.settingsItem}>
+            <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
+              <Text style={styles.icon}>🌙</Text>
+            </View>
             <View style={styles.settingsContent}>
               <Text style={[styles.settingsTitle, { color: colors.text }]}>Modo Oscuro</Text>
               <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>
@@ -86,133 +139,18 @@ export default function SettingsScreen() {
               thumbColor="#ffffff"
             />
           </View>
-        </Card>
+        </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Cuenta</Text>
-        <Card padding="none">
-          <SettingsItem
-            icon="👤"
-            title="Perfil"
-            subtitle="Gestiona la información de tu perfil"
-            onPress={() => {}}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="🔔"
-            title="Notificaciones"
-            subtitle="Configura las preferencias de notificaciones"
-            onPress={() => {}}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="💱"
-            title="Moneda"
-            subtitle="USD"
-            onPress={() => {}}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="🌐"
-            title="Idioma"
-            subtitle="Español"
-            onPress={() => {}}
-            colors={colors}
-            isLast
-          />
-        </Card>
-
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Datos</Text>
-        <Card padding="none">
-          <SettingsItem
-            icon="📤"
-            title="Exportar Datos"
-            subtitle="Descarga tus datos de gastos"
-            onPress={() => {}}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="🗑️"
-            title="Borrar Datos"
-            subtitle="Elimina todos los datos locales"
-            onPress={() => {}}
-            colors={colors}
-            isLast
-            isDanger
-          />
-        </Card>
-
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Acerca de</Text>
-        <Card padding="none">
-          <SettingsItem
-            icon="ℹ️"
-            title="Versión"
-            subtitle="1.0.0"
-            onPress={() => {}}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="📜"
-            title="Política de Privacidad"
-            subtitle=""
-            onPress={() => {}}
-            colors={colors}
-          />
-          <SettingsItem
-            icon="📋"
-            title="Términos de Servicio"
-            subtitle=""
-            onPress={() => {}}
-            colors={colors}
-            isLast
-          />
-        </Card>
-
+        {/* Logout Button */}
         <Button
           title="Cerrar Sesión"
           variant="danger"
           onPress={handleLogout}
           style={styles.logoutButton}
+          fullWidth
         />
       </View>
     </SafeAreaView>
-  );
-}
-
-interface SettingsItemProps {
-  icon: string;
-  title: string;
-  subtitle: string;
-  onPress: () => void;
-  colors: { text: string; textSecondary: string; border: string };
-  isLast?: boolean;
-  isDanger?: boolean;
-}
-
-function SettingsItem({
-  icon,
-  title,
-  subtitle,
-  onPress,
-  colors,
-  isLast,
-  isDanger,
-}: SettingsItemProps) {
-  return (
-    <Pressable
-      style={[styles.settingsItem, !isLast && [styles.settingsItemBorder, { borderBottomColor: colors.border }]]}
-      onPress={onPress}
-    >
-      <Text style={styles.settingsIcon}>{icon}</Text>
-      <View style={styles.settingsContent}>
-        <Text style={[styles.settingsTitle, { color: isDanger ? '#ef4444' : colors.text }]}>
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
-        ) : null}
-      </View>
-      <Text style={[styles.chevron, { color: colors.textSecondary }]}>›</Text>
-    </Pressable>
   );
 }
 
@@ -224,25 +162,47 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   desktopContent: {
-    maxWidth: 600,
+    maxWidth: 500,
     alignSelf: 'center',
     width: '100%',
   },
+  card: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  shadowIOS: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  shadowAndroid: {
+    elevation: 4,
+  },
+  shadowWeb: {
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+  },
+  // Auth Card
   authCard: {
     alignItems: 'center',
-    paddingVertical: 48,
+    padding: 32,
+    marginTop: 16,
   },
   authTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
   },
   authText: {
     fontSize: 14,
-    marginBottom: 24,
+    marginBottom: 20,
+    textAlign: 'center',
   },
+  // Profile Card
   profileCard: {
     alignItems: 'center',
+    padding: 24,
     marginBottom: 24,
   },
   avatarContainer: {
@@ -251,7 +211,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   avatarText: {
     fontSize: 32,
@@ -266,25 +226,31 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 14,
   },
+  // Section
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
-    marginBottom: 8,
-    marginTop: 16,
+    letterSpacing: 0.5,
+    marginBottom: 10,
     marginLeft: 4,
   },
+  // Settings Item
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
   },
-  settingsItemBorder: {
-    borderBottomWidth: 1,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
   },
-  settingsIcon: {
+  icon: {
     fontSize: 20,
-    marginRight: 12,
   },
   settingsContent: {
     flex: 1,
@@ -294,12 +260,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   settingsSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
   },
-  chevron: {
-    fontSize: 20,
-  },
+  // Logout
   logoutButton: {
     marginTop: 32,
   },
