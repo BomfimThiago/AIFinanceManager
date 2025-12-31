@@ -9,11 +9,22 @@ import { useExpenses } from '../../hooks/useExpenses';
 import { useResponsive } from '../../hooks/useResponsive';
 import { formatCurrency } from '../../utils/formatters';
 import { useAuthStore } from '../../store/authStore';
+import { useColorMode } from '../../providers/GluestackUIProvider';
 
 export default function DashboardScreen() {
   const { isDesktop } = useResponsive();
+  const { isDark } = useColorMode();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const colors = {
+    background: isDark ? '#111827' : '#f3f4f6',
+    text: isDark ? '#f9fafb' : '#1f2937',
+    textSecondary: isDark ? '#9ca3af' : '#6b7280',
+    primary: '#7c3aed',
+    accent: '#3b82f6',
+    warning: '#f59e0b',
+  };
 
   // Only fetch data when authenticated to avoid 401 errors
   const { data: receipts, isLoading: receiptsLoading, refetch: refetchReceipts } = useReceipts({ enabled: isAuthenticated });
@@ -33,10 +44,10 @@ export default function DashboardScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.authPrompt}>
-          <Text style={styles.welcomeTitle}>Bienvenido a AI Finance Manager</Text>
-          <Text style={styles.welcomeSubtitle}>
+          <Text style={[styles.welcomeTitle, { color: colors.text }]}>Bienvenido a Konta</Text>
+          <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>
             Controla tus gastos fácilmente con escaneo de recibos con IA
           </Text>
           <Link href="/auth" asChild>
@@ -48,7 +59,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -56,37 +67,37 @@ export default function DashboardScreen() {
           isDesktop && styles.desktopContent,
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        <Text style={styles.greeting}>
+        <Text style={[styles.greeting, { color: colors.text }]}>
           ¡Hola, {user?.fullName?.split(' ')[0] || 'usuario'}!
         </Text>
 
         <View style={[styles.statsGrid, isDesktop && styles.desktopGrid]}>
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Gastos Totales</Text>
-            <Text style={styles.statValue}>{formatCurrency(totalExpenses)}</Text>
-            <Text style={styles.statSubtext}>Este mes</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Gastos Totales</Text>
+            <Text style={[styles.statValue, { color: colors.accent }]}>{formatCurrency(totalExpenses)}</Text>
+            <Text style={[styles.statSubtext, { color: colors.textSecondary }]}>Este mes</Text>
           </Card>
 
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Recibos</Text>
-            <Text style={styles.statValue}>{completedReceipts}</Text>
-            <Text style={styles.statSubtext}>Procesados</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Recibos</Text>
+            <Text style={[styles.statValue, { color: colors.accent }]}>{completedReceipts}</Text>
+            <Text style={[styles.statSubtext, { color: colors.textSecondary }]}>Procesados</Text>
           </Card>
 
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Pendientes</Text>
-            <Text style={[styles.statValue, { color: '#f59e0b' }]}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pendientes</Text>
+            <Text style={[styles.statValue, { color: colors.warning }]}>
               {pendingReceipts}
             </Text>
-            <Text style={styles.statSubtext}>Procesando</Text>
+            <Text style={[styles.statSubtext, { color: colors.textSecondary }]}>Procesando</Text>
           </Card>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Acciones Rápidas</Text>
           <View style={styles.actionsRow}>
             <Link href="/receipts" asChild>
               <Button title="📷 Escanear Recibo" style={styles.actionButton} />
@@ -111,10 +122,10 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Actividad Reciente</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Actividad Reciente</Text>
           {receiptsLoading || expensesLoading ? (
             <Card>
-              <Text style={styles.loadingText}>Cargando...</Text>
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Cargando...</Text>
             </Card>
           ) : receipts && receipts.length > 0 ? (
             receipts.slice(0, 3).map((receipt) => (
@@ -123,15 +134,15 @@ export default function DashboardScreen() {
                   <View style={styles.activityRow}>
                     <Text style={styles.activityIcon}>🧾</Text>
                     <View style={styles.activityContent}>
-                      <Text style={styles.activityTitle}>
+                      <Text style={[styles.activityTitle, { color: colors.text }]}>
                         {receipt.storeName || 'Tienda Desconocida'}
                       </Text>
-                      <Text style={styles.activitySubtitle}>
+                      <Text style={[styles.activitySubtitle, { color: colors.textSecondary }]}>
                         {receipt.status}
                       </Text>
                     </View>
                     {receipt.totalAmount && (
-                      <Text style={styles.activityAmount}>
+                      <Text style={[styles.activityAmount, { color: colors.accent }]}>
                         {formatCurrency(receipt.totalAmount)}
                       </Text>
                     )}
@@ -141,7 +152,7 @@ export default function DashboardScreen() {
             ))
           ) : (
             <Card>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 Sin actividad reciente. ¡Escanea un recibo para comenzar!
               </Text>
             </Card>
@@ -155,7 +166,6 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
   },
   scrollView: {
     flex: 1,
@@ -177,20 +187,17 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1f2937',
     textAlign: 'center',
     marginBottom: 12,
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#6b7280',
     textAlign: 'center',
     marginBottom: 32,
   },
   greeting: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1f2937',
     marginBottom: 20,
   },
   statsGrid: {
@@ -206,17 +213,14 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: '#6b7280',
     marginBottom: 4,
   },
   statValue: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#3b82f6',
   },
   statSubtext: {
     fontSize: 12,
-    color: '#9ca3af',
     marginTop: 4,
   },
   section: {
@@ -225,7 +229,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
     marginBottom: 12,
   },
   actionsRow: {
@@ -252,24 +255,19 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1f2937',
   },
   activitySubtitle: {
     fontSize: 12,
-    color: '#6b7280',
     textTransform: 'capitalize',
   },
   activityAmount: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#3b82f6',
   },
   loadingText: {
-    color: '#6b7280',
     textAlign: 'center',
   },
   emptyText: {
-    color: '#6b7280',
     textAlign: 'center',
   },
 });

@@ -1,69 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TextInput,
   View,
   Text,
-  StyleSheet,
   TextInputProps,
-  ViewStyle,
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  containerStyle?: ViewStyle;
+  containerClassName?: string;
 }
 
 export function Input({
   label,
   error,
-  containerStyle,
-  style,
+  containerClassName = '',
+  className = '',
+  onFocus,
+  onBlur,
   ...props
 }: InputProps) {
+  const [isFocused, setIsFocused] = useState(false);
+
+  const handleFocus = (e: any) => {
+    setIsFocused(true);
+    onFocus?.(e);
+  };
+
+  const handleBlur = (e: any) => {
+    setIsFocused(false);
+    onBlur?.(e);
+  };
+
+  const getBorderClass = () => {
+    if (error) return 'border-error';
+    if (isFocused) return 'border-primary-600';
+    return 'border-gray-200 dark:border-gray-700';
+  };
+
   return (
-    <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View className={`mb-4 ${containerClassName}`}>
+      {label && (
+        <Text className="text-base font-medium text-gray-600 dark:text-gray-400 mb-2">
+          {label}
+        </Text>
+      )}
       <TextInput
-        style={[
-          styles.input,
-          error ? styles.inputError : undefined,
-          style,
-        ]}
+        className={`bg-gray-50 dark:bg-gray-800 border rounded-lg py-3 px-4 text-lg text-gray-900 dark:text-gray-100 ${getBorderClass()} ${className}`}
         placeholderTextColor="#9ca3af"
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         {...props}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && (
+        <Text className="text-sm text-error mt-1">
+          {error}
+        </Text>
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#1f2937',
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  error: {
-    fontSize: 12,
-    color: '#ef4444',
-    marginTop: 4,
-  },
-});

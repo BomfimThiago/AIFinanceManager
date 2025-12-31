@@ -2,23 +2,48 @@ import React, { forwardRef } from 'react';
 import {
   Pressable,
   Text,
-  StyleSheet,
   ActivityIndicator,
-  ViewStyle,
-  TextStyle,
   View,
 } from 'react-native';
 
 export interface ButtonProps {
   title: string;
   onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   loading?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  fullWidth?: boolean;
+  className?: string;
 }
+
+const variantClasses = {
+  primary: 'bg-primary-600 active:bg-primary-700',
+  secondary: 'bg-gray-100 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700',
+  outline: 'bg-transparent border-2 border-primary-600 active:bg-primary-50 dark:active:bg-primary-900/20',
+  danger: 'bg-error active:bg-red-600',
+  ghost: 'bg-transparent active:bg-gray-100 dark:active:bg-gray-800',
+};
+
+const variantTextClasses = {
+  primary: 'text-white',
+  secondary: 'text-gray-900 dark:text-gray-100',
+  outline: 'text-primary-600',
+  danger: 'text-white',
+  ghost: 'text-primary-600',
+};
+
+const sizeClasses = {
+  small: 'py-2 px-4',
+  medium: 'py-3 px-6',
+  large: 'py-4 px-8',
+};
+
+const sizeTextClasses = {
+  small: 'text-sm',
+  medium: 'text-base',
+  large: 'text-lg',
+};
 
 export const Button = forwardRef<View, ButtonProps>(function Button(
   {
@@ -28,112 +53,34 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
     size = 'medium',
     disabled = false,
     loading = false,
-    style,
-    textStyle,
+    fullWidth = false,
+    className = '',
   },
   ref
 ) {
   const isDisabled = disabled || loading;
+
+  const baseClasses = 'items-center justify-center flex-row rounded-lg';
+  const disabledClasses = isDisabled ? 'opacity-50' : '';
+  const widthClasses = fullWidth ? 'w-full' : '';
 
   return (
     <Pressable
       ref={ref}
       onPress={onPress}
       disabled={isDisabled}
-      style={({ pressed }) => [
-        styles.button,
-        styles[variant],
-        styles[size],
-        pressed && styles.pressed,
-        isDisabled && styles.disabled,
-        style,
-      ]}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses} ${widthClasses} ${className}`}
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'outline' ? '#3b82f6' : '#ffffff'}
+          color={variant === 'primary' || variant === 'danger' ? 'white' : '#7c3aed'}
           size="small"
         />
       ) : (
-        <Text
-          style={[
-            styles.text,
-            styles[`${variant}Text`],
-            styles[`${size}Text`],
-            textStyle,
-          ]}
-        >
+        <Text className={`font-semibold ${variantTextClasses[variant]} ${sizeTextClasses[size]}`}>
           {title}
         </Text>
       )}
     </Pressable>
   );
-});
-
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  // Variants
-  primary: {
-    backgroundColor: '#3b82f6',
-  },
-  secondary: {
-    backgroundColor: '#6b7280',
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-  },
-  danger: {
-    backgroundColor: '#ef4444',
-  },
-  // Sizes
-  small: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  medium: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  large: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-  },
-  // Text styles
-  text: {
-    fontWeight: '600',
-  },
-  primaryText: {
-    color: '#ffffff',
-  },
-  secondaryText: {
-    color: '#ffffff',
-  },
-  outlineText: {
-    color: '#3b82f6',
-  },
-  dangerText: {
-    color: '#ffffff',
-  },
-  smallText: {
-    fontSize: 14,
-  },
-  mediumText: {
-    fontSize: 16,
-  },
-  largeText: {
-    fontSize: 18,
-  },
 });

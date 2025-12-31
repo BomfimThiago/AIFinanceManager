@@ -1,16 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../store/authStore';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useColorMode } from '../../providers/GluestackUIProvider';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { isDark, toggleColorMode } = useColorMode();
+
+  const colors = {
+    background: isDark ? '#111827' : '#f3f4f6',
+    text: isDark ? '#f9fafb' : '#1f2937',
+    textSecondary: isDark ? '#9ca3af' : '#6b7280',
+    border: isDark ? '#374151' : '#e5e7eb',
+    primary: '#7c3aed',
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -32,11 +42,11 @@ export default function SettingsScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
         <View style={[styles.content, isDesktop && styles.desktopContent]}>
           <Card style={styles.authCard}>
-            <Text style={styles.authTitle}>Sin Iniciar Sesión</Text>
-            <Text style={styles.authText}>
+            <Text style={[styles.authTitle, { color: colors.text }]}>Sin Iniciar Sesión</Text>
+            <Text style={[styles.authText, { color: colors.textSecondary }]}>
               Inicia sesión para acceder a la configuración de tu cuenta
             </Text>
             <Button title="Iniciar Sesión" onPress={() => router.push('/auth')} />
@@ -47,84 +57,112 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <View style={[styles.content, isDesktop && styles.desktopContent]}>
         <Card style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
+          <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
             <Text style={styles.avatarText}>
               {user?.fullName?.charAt(0).toUpperCase() || '?'}
             </Text>
           </View>
-          <Text style={styles.userName}>{user?.fullName}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{user?.fullName}</Text>
+          <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
         </Card>
 
-        <Text style={styles.sectionTitle}>Cuenta</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Apariencia</Text>
+        <Card padding="none">
+          <View style={[styles.settingsItem, styles.settingsItemBorder, { borderBottomColor: colors.border }]}>
+            <Text style={styles.settingsIcon}>🌙</Text>
+            <View style={styles.settingsContent}>
+              <Text style={[styles.settingsTitle, { color: colors.text }]}>Modo Oscuro</Text>
+              <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>
+                {isDark ? 'Activado' : 'Desactivado'}
+              </Text>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleColorMode}
+              trackColor={{ false: '#d1d5db', true: '#7c3aed' }}
+              thumbColor="#ffffff"
+            />
+          </View>
+        </Card>
+
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Cuenta</Text>
         <Card padding="none">
           <SettingsItem
             icon="👤"
             title="Perfil"
             subtitle="Gestiona la información de tu perfil"
             onPress={() => {}}
+            colors={colors}
           />
           <SettingsItem
             icon="🔔"
             title="Notificaciones"
             subtitle="Configura las preferencias de notificaciones"
             onPress={() => {}}
+            colors={colors}
           />
           <SettingsItem
             icon="💱"
             title="Moneda"
             subtitle="USD"
             onPress={() => {}}
+            colors={colors}
           />
           <SettingsItem
             icon="🌐"
             title="Idioma"
             subtitle="Español"
             onPress={() => {}}
+            colors={colors}
             isLast
           />
         </Card>
 
-        <Text style={styles.sectionTitle}>Datos</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Datos</Text>
         <Card padding="none">
           <SettingsItem
             icon="📤"
             title="Exportar Datos"
             subtitle="Descarga tus datos de gastos"
             onPress={() => {}}
+            colors={colors}
           />
           <SettingsItem
             icon="🗑️"
             title="Borrar Datos"
             subtitle="Elimina todos los datos locales"
             onPress={() => {}}
+            colors={colors}
             isLast
             isDanger
           />
         </Card>
 
-        <Text style={styles.sectionTitle}>Acerca de</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Acerca de</Text>
         <Card padding="none">
           <SettingsItem
             icon="ℹ️"
             title="Versión"
             subtitle="1.0.0"
             onPress={() => {}}
+            colors={colors}
           />
           <SettingsItem
             icon="📜"
             title="Política de Privacidad"
             subtitle=""
             onPress={() => {}}
+            colors={colors}
           />
           <SettingsItem
             icon="📋"
             title="Términos de Servicio"
             subtitle=""
             onPress={() => {}}
+            colors={colors}
             isLast
           />
         </Card>
@@ -145,6 +183,7 @@ interface SettingsItemProps {
   title: string;
   subtitle: string;
   onPress: () => void;
+  colors: { text: string; textSecondary: string; border: string };
   isLast?: boolean;
   isDanger?: boolean;
 }
@@ -154,24 +193,25 @@ function SettingsItem({
   title,
   subtitle,
   onPress,
+  colors,
   isLast,
   isDanger,
 }: SettingsItemProps) {
   return (
     <Pressable
-      style={[styles.settingsItem, !isLast && styles.settingsItemBorder]}
+      style={[styles.settingsItem, !isLast && [styles.settingsItemBorder, { borderBottomColor: colors.border }]]}
       onPress={onPress}
     >
       <Text style={styles.settingsIcon}>{icon}</Text>
       <View style={styles.settingsContent}>
-        <Text style={[styles.settingsTitle, isDanger && styles.dangerText]}>
+        <Text style={[styles.settingsTitle, { color: isDanger ? '#ef4444' : colors.text }]}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={styles.settingsSubtitle}>{subtitle}</Text>
+          <Text style={[styles.settingsSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
         ) : null}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Text style={[styles.chevron, { color: colors.textSecondary }]}>›</Text>
     </Pressable>
   );
 }
@@ -179,7 +219,6 @@ function SettingsItem({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
   },
   content: {
     padding: 16,
@@ -196,12 +235,10 @@ const styles = StyleSheet.create({
   authTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1f2937',
     marginBottom: 8,
   },
   authText: {
     fontSize: 14,
-    color: '#6b7280',
     marginBottom: 24,
   },
   profileCard: {
@@ -212,7 +249,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#3b82f6',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -225,17 +261,14 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1f2937',
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: '#6b7280',
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
     textTransform: 'uppercase',
     marginBottom: 8,
     marginTop: 16,
@@ -248,7 +281,6 @@ const styles = StyleSheet.create({
   },
   settingsItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
   settingsIcon: {
     fontSize: 20,
@@ -260,19 +292,13 @@ const styles = StyleSheet.create({
   settingsTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1f2937',
   },
   settingsSubtitle: {
     fontSize: 12,
-    color: '#6b7280',
     marginTop: 2,
   },
   chevron: {
     fontSize: 20,
-    color: '#9ca3af',
-  },
-  dangerText: {
-    color: '#ef4444',
   },
   logoutButton: {
     marginTop: 32,

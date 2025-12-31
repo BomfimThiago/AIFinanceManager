@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, FlatList, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Link } from 'expo-router';
 import { ReceiptUploader } from '../../components/receipts/ReceiptUploader';
 import { ReceiptCard } from '../../components/receipts/ReceiptCard';
-import { Button } from '../../components/ui/Button';
+import { Button, Text } from '../../components/ui';
 import { useReceipts } from '../../hooks/useReceipts';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Receipt } from '../../types';
 import { useAuthStore } from '../../store/authStore';
+import { useColorMode } from '../../providers/GluestackUIProvider';
 
 export default function ReceiptsScreen() {
+  const { isDark } = useColorMode();
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -18,12 +20,19 @@ export default function ReceiptsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showUploader, setShowUploader] = useState(true);
 
+  const colors = {
+    background: isDark ? '#111827' : '#ffffff',
+    primary: '#7c3aed',
+  };
+
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.authPrompt}>
-          <Text style={styles.authTitle}>Inicia sesión para escanear recibos</Text>
-          <Text style={styles.authSubtitle}>
+          <Text variant="displayMd" style={{ textAlign: 'center', marginBottom: 12 }}>
+            Inicia sesión para escanear recibos
+          </Text>
+          <Text variant="bodyLg" color="secondary" style={{ textAlign: 'center', marginBottom: 32 }}>
             Sube recibos y deja que la IA extraiga los detalles de gastos
           </Text>
           <Link href="/auth" asChild>
@@ -54,7 +63,7 @@ export default function ReceiptsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <FlatList
         data={receipts}
         keyExtractor={(item) => item.id.toString()}
@@ -73,19 +82,25 @@ export default function ReceiptsScreen() {
           !isLoading ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🧾</Text>
-              <Text style={styles.emptyTitle}>Sin recibos aún</Text>
-              <Text style={styles.emptyText}>
+              <Text variant="displaySm" style={{ marginBottom: 8 }}>
+                Sin recibos aún
+              </Text>
+              <Text variant="bodyMd" color="secondary" style={{ textAlign: 'center' }}>
                 Sube tu primer recibo para comenzar
               </Text>
             </View>
           ) : null
         }
         contentContainerStyle={[
-          styles.listContent,
+          { paddingVertical: 8 },
           isDesktop && styles.desktopContent,
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
         }
       />
     </SafeAreaView>
@@ -95,10 +110,6 @@ export default function ReceiptsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
-  },
-  listContent: {
-    paddingVertical: 8,
   },
   desktopContent: {
     maxWidth: 800,
@@ -114,34 +125,10 @@ const styles = StyleSheet.create({
     fontSize: 64,
     marginBottom: 16,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
   authPrompt: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
-  },
-  authTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1f2937',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  authSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 32,
   },
 });
