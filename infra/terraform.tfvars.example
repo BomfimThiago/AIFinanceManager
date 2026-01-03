@@ -1,0 +1,30 @@
+# AWS Region (eu-west-3 = Paris)
+aws_region = "eu-west-3"
+
+# Environment
+environment = "production"
+
+# Project name (used for resource naming)
+project_name = "konta"
+
+# Database Configuration
+db_name     = "finance_manager"
+db_username = "postgres"
+db_password = "CHANGE_ME_TO_STRONG_PASSWORD"  # At least 16 characters
+
+# Lightsail Configuration
+# nano_3_0 = $3.50/month (512MB RAM, 1 vCPU)
+# micro_3_0 = $5/month (1GB RAM, 1 vCPU)
+# small_3_0 = $10/month (2GB RAM, 1 vCPU)
+lightsail_bundle_id = "nano_3_0"
+
+# RDS Configuration
+# db.t4g.micro = ~$13/month (2 vCPU, 1GB RAM)
+# db.t4g.small = ~$26/month (2 vCPU, 2GB RAM)
+db_instance_class = "db.t4g.micro"
+
+# Cloudflare Configuration
+# Create token at: https://dash.cloudflare.com/profile/api-tokens
+# Use "Edit zone DNS" template, select your zone
+cloudflare_api_token = "YOUR_CLOUDFLARE_API_TOKEN"
+cloudflare_zone_name = "getkonta.app"

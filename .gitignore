@@ -116,3 +116,7 @@ credentials/
 
 # Sentry
 .sentryclirc
+
+# SSL certificates and certbot
+certbot/
+nginx/ssl/
