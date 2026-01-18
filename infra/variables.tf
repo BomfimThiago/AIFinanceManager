@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
-  default     = "eu-south-2"  # Spain (Madrid)
+  default     = "eu-west-3"  # Paris (same as existing RDS)
 }
 
 variable "environment" {
@@ -41,17 +41,16 @@ variable "db_instance_class" {
   default     = "db.t4g.micro"
 }
 
-# Lightsail Variables
-variable "lightsail_bundle_id" {
-  description = "Lightsail bundle ID (nano_3_0 = $3.50/month)"
+# EC2 Variables
+variable "ec2_instance_type" {
+  description = "EC2 instance type (t3.small = 2GB RAM, ~$15/month)"
   type        = string
-  default     = "nano_3_0"
+  default     = "t3.small"
 }
 
-variable "lightsail_blueprint_id" {
-  description = "Lightsail blueprint ID"
+variable "ssh_public_key" {
+  description = "SSH public key for EC2 access"
   type        = string
-  default     = "ubuntu_22_04"
 }
 
 # Cloudflare Variables

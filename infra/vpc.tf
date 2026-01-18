@@ -70,14 +70,13 @@ resource "aws_security_group" "rds" {
   description = "Security group for RDS PostgreSQL"
   vpc_id      = aws_vpc.main.id
 
-  # Allow PostgreSQL from anywhere (Lightsail will connect via public internet)
-  # In production, you might want to restrict this to Lightsail IP
+  # Allow PostgreSQL from EC2 security group (same VPC)
   ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "PostgreSQL access"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2.id]
+    description     = "PostgreSQL access from EC2"
   }
 
   egress {

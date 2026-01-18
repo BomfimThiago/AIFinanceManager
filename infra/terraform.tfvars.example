@@ -12,16 +12,20 @@ db_name     = "finance_manager"
 db_username = "postgres"
 db_password = "CHANGE_ME_TO_STRONG_PASSWORD"  # At least 16 characters
 
-# Lightsail Configuration
-# nano_3_0 = $3.50/month (512MB RAM, 1 vCPU)
-# micro_3_0 = $5/month (1GB RAM, 1 vCPU)
-# small_3_0 = $10/month (2GB RAM, 1 vCPU)
-lightsail_bundle_id = "nano_3_0"
-
 # RDS Configuration
 # db.t4g.micro = ~$13/month (2 vCPU, 1GB RAM)
 # db.t4g.small = ~$26/month (2 vCPU, 2GB RAM)
 db_instance_class = "db.t4g.micro"
+
+# EC2 Configuration
+# t3.micro  = ~$7.50/month (1GB RAM) - may struggle with Docker builds
+# t3.small  = ~$15/month (2GB RAM) - recommended
+# t3.medium = ~$30/month (4GB RAM) - for heavier workloads
+ec2_instance_type = "t3.small"
+
+# SSH Public Key for EC2 access
+# Generate with: ssh-keygen -t ed25519 -f ~/.ssh/konta-key -C "konta-ec2"
+ssh_public_key = "ssh-ed25519 AAAA... konta-ec2"
 
 # Cloudflare Configuration
 # Create token at: https://dash.cloudflare.com/profile/api-tokens

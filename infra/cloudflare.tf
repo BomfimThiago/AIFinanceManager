@@ -5,11 +5,11 @@ data "cloudflare_zone" "main" {
   name = var.cloudflare_zone_name
 }
 
-# A record for API subdomain (points to Lightsail static IP)
+# A record for API subdomain (points to EC2 Elastic IP)
 resource "cloudflare_record" "api" {
   zone_id = data.cloudflare_zone.main.id
   name    = "api"
-  content = aws_lightsail_static_ip.api.ip_address
+  content = aws_eip.api.public_ip
   type    = "A"
   ttl     = 1  # 1 = automatic (Cloudflare proxied default)
   proxied = false  # Set to false for direct connection (needed for SSL cert)

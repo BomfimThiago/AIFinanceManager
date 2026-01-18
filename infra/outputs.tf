@@ -1,13 +1,20 @@
-output "lightsail_static_ip" {
-  description = "Static IP address for Lightsail instance"
-  value       = aws_lightsail_static_ip.api.ip_address
+# EC2 Outputs
+output "ec2_public_ip" {
+  description = "Elastic IP address for EC2 instance"
+  value       = aws_eip.api.public_ip
 }
 
-output "lightsail_instance_name" {
-  description = "Lightsail instance name"
-  value       = aws_lightsail_instance.api.name
+output "ec2_instance_id" {
+  description = "EC2 instance ID"
+  value       = aws_instance.api.id
 }
 
+output "ec2_instance_type" {
+  description = "EC2 instance type"
+  value       = aws_instance.api.instance_type
+}
+
+# RDS Outputs
 output "rds_endpoint" {
   description = "RDS PostgreSQL endpoint"
   value       = aws_db_instance.postgres.endpoint
@@ -32,12 +39,18 @@ output "database_url" {
 # Cloudflare DNS Outputs
 output "api_dns_record" {
   description = "API DNS record created in Cloudflare"
-  value       = "api.${var.cloudflare_zone_name} -> ${aws_lightsail_static_ip.api.ip_address}"
+  value       = "api.${var.cloudflare_zone_name} -> ${aws_eip.api.public_ip}"
 }
 
 output "api_url" {
   description = "API URL"
   value       = "https://api.${var.cloudflare_zone_name}"
+}
+
+# SSH Command
+output "ssh_command" {
+  description = "SSH command to connect to EC2"
+  value       = "ssh -i ~/.ssh/konta-key ubuntu@${aws_eip.api.public_ip}"
 }
 
 output "next_steps" {
@@ -48,15 +61,18 @@ output "next_steps" {
     DEPLOYMENT SUCCESSFUL
     =====================================================
 
+    EC2 Instance: ${aws_instance.api.instance_type} (2GB RAM)
+    Public IP: ${aws_eip.api.public_ip}
+
     DNS Record Created:
-    api.${var.cloudflare_zone_name} -> ${aws_lightsail_static_ip.api.ip_address}
+    api.${var.cloudflare_zone_name} -> ${aws_eip.api.public_ip}
 
     =====================================================
     NEXT STEPS (Docker Deployment)
     =====================================================
 
-    1. SSH into Lightsail (wait 2-3 min for Docker install):
-       ssh ubuntu@${aws_lightsail_static_ip.api.ip_address}
+    1. SSH into EC2 (wait 2-3 min for Docker install):
+       ssh -i ~/.ssh/konta-key ubuntu@${aws_eip.api.public_ip}
 
     2. Clone the repository:
        cd /opt/konta

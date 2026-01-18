@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  EXPO_PUBLIC_API_URL = "https://api.getkonta.app/api/v1"
 
 [[redirects]]
   from = "/*"
