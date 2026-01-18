@@ -1,0 +1,3 @@
+# Netlify configuration - points to the app folder
+[build]
+  base = "app"
