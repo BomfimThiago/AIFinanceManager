@@ -13,6 +13,8 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import {
@@ -28,6 +30,7 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { Category, CategoryCreate, CategoryType } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useColorMode } from '../../providers/GluestackUIProvider';
+import { getThemeColors, GRADIENTS } from '../../constants/theme';
 
 // Predefined colors for category selection
 const CATEGORY_COLORS = [
@@ -76,20 +79,7 @@ export default function CategoriesScreen() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // Theme colors
-  const colors = {
-    background: isDark ? '#111827' : '#f3f4f6',
-    surface: isDark ? '#1f2937' : '#ffffff',
-    surfaceSecondary: isDark ? '#374151' : '#f9fafb',
-    text: isDark ? '#f9fafb' : '#1f2937',
-    textSecondary: isDark ? '#9ca3af' : '#6b7280',
-    textMuted: isDark ? '#6b7280' : '#9ca3af',
-    border: isDark ? '#374151' : '#e5e7eb',
-    primary: '#7c3aed',
-    primaryLight: isDark ? '#7c3aed30' : '#ede9fe',
-    danger: '#ef4444',
-    dangerLight: isDark ? '#ef444430' : '#fee2e2',
-    success: '#10b981',
-  };
+  const colors = getThemeColors(isDark);
 
   const { data: categories, isLoading, refetch } = useCategories({
     filters: { includeHidden: true },
@@ -224,16 +214,36 @@ export default function CategoriesScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.authPrompt}>
-          <Text style={[styles.authIcon]}>🏷️</Text>
-          <Text style={[styles.authTitle, { color: colors.text }]}>Gestiona tus Categorías</Text>
-          <Text style={[styles.authText, { color: colors.textSecondary }]}>
-            Inicia sesión para crear y organizar categorías personalizadas
-          </Text>
-          <Button title="Iniciar Sesión" onPress={() => {}} />
-        </View>
-      </SafeAreaView>
+      <LinearGradient
+        colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.authPrompt}>
+            <View style={[styles.authIconContainer, { backgroundColor: colors.primaryLight }]}>
+              <Text style={styles.authIconLarge}>🏷️</Text>
+            </View>
+            <Text style={[styles.authTitle, { color: colors.text, fontSize: isSmallMobile ? 22 : 26 }]}>
+              Gestiona tus Categorias
+            </Text>
+            <Text style={[styles.authSubtitle, { color: colors.textSecondary, fontSize: isSmallMobile ? 14 : 16 }]}>
+              Inicia sesion para crear y organizar categorias personalizadas
+            </Text>
+            <Link href="/auth" asChild>
+              <Pressable style={styles.authButtonWrapper}>
+                <LinearGradient
+                  colors={GRADIENTS.primaryFull as [string, string, ...string[]]}
+                  style={styles.authButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.authButtonText}>Iniciar Sesion</Text>
+                </LinearGradient>
+              </Pressable>
+            </Link>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
@@ -346,9 +356,13 @@ export default function CategoriesScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-      {/* Segmented Tabs */}
-      <View style={[styles.tabsWrapper, { backgroundColor: colors.background, paddingHorizontal: horizontalPadding }]}>
+    <LinearGradient
+      colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        {/* Segmented Tabs */}
+        <View style={[styles.tabsWrapper, { paddingHorizontal: horizontalPadding }]}>
         <View style={[styles.tabsContainer, { backgroundColor: colors.surfaceSecondary }]}>
           <Pressable
             style={[
@@ -547,11 +561,15 @@ export default function CategoriesScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -562,20 +580,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
+  authIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  authIconLarge: {
+    fontSize: 48,
+  },
   authIcon: {
     fontSize: 64,
     marginBottom: 16,
   },
   authTitle: {
-    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 12,
     textAlign: 'center',
+  },
+  authSubtitle: {
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+    paddingHorizontal: 20,
   },
   authText: {
     fontSize: 16,
     marginBottom: 24,
     textAlign: 'center',
+  },
+  authButtonWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: 280,
+  },
+  authButtonGradient: {
+    paddingVertical: 18,
+    alignItems: 'center',
+  },
+  authButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
   // Tabs
   tabsWrapper: {

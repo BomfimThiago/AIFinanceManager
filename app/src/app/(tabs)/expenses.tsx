@@ -8,10 +8,12 @@ import {
   ScrollView,
   Modal,
   Platform,
+  Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
-import { Card, Button, Text, AmountDisplay, CategoryBadge } from '../../components/ui';
+import { Card, Button, AmountDisplay, CategoryBadge } from '../../components/ui';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { useExpenses, useUpdateExpense } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
@@ -21,6 +23,7 @@ import { getCategoryInfo } from '../../constants/categories';
 import { Expense } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useColorMode } from '../../providers/GluestackUIProvider';
+import { getThemeColors, GRADIENTS } from '../../constants/theme';
 
 type FilterMode = 'month' | 'range';
 
@@ -78,14 +81,7 @@ export default function ExpensesScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Define colors based on dark mode
-  const colors = {
-    background: isDark ? '#111827' : '#ffffff',
-    backgroundSecondary: isDark ? '#1f2937' : '#f9fafb',
-    surface: isDark ? '#1f2937' : '#ffffff',
-    border: isDark ? '#374151' : '#e5e7eb',
-    primary: '#7c3aed',
-    primaryLight: isDark ? '#7c3aed30' : '#ede9fe',
-  };
+  const colors = getThemeColors(isDark);
 
   const borderRadius = { sm: 4, md: 8, lg: 12, xl: 16, full: 9999 };
 
@@ -189,19 +185,36 @@ export default function ExpensesScreen() {
   // Early return for unauthenticated users
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={[styles.authPrompt, { paddingHorizontal: horizontalPadding }]}>
-          <Text variant={isSmallMobile ? 'displaySm' : 'displayMd'} style={{ textAlign: 'center', marginBottom: 12 }}>
-            Inicia sesión para ver gastos
-          </Text>
-          <Text variant={isSmallMobile ? 'bodyMd' : 'bodyLg'} color="secondary" style={{ textAlign: 'center', marginBottom: isSmallMobile ? 24 : 32 }}>
-            Controla tus gastos y administra tus finanzas
-          </Text>
-          <Link href="/auth" asChild>
-            <Button title="Iniciar Sesión" />
-          </Link>
-        </View>
-      </SafeAreaView>
+      <LinearGradient
+        colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={[styles.authPrompt, { paddingHorizontal: horizontalPadding }]}>
+            <View style={[styles.authIconContainer, { backgroundColor: colors.primaryLight }]}>
+              <Text style={styles.authIcon}>💰</Text>
+            </View>
+            <Text style={[styles.authTitle, { color: colors.text, fontSize: isSmallMobile ? 22 : 26 }]}>
+              Rastrea tus Gastos
+            </Text>
+            <Text style={[styles.authSubtitle, { color: colors.textSecondary, fontSize: isSmallMobile ? 14 : 16 }]}>
+              Controla tus gastos y administra tus finanzas de forma inteligente
+            </Text>
+            <Link href="/auth" asChild>
+              <Pressable style={styles.authButtonWrapper}>
+                <LinearGradient
+                  colors={GRADIENTS.primaryFull as [string, string, ...string[]]}
+                  style={styles.authButton}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.authButtonText}>Iniciar Sesion</Text>
+                </LinearGradient>
+              </Pressable>
+            </Link>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
@@ -411,7 +424,11 @@ export default function ExpensesScreen() {
   // Mobile: Card view
   if (isMobile) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+      <LinearGradient
+        colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <FlatList
           data={filteredExpenses}
           keyExtractor={(item) => item.id.toString()}
@@ -424,12 +441,17 @@ export default function ExpensesScreen() {
         <DateRangePicker visible={showDatePicker} startDate={customStartDate} endDate={customEndDate} onRangeChange={handleRangeChange} onClose={() => setShowDatePicker(false)} />
         {renderCategoryPicker()}
       </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   // Desktop/Tablet: Table view
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+    <LinearGradient
+      colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={[styles.desktopContent, { padding: 24 }]} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
         {renderSummary()}
         {filteredExpenses.length > 0 ? (
@@ -450,10 +472,12 @@ export default function ExpensesScreen() {
       <DateRangePicker visible={showDatePicker} startDate={customStartDate} endDate={customEndDate} onRangeChange={handleRangeChange} onClose={() => setShowDatePicker(false)} />
       {renderCategoryPicker()}
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: { flex: 1 },
   container: { flex: 1 },
   desktopContent: { maxWidth: 1200, alignSelf: 'center', width: '100%' },
   filterModeToggle: { flexDirection: 'row', padding: 4, marginBottom: 12 },
@@ -481,6 +505,13 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: 48 },
   emptyIcon: { fontSize: 64, marginBottom: 16 },
   authPrompt: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  authIconContainer: { width: 100, height: 100, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
+  authIcon: { fontSize: 48 },
+  authTitle: { fontWeight: '700', textAlign: 'center', marginBottom: 12 },
+  authSubtitle: { textAlign: 'center', marginBottom: 32, lineHeight: 24, paddingHorizontal: 20 },
+  authButtonWrapper: { borderRadius: 16, overflow: 'hidden', width: '100%', maxWidth: 280 },
+  authButton: { paddingVertical: 18, alignItems: 'center' },
+  authButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
   modalContent: { maxHeight: '70%', paddingBottom: 34 },
   modalHeader: { padding: 20, borderBottomWidth: 1 },

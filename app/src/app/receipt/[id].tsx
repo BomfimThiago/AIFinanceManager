@@ -6,201 +6,266 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
-import { Card } from '../../components/ui/Card';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useReceipt } from '../../hooks/useReceipts';
 import { useResponsive } from '../../hooks/useResponsive';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { getCategoryInfo } from '../../constants/categories';
 import { useColorMode } from '../../providers/GluestackUIProvider';
+import { getThemeColors, getStatusConfig, GRADIENTS } from '../../constants/theme';
 
 export default function ReceiptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { isDesktop } = useResponsive();
+  const router = useRouter();
+  const { isDesktop, horizontalPadding } = useResponsive();
   const { isDark } = useColorMode();
   const { data: receipt, isLoading, error } = useReceipt(Number(id));
 
-  const colors = {
-    background: isDark ? '#111827' : '#f3f4f6',
-    surface: isDark ? '#1f2937' : '#ffffff',
-    text: isDark ? '#f9fafb' : '#1f2937',
-    textSecondary: isDark ? '#9ca3af' : '#6b7280',
-    border: isDark ? '#374151' : '#e5e7eb',
-    primary: '#7c3aed',
-    divider: isDark ? '#374151' : '#e5e7eb',
-  };
+  const colors = getThemeColors(isDark);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.loadingContainer}>
-          <View style={[styles.loadingIcon, { backgroundColor: colors.surface }]}>
-            <ActivityIndicator size="large" color={colors.primary} />
+      <LinearGradient
+        colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <View style={[styles.loadingIcon, { backgroundColor: colors.surface }]}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+              Cargando recibo...
+            </Text>
           </View>
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Cargando recibo...
-          </Text>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   if (error || !receipt) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>❌</Text>
-          <Text style={[styles.errorTitle, { color: colors.text }]}>Error</Text>
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            No se pudo cargar el recibo
-          </Text>
-        </View>
-      </SafeAreaView>
+      <LinearGradient
+        colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorIcon}>❌</Text>
+            <Text style={[styles.errorTitle, { color: colors.text }]}>Error</Text>
+            <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+              No se pudo cargar el recibo
+            </Text>
+            <Pressable
+              onPress={() => router.back()}
+              style={styles.backButtonWrapper}
+            >
+              <LinearGradient
+                colors={GRADIENTS.primary as [string, string]}
+                style={styles.backButton}
+              >
+                <Text style={styles.backButtonText}>Volver</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
-  const getStatusConfig = () => {
-    switch (receipt.status) {
-      case 'completed':
-        return { color: '#22c55e', bg: isDark ? '#22c55e20' : '#dcfce7', label: 'Completado', icon: '✓' };
-      case 'processing':
-        return { color: '#f59e0b', bg: isDark ? '#f59e0b20' : '#fef3c7', label: 'Procesando', icon: '⏳' };
-      case 'failed':
-        return { color: '#ef4444', bg: isDark ? '#ef444420' : '#fee2e2', label: 'Error', icon: '✕' };
-      default:
-        return { color: '#6b7280', bg: isDark ? '#6b728020' : '#f3f4f6', label: 'Pendiente', icon: '•' };
-    }
-  };
-
-  const statusConfig = getStatusConfig();
+  const statusConfig = getStatusConfig(receipt.status, isDark);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right', 'bottom']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.content,
-          isDesktop && styles.desktopContent,
-        ]}
-      >
-        {/* Main Info Card */}
-        <View style={[
-          styles.mainCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-          Platform.OS === 'ios' && styles.shadowIOS,
-          Platform.OS === 'android' && styles.shadowAndroid,
-          Platform.OS === 'web' && styles.shadowWeb,
-        ]}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={[styles.storeName, { color: colors.text }]}>
-                {receipt.storeName || 'Tienda Desconocida'}
-              </Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                <Text style={[styles.statusIcon, { color: statusConfig.color }]}>{statusConfig.icon}</Text>
-                <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                  {statusConfig.label}
-                </Text>
+    <LinearGradient
+      colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            { paddingHorizontal: horizontalPadding },
+            isDesktop && styles.desktopContent,
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Store Header with Gradient */}
+          <LinearGradient
+            colors={GRADIENTS.primaryFull as [string, string, ...string[]]}
+            style={styles.headerCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Decorative circles */}
+            <View style={styles.headerCircle1} />
+            <View style={styles.headerCircle2} />
+
+            <View style={styles.headerContent}>
+              <View style={styles.headerLeft}>
+                <View style={styles.storeIconContainer}>
+                  <Text style={styles.storeIcon}>🏪</Text>
+                </View>
+                <View>
+                  <Text style={styles.storeName}>
+                    {receipt.storeName || 'Tienda Desconocida'}
+                  </Text>
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusIcon}>{statusConfig.icon}</Text>
+                    <Text style={styles.statusText}>{statusConfig.label}</Text>
+                  </View>
+                </View>
               </View>
+
+              {receipt.totalAmount !== null && (
+                <View style={styles.amountContainer}>
+                  <Text style={styles.amountLabel}>Total</Text>
+                  <Text style={styles.totalAmount}>
+                    {formatCurrency(receipt.totalAmount, receipt.currency as any)}
+                  </Text>
+                </View>
+              )}
             </View>
-            {receipt.totalAmount !== null && (
-              <View style={styles.amountContainer}>
-                <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Total</Text>
-                <Text style={[styles.totalAmount, { color: colors.primary }]}>
-                  {formatCurrency(receipt.totalAmount, receipt.currency as any)}
-                </Text>
-              </View>
-            )}
+          </LinearGradient>
+
+          {/* Details Card */}
+          <View style={[
+            styles.detailsCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            Platform.OS === 'ios' && styles.shadowIOS,
+            Platform.OS === 'android' && styles.shadowAndroid,
+            Platform.OS === 'web' && styles.shadowWeb,
+          ]}>
+            <Text style={[styles.detailsTitle, { color: colors.text }]}>Detalles</Text>
+
+            <View style={styles.detailsGrid}>
+              <DetailRow
+                icon="📅"
+                label="Fecha de compra"
+                value={receipt.purchaseDate ? formatDateTime(receipt.purchaseDate) : 'Desconocida'}
+                colors={colors}
+              />
+              <DetailRow
+                icon="💱"
+                label="Moneda"
+                value={receipt.currency}
+                colors={colors}
+              />
+              <DetailRow
+                icon="📤"
+                label="Subido"
+                value={formatDateTime(receipt.createdAt)}
+                colors={colors}
+              />
+            </View>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-
-          {/* Details Grid */}
-          <View style={styles.detailsGrid}>
-            <DetailRow
-              icon="📅"
-              label="Fecha de compra"
-              value={receipt.purchaseDate ? formatDateTime(receipt.purchaseDate) : 'Desconocida'}
-              colors={colors}
-            />
-            <DetailRow
-              icon="💱"
-              label="Moneda"
-              value={receipt.currency}
-              colors={colors}
-            />
-            <DetailRow
-              icon="📤"
-              label="Subido"
-              value={formatDateTime(receipt.createdAt)}
-              colors={colors}
-            />
-          </View>
-        </View>
-
-        {/* Items Section */}
-        {receipt.expenses && receipt.expenses.length > 0 && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Artículos</Text>
-              <View style={[styles.itemCount, { backgroundColor: colors.primary + '20' }]}>
-                <Text style={[styles.itemCountText, { color: colors.primary }]}>
-                  {receipt.expenses.length}
-                </Text>
+          {/* Items Section */}
+          {receipt.expenses && receipt.expenses.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Articulos</Text>
+                <View style={[styles.itemCountBadge, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.itemCountText, { color: colors.primary }]}>
+                    {receipt.expenses.length}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={[
-              styles.itemsCard,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-              Platform.OS === 'ios' && styles.shadowIOS,
-              Platform.OS === 'android' && styles.shadowAndroid,
-              Platform.OS === 'web' && styles.shadowWeb,
-            ]}>
-              {receipt.expenses.map((expense, index) => {
-                const expenseCategoryInfo = getCategoryInfo(expense.category);
-                return (
-                  <View
-                    key={expense.id}
-                    style={[
-                      styles.itemRow,
-                      index < receipt.expenses.length - 1 && [styles.itemBorder, { borderBottomColor: colors.divider }],
-                    ]}
-                  >
-                    <View style={[styles.itemCategoryIcon, { backgroundColor: expenseCategoryInfo.color + '20' }]}>
-                      <Text style={styles.itemCategoryEmoji}>{expenseCategoryInfo.icon}</Text>
-                    </View>
-                    <View style={styles.itemContent}>
-                      <Text style={[styles.itemName, { color: colors.text }]}>{expense.description}</Text>
-                      <Text style={[styles.itemCategory, { color: expenseCategoryInfo.color }]}>
-                        {expenseCategoryInfo.label}
+              <View style={[
+                styles.itemsCard,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                Platform.OS === 'ios' && styles.shadowIOS,
+                Platform.OS === 'android' && styles.shadowAndroid,
+                Platform.OS === 'web' && styles.shadowWeb,
+              ]}>
+                {receipt.expenses.map((expense, index) => {
+                  const categoryInfo = getCategoryInfo(expense.category);
+                  return (
+                    <View
+                      key={expense.id}
+                      style={[
+                        styles.itemRow,
+                        index < receipt.expenses.length - 1 && [
+                          styles.itemBorder,
+                          { borderBottomColor: colors.border },
+                        ],
+                      ]}
+                    >
+                      <View style={[styles.itemIcon, { backgroundColor: categoryInfo.color + '20' }]}>
+                        <Text style={styles.itemEmoji}>{categoryInfo.icon}</Text>
+                      </View>
+                      <View style={styles.itemContent}>
+                        <Text style={[styles.itemName, { color: colors.text }]} numberOfLines={1}>
+                          {expense.description}
+                        </Text>
+                        <Text style={[styles.itemCategory, { color: categoryInfo.color }]}>
+                          {categoryInfo.label}
+                        </Text>
+                      </View>
+                      <Text style={[styles.itemTotal, { color: colors.text }]}>
+                        {formatCurrency(expense.amount, expense.currency as any)}
                       </Text>
                     </View>
-                    <Text style={[styles.itemTotal, { color: colors.text }]}>
-                      {formatCurrency(expense.amount, expense.currency as any)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </>
-        )}
+                  );
+                })}
+              </View>
+            </>
+          )}
 
-        {/* Empty items state */}
-        {(!receipt.expenses || receipt.expenses.length === 0) && receipt.status === 'completed' && (
-          <View style={[styles.emptyItems, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={styles.emptyIcon}>📝</Text>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin artículos</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No se encontraron artículos en este recibo
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          {/* Empty items state */}
+          {(!receipt.expenses || receipt.expenses.length === 0) && receipt.status === 'completed' && (
+            <View style={[
+              styles.emptyItems,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              Platform.OS === 'ios' && styles.shadowIOS,
+            ]}>
+              <Text style={styles.emptyIcon}>📝</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin articulos</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No se encontraron articulos en este recibo
+              </Text>
+            </View>
+          )}
+
+          {/* Processing state */}
+          {receipt.status === 'processing' && (
+            <View style={[
+              styles.processingCard,
+              { backgroundColor: colors.warningLight, borderColor: colors.warning + '40' },
+            ]}>
+              <Text style={styles.processingIcon}>⏳</Text>
+              <Text style={[styles.processingTitle, { color: colors.warning }]}>
+                Procesando recibo...
+              </Text>
+              <Text style={[styles.processingText, { color: colors.textSecondary }]}>
+                Estamos extrayendo la informacion del recibo. Esto puede tomar unos segundos.
+              </Text>
+            </View>
+          )}
+
+          {/* Failed state */}
+          {receipt.status === 'failed' && (
+            <View style={[
+              styles.failedCard,
+              { backgroundColor: colors.errorLight, borderColor: colors.error + '40' },
+            ]}>
+              <Text style={styles.failedIcon}>⚠️</Text>
+              <Text style={[styles.failedTitle, { color: colors.error }]}>
+                Error al procesar
+              </Text>
+              <Text style={[styles.failedText, { color: colors.textSecondary }]}>
+                No pudimos extraer la informacion del recibo. Intenta subir una imagen mas clara.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -208,13 +273,15 @@ interface DetailRowProps {
   icon: string;
   label: string;
   value: string;
-  colors: { text: string; textSecondary: string };
+  colors: ReturnType<typeof getThemeColors>;
 }
 
 function DetailRow({ icon, label, value, colors }: DetailRowProps) {
   return (
     <View style={styles.detailRow}>
-      <Text style={styles.detailIcon}>{icon}</Text>
+      <View style={[styles.detailIconContainer, { backgroundColor: colors.primaryLight }]}>
+        <Text style={styles.detailIcon}>{icon}</Text>
+      </View>
       <View style={styles.detailContent}>
         <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>{label}</Text>
         <Text style={[styles.detailValue, { color: colors.text }]}>{value}</Text>
@@ -224,6 +291,9 @@ function DetailRow({ icon, label, value, colors }: DetailRowProps) {
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -232,9 +302,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingBottom: 40,
   },
   desktopContent: {
-    maxWidth: 800,
+    maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
@@ -247,7 +318,7 @@ const styles = StyleSheet.create({
   loadingIcon: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -263,92 +334,148 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   errorIcon: {
-    fontSize: 48,
+    fontSize: 56,
     marginBottom: 16,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
     textAlign: 'center',
+    marginBottom: 24,
   },
-  // Main Card
-  mainCard: {
-    borderRadius: 16,
-    padding: 20,
+  backButtonWrapper: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  backButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+  },
+  backButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  // Header Card
+  headerCard: {
+    borderRadius: 28,
+    padding: 24,
     marginBottom: 20,
-    borderWidth: 1,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  shadowIOS: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+  headerCircle1: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  shadowAndroid: {
-    elevation: 4,
+  headerCircle2: {
+    position: 'absolute',
+    bottom: -40,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  shadowWeb: {
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-  },
-  header: {
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     flex: 1,
   },
+  storeIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  storeIcon: {
+    fontSize: 28,
+  },
   storeName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    marginBottom: 10,
+    color: '#ffffff',
+    marginBottom: 8,
+    maxWidth: 160,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
     gap: 4,
+    alignSelf: 'flex-start',
   },
   statusIcon: {
-    fontSize: 12,
-    fontWeight: '700',
+    color: '#ffffff',
+    fontSize: 11,
   },
   statusText: {
-    fontSize: 13,
+    color: '#ffffff',
+    fontSize: 12,
     fontWeight: '600',
   },
   amountContainer: {
     alignItems: 'flex-end',
   },
   amountLabel: {
-    fontSize: 12,
-    marginBottom: 2,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    marginBottom: 4,
   },
   totalAmount: {
+    color: '#ffffff',
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  divider: {
-    height: 1,
-    marginVertical: 20,
+  // Details Card
+  detailsCard: {
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+  },
+  detailsTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 16,
   },
   detailsGrid: {
-    gap: 16,
+    gap: 14,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  detailIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   detailIcon: {
     fontSize: 20,
-    marginRight: 12,
   },
   detailContent: {
     flex: 1,
@@ -359,7 +486,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   // Items Section
   sectionHeader: {
@@ -368,23 +495,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
   },
-  itemCount: {
+  itemCountBadge: {
     marginLeft: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   itemCountText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
   itemsCard: {
-    borderRadius: 16,
+    borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
+    marginBottom: 20,
   },
   itemRow: {
     flexDirection: 'row',
@@ -394,24 +522,24 @@ const styles = StyleSheet.create({
   itemBorder: {
     borderBottomWidth: 1,
   },
-  itemCategoryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  itemIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
-  itemCategoryEmoji: {
-    fontSize: 20,
+  itemEmoji: {
+    fontSize: 22,
   },
   itemContent: {
     flex: 1,
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 3,
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   itemCategory: {
     fontSize: 13,
@@ -419,26 +547,81 @@ const styles = StyleSheet.create({
   },
   itemTotal: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  // Shadows
+  shadowIOS: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+  },
+  shadowAndroid: {
+    elevation: 3,
+  },
+  shadowWeb: {
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
   },
   // Empty Items
   emptyItems: {
     alignItems: 'center',
     padding: 32,
-    borderRadius: 16,
+    borderRadius: 24,
     borderWidth: 1,
   },
   emptyIcon: {
-    fontSize: 40,
+    fontSize: 44,
     marginBottom: 12,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  // Processing Card
+  processingCard: {
+    alignItems: 'center',
+    padding: 28,
+    borderRadius: 24,
+    borderWidth: 1,
+  },
+  processingIcon: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  processingTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  processingText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  // Failed Card
+  failedCard: {
+    alignItems: 'center',
+    padding: 28,
+    borderRadius: 24,
+    borderWidth: 1,
+  },
+  failedIcon: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  failedTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  failedText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
