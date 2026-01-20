@@ -45,7 +45,7 @@ export default function DashboardScreen() {
   // Calculate total balance from expenses
   const totalBalance = React.useMemo(() => {
     if (!expenses) return 0;
-    return expenses.reduce((sum, exp) => sum + (exp.amountEur || 0), 0);
+    return expenses.reduce((sum, exp) => sum + (Number(exp.amountEur) || 0), 0);
   }, [expenses]);
 
   // Calculate this month's expenses
@@ -57,7 +57,7 @@ export default function DashboardScreen() {
         const expDate = new Date(exp.expenseDate);
         return expDate.getMonth() === now.getMonth() && expDate.getFullYear() === now.getFullYear();
       })
-      .reduce((sum, exp) => sum + (exp.amountEur || 0), 0);
+      .reduce((sum, exp) => sum + (Number(exp.amountEur) || 0), 0);
   }, [expenses]);
 
   // Calculate spending by category
@@ -75,7 +75,7 @@ export default function DashboardScreen() {
           name: getCategoryName(cat),
         };
       }
-      categoryTotals[cat].amount += exp.amountEur || 0;
+      categoryTotals[cat].amount += Number(exp.amountEur) || 0;
     });
 
     return Object.entries(categoryTotals)

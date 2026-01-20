@@ -1,11 +1,13 @@
 import { Currency } from '../types';
 
-export function formatCurrency(amount: number, currency: Currency = 'USD'): string {
+export function formatCurrency(amount: number | string | null | undefined, currency: Currency = 'USD'): string {
+  // Defensive conversion: API may return strings instead of numbers
+  const numericAmount = Number(amount) || 0;
   const formatter = new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: currency,
   });
-  return formatter.format(amount);
+  return formatter.format(numericAmount);
 }
 
 export function formatDate(dateString: string): string {

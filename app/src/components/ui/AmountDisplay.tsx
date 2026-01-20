@@ -5,7 +5,7 @@ type AmountType = 'expense' | 'income' | 'neutral';
 type AmountSize = 'small' | 'medium' | 'large';
 
 interface AmountDisplayProps {
-  amount: number;
+  amount: number | string | null | undefined;
   currency?: string;
   type?: AmountType;
   size?: AmountSize;
@@ -33,6 +33,9 @@ export function AmountDisplay({
   showSign = false,
   className = '',
 }: AmountDisplayProps) {
+  // Defensive conversion: API may return strings instead of numbers
+  const numericAmount = Number(amount) || 0;
+
   const formatAmount = (value: number, curr: string): string => {
     const formatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -45,15 +48,15 @@ export function AmountDisplay({
 
   const getSign = (): string => {
     if (!showSign) return '';
-    if (type === 'expense' || amount < 0) return '- ';
-    if (type === 'income' || amount > 0) return '+ ';
+    if (type === 'expense' || numericAmount < 0) return '- ';
+    if (type === 'income' || numericAmount > 0) return '+ ';
     return '';
   };
 
   return (
     <View className={`flex-row items-baseline ${className}`}>
       <Text className={`${sizeClasses[size]} ${typeClasses[type]}`}>
-        {getSign()}{formatAmount(amount, currency)}
+        {getSign()}{formatAmount(numericAmount, currency)}
       </Text>
     </View>
   );
