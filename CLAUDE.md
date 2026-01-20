@@ -678,6 +678,109 @@ function Dashboard() {
 
 ---
 
+## Konta Design System (REQUIRED FOR ALL UI CHANGES)
+
+**IMPORTANT**: All visual changes to the frontend MUST follow the Konta Design System. Before making any UI modifications, review the full documentation at `app/docs/DESIGN_SYSTEM.md`.
+
+### Quick Reference
+
+#### Theme Colors (ALWAYS use these)
+```typescript
+import { getThemeColors, GRADIENTS } from '../constants/theme';
+import { useColorMode } from '../providers/GluestackUIProvider';
+
+const { isDark } = useColorMode();
+const colors = getThemeColors(isDark);
+
+// NEVER hardcode colors - always use:
+colors.background    // Screen backgrounds
+colors.surface       // Cards, modals
+colors.text          // Primary text
+colors.textSecondary // Secondary text
+colors.primary       // Brand color (#7C3AED)
+colors.primaryLight  // Primary tint
+colors.success       // Positive states
+colors.warning       // Processing states
+colors.error         // Error states
+```
+
+#### Gradient Backgrounds (Required for all screens)
+```typescript
+import { LinearGradient } from 'expo-linear-gradient';
+
+// Wrap ALL screens with gradient background
+<LinearGradient
+  colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
+  style={{ flex: 1 }}
+>
+  <SafeAreaView style={{ flex: 1 }}>
+    {/* Screen content */}
+  </SafeAreaView>
+</LinearGradient>
+```
+
+#### Primary Gradient (Buttons, Cards, Headers)
+```typescript
+// Primary gradient: Purple to Pink
+GRADIENTS.primary     // ['#7C3AED', '#A855F7']
+GRADIENTS.primaryFull // ['#7C3AED', '#A855F7', '#EC4899']
+
+// Button example
+<LinearGradient
+  colors={GRADIENTS.primaryFull}
+  style={styles.button}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 0 }}
+>
+  <Text style={{ color: '#fff' }}>Submit</Text>
+</LinearGradient>
+```
+
+#### Border Radius Standards
+- Small buttons/badges: `4-8px`
+- Inputs, small cards: `10-14px`
+- Standard cards: `20-24px`
+- Hero cards, modals: `28-32px`
+
+#### Platform Shadows
+```typescript
+// Always include all three for cross-platform support
+Platform.OS === 'ios' && styles.shadowIOS,
+Platform.OS === 'android' && styles.shadowAndroid,
+Platform.OS === 'web' && styles.shadowWeb,
+
+// Standard shadow definitions
+shadowIOS: {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 6,
+},
+shadowAndroid: { elevation: 3 },
+shadowWeb: { boxShadow: '0 2px 6px rgba(0,0,0,0.06)' },
+```
+
+#### Status Badges
+```typescript
+import { getStatusConfig } from '../constants/theme';
+
+const statusConfig = getStatusConfig(receipt.status, isDark);
+// Returns: { color, bg, label, icon }
+```
+
+### Design Rules
+
+1. **Never hardcode colors** - Always use `getThemeColors(isDark)`
+2. **Always support dark mode** - Test both themes
+3. **Use gradient backgrounds** - All screens must have the purple gradient
+4. **Follow spacing conventions** - Cards: 16-20px padding, Hero: 24-28px
+5. **Use consistent border radius** - See standards above
+6. **Include platform shadows** - iOS, Android, and Web variants
+
+For complete documentation including typography, components, and examples, see: `app/docs/DESIGN_SYSTEM.md`
+
+---
+
 ## AI Receipt Processing Guidelines
 
 ### OCR + LLM Pipeline
