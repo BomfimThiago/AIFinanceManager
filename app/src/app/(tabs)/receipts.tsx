@@ -1,72 +1,44 @@
+// src/app/(tabs)/receipts.tsx
 import React, { useState } from 'react';
 import {
   View,
+  Text,
   FlatList,
   StyleSheet,
   RefreshControl,
-  Alert,
   Pressable,
-  Platform,
-  Text,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, Link } from 'expo-router';
-import { ReceiptUploader } from '../../components/receipts/ReceiptUploader';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { ReceiptUploader } from '../../components/receipts/ReceiptUploader';
 import { useReceipts } from '../../hooks/useReceipts';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Receipt } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useColorMode } from '../../providers/GluestackUIProvider';
-import { getThemeColors, getStatusConfig, GRADIENTS } from '../../constants/theme';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { getTheme, radius, getShadow, colors, gradients } from '../../constants/theme';
 
 export default function ReceiptsScreen() {
   const { isDark } = useColorMode();
   const router = useRouter();
-  const { isDesktop, isSmallMobile, horizontalPadding, isMobile } = useResponsive();
+  const { isDesktop, horizontalPadding } = useResponsive();
+  const theme = getTheme(isDark);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   const { data: receipts, isLoading, refetch } = useReceipts({ enabled: isAuthenticated });
   const [refreshing, setRefreshing] = useState(false);
-  const [showUploader, setShowUploader] = useState(true);
+  const [dragActive, setDragActive] = useState(false);
 
-  const colors = getThemeColors(isDark);
-
-  if (!isAuthenticated) {
-    return (
-      <LinearGradient
-        colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
-        style={styles.gradient}
-      >
-        <SafeAreaView style={styles.container}>
-          <View style={[styles.authPrompt, { paddingHorizontal: horizontalPadding }]}>
-            <View style={[styles.authIconContainer, { backgroundColor: colors.primaryLight }]}>
-              <Text style={styles.authIcon}>🧾</Text>
-            </View>
-            <Text style={[styles.authTitle, { color: colors.text, fontSize: isSmallMobile ? 22 : 26 }]}>
-              Escanea tus Recibos
-            </Text>
-            <Text style={[styles.authSubtitle, { color: colors.textSecondary, fontSize: isSmallMobile ? 14 : 16 }]}>
-              Sube recibos y deja que la IA extraiga todos los detalles automaticamente
-            </Text>
-            <Link href="/auth" asChild>
-              <Pressable style={styles.authButtonWrapper}>
-                <LinearGradient
-                  colors={GRADIENTS.primaryFull as [string, string, ...string[]]}
-                  style={styles.authButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.authButtonText}>Iniciar Sesion</Text>
-                </LinearGradient>
-              </Pressable>
-            </Link>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-    );
-  }
+  const statusConfig = {
+    completed: { color: colors.success.main, bg: 'rgba(16,185,129,0.15)', icon: '✓', label: 'Completado' },
+    processing: { color: colors.warning.main, bg: 'rgba(245,158,11,0.15)', icon: '⏳', label: 'Procesando' },
+    failed: { color: colors.danger.main, bg: 'rgba(239,68,68,0.15)', icon: '✕', label: 'Error' },
+    pending: { color: colors.gray[500], bg: 'rgba(107,114,128,0.15)', icon: '•', label: 'Pendiente' },
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -74,12 +46,8 @@ export default function ReceiptsScreen() {
     setRefreshing(false);
   };
 
-  const handleReceiptPress = (receipt: Receipt) => {
-    router.push(`/receipt/${receipt.id}`);
-  };
-
   const handleUploadSuccess = () => {
-    Alert.alert('Exito', 'Recibo subido y procesando!');
+    Alert.alert('Éxito', '¡Recibo subido y procesando!');
     refetch();
   };
 
@@ -87,327 +55,250 @@ export default function ReceiptsScreen() {
     Alert.alert('Error', error.message || 'Error al subir el recibo');
   };
 
-  const renderReceiptCard = ({ item }: { item: Receipt }) => {
-    const statusConfig = getStatusConfig(item.status, isDark);
+  // Calculate stats
+  const stats = receipts
+    ? {
+        total: receipts.length,
+        completed: receipts.filter((r) => r.status === 'completed').length,
+        pending: receipts.filter((r) => r.status === 'processing' || r.status === 'pending').length,
+      }
+    : { total: 0, completed: 0, pending: 0 };
+
+  if (!isAuthenticated) {
     return (
-      <Pressable
-        style={({ pressed }) => [
-          styles.receiptCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-          pressed && styles.receiptCardPressed,
-          Platform.OS === 'ios' && styles.shadowIOS,
-          Platform.OS === 'android' && styles.shadowAndroid,
-          Platform.OS === 'web' && styles.shadowWeb,
-        ]}
-        onPress={() => handleReceiptPress(item)}
-      >
-        {/* Left Icon */}
-        <View style={[styles.receiptIconContainer, { backgroundColor: colors.primaryLight }]}>
-          <Text style={styles.receiptIcon}>🧾</Text>
-        </View>
-
-        {/* Content */}
-        <View style={styles.receiptContent}>
-          <Text style={[styles.receiptStoreName, { color: colors.text }]} numberOfLines={1}>
-            {item.storeName || 'Tienda Desconocida'}
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.authPrompt, { paddingHorizontal: horizontalPadding }]}>
+          <Text style={styles.authIcon}>🧾</Text>
+          <Text style={[styles.authTitle, { color: theme.text }]}>
+            Inicia sesión para escanear recibos
           </Text>
-          <View style={styles.receiptMeta}>
-            <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-              <Text style={[styles.statusIcon, { color: statusConfig.color }]}>{statusConfig.icon}</Text>
-              <Text style={[styles.statusText, { color: statusConfig.color }]}>{statusConfig.label}</Text>
-            </View>
-            {item.purchaseDate && (
-              <Text style={[styles.receiptDate, { color: colors.textMuted }]}>
-                {formatDate(item.purchaseDate)}
-              </Text>
-            )}
-          </View>
+          <Text style={[styles.authSubtitle, { color: theme.textSecondary }]}>
+            Sube recibos y deja que la IA extraiga los detalles
+          </Text>
+          <Link href="/auth" asChild>
+            <Button title="Iniciar Sesión" />
+          </Link>
         </View>
+      </SafeAreaView>
+    );
+  }
 
-        {/* Amount & Chevron */}
-        <View style={styles.receiptRight}>
-          {item.totalAmount !== null && (
-            <Text style={[styles.receiptAmount, { color: colors.primary }]}>
-              {formatCurrency(item.totalAmount, item.currency as any)}
-            </Text>
-          )}
-          <Text style={[styles.chevron, { color: colors.textMuted }]}>›</Text>
-        </View>
+  const renderHeader = () => (
+    <View style={styles.headerContent}>
+      {/* Upload Area */}
+      <Pressable
+        onPressIn={() => setDragActive(true)}
+        onPressOut={() => setDragActive(false)}
+        style={[
+          styles.uploadArea,
+          { backgroundColor: dragActive ? theme.primaryLight : theme.surface, borderColor: dragActive ? theme.primary : theme.border },
+          getShadow('sm'),
+        ]}
+      >
+        <LinearGradient
+          colors={gradients.primary as [string, string, ...string[]]}
+          style={[styles.uploadIcon, getShadow('primary')]}
+        >
+          <Text style={styles.uploadEmoji}>📷</Text>
+        </LinearGradient>
+        <Text style={[styles.uploadTitle, { color: theme.text }]}>Sube tu Recibo</Text>
+        <Text style={[styles.uploadDesc, { color: theme.textSecondary }]}>
+          Arrastra una imagen o toca para seleccionar.{'\n'}
+          La IA extraerá todos los detalles automáticamente.
+        </Text>
+        <ReceiptUploader onSuccess={handleUploadSuccess} onError={handleUploadError} />
+      </Pressable>
+
+      {/* Stats */}
+      <View style={styles.statsRow}>
+        {[
+          { label: 'Total', value: stats.total, icon: '📄', color: theme.primary },
+          { label: 'Procesados', value: stats.completed, icon: '✓', color: colors.success.main },
+          { label: 'Pendientes', value: stats.pending, icon: '⏳', color: colors.warning.main },
+        ].map(({ label, value, icon, color }) => (
+          <View
+            key={label}
+            style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.border }, getShadow('sm')]}
+          >
+            <View style={[styles.statIcon, { backgroundColor: `${color}20` }]}>
+              <Text style={styles.statEmoji}>{icon}</Text>
+            </View>
+            <Text style={[styles.statValue, { color: theme.text }]}>{value}</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>{label}</Text>
+          </View>
+        ))}
+      </View>
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Recibos Recientes</Text>
+    </View>
+  );
+
+  const renderReceiptCard = ({ item }: { item: Receipt }) => {
+    const status = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.pending;
+    return (
+      <Pressable onPress={() => router.push(`/receipt/${item.id}`)}>
+        <Card variant="glass" style={styles.receiptCard}>
+          <View style={styles.receiptRow}>
+            <View style={[styles.receiptIcon, { backgroundColor: theme.primaryLight }]}>
+              <Text style={styles.receiptEmoji}>🧾</Text>
+              {item.status === 'processing' && (
+                <View style={[styles.receiptStatusDot, { backgroundColor: status.bg }]}>
+                  <Text style={styles.receiptStatusDotText}>⏳</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.receiptContent}>
+              <Text style={[styles.receiptStore, { color: theme.text }]} numberOfLines={1}>
+                {item.storeName || 'Tienda Desconocida'}
+              </Text>
+              <View style={styles.receiptMeta}>
+                <View style={[styles.receiptBadge, { backgroundColor: status.bg }]}>
+                  <Text style={[styles.receiptBadgeText, { color: status.color }]}>
+                    {status.icon} {status.label}
+                  </Text>
+                </View>
+                {item.expenses && item.expenses.length > 0 && (
+                  <Text style={[styles.receiptItems, { color: theme.textMuted }]}>
+                    {item.expenses.length} items
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={styles.receiptRight}>
+              {item.totalAmount !== null && (
+                <Text style={[styles.receiptAmount, { color: theme.primary }]}>
+                  €{item.totalAmount.toFixed(2)}
+                </Text>
+              )}
+              <Text style={[styles.receiptDate, { color: theme.textMuted }]}>
+                {new Date(item.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+              </Text>
+            </View>
+            <Text style={[styles.chevron, { color: theme.textMuted }]}>›</Text>
+          </View>
+        </Card>
       </Pressable>
     );
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerSection}>
-      {/* Stats Row */}
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.statValue, { color: colors.primary }]}>{receipts?.length || 0}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.statValue, { color: colors.success }]}>
-            {receipts?.filter((r) => r.status === 'completed').length || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Procesados</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.statValue, { color: colors.warning }]}>
-            {receipts?.filter((r) => r.status === 'processing').length || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pendientes</Text>
-        </View>
-      </View>
-
-      {/* Uploader */}
-      {showUploader && (
-        <ReceiptUploader onSuccess={handleUploadSuccess} onError={handleUploadError} />
-      )}
-
-      {/* Section Title */}
-      {receipts && receipts.length > 0 && (
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          TODOS LOS RECIBOS
-        </Text>
-      )}
-    </View>
-  );
-
-  const renderEmptyState = () => (
-    <View style={[
-      styles.emptyContainer,
-      { backgroundColor: colors.surface, borderColor: colors.border },
-      Platform.OS === 'ios' && styles.shadowIOS,
-    ]}>
-      <Text style={styles.emptyIcon}>📄</Text>
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin recibos aun</Text>
-      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-        Sube tu primer recibo para comenzar a rastrear tus gastos
-      </Text>
-    </View>
-  );
-
   return (
-    <LinearGradient
-      colors={isDark ? ['#0F0F1A', '#1A1A2E'] : ['#FAFBFF', '#F3E8FF']}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.container} edges={['left', 'right']}>
-        <FlatList
-          data={receipts}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderReceiptCard}
-          ListHeaderComponent={renderHeader}
-          ListEmptyComponent={!isLoading ? renderEmptyState : null}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingHorizontal: horizontalPadding },
-            isDesktop && styles.desktopContent,
-          ]}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      </SafeAreaView>
-    </LinearGradient>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
+      <FlatList
+        data={receipts}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderReceiptCard}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>🧾</Text>
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin recibos aún</Text>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                Sube tu primer recibo para comenzar
+              </Text>
+            </View>
+          ) : null
+        }
+        contentContainerStyle={[
+          { paddingVertical: 8, paddingHorizontal: horizontalPadding },
+          isDesktop && styles.desktopContent,
+        ]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+        }
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  listContent: {
-    paddingVertical: 16,
-    paddingBottom: 100,
-  },
-  desktopContent: {
-    maxWidth: 600,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  // Auth Prompt
-  authPrompt: {
-    flex: 1,
-    justifyContent: 'center',
+  container: { flex: 1 },
+  desktopContent: { maxWidth: 800, alignSelf: 'center', width: '100%' },
+  authPrompt: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  authIcon: { fontSize: 64, marginBottom: 16 },
+  authTitle: { fontSize: 22, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+  authSubtitle: { fontSize: 15, marginBottom: 24, textAlign: 'center' },
+  headerContent: { marginBottom: 16 },
+  // Upload Area
+  uploadArea: {
+    borderRadius: radius['3xl'],
+    padding: 28,
+    borderWidth: 2,
+    borderStyle: 'dashed',
     alignItems: 'center',
-  },
-  authIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  authIcon: {
-    fontSize: 48,
-  },
-  authTitle: {
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  authSubtitle: {
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
-    paddingHorizontal: 20,
-  },
-  authButtonWrapper: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: '100%',
-    maxWidth: 280,
-  },
-  authButton: {
-    paddingVertical: 18,
-    alignItems: 'center',
-  },
-  authButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  // Header Section
-  headerSection: {
-    marginBottom: 16,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
     marginBottom: 20,
   },
+  uploadIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  uploadEmoji: { fontSize: 36 },
+  uploadTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  uploadDesc: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  // Stats
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   statCard: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  // Receipt Card
-  receiptCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: radius.xl,
     padding: 16,
-    borderRadius: 20,
+    alignItems: 'center',
     borderWidth: 1,
-    marginBottom: 10,
   },
-  receiptCardPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  receiptIconContainer: {
-    width: 52,
-    height: 52,
+  statEmoji: { fontSize: 18 },
+  statValue: { fontSize: 24, fontWeight: '700' },
+  statLabel: { fontSize: 12, marginTop: 4 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  // Receipt Card
+  receiptCard: { padding: 16 },
+  receiptRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  receiptIcon: {
+    width: 56,
+    height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    position: 'relative',
   },
-  receiptIcon: {
-    fontSize: 24,
-  },
-  receiptContent: {
-    flex: 1,
-  },
-  receiptStoreName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  receiptMeta: {
-    flexDirection: 'row',
+  receiptEmoji: { fontSize: 26 },
+  receiptStatusDot: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-    gap: 4,
-  },
-  statusIcon: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  receiptDate: {
-    fontSize: 12,
-  },
-  receiptRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  receiptAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chevron: {
-    fontSize: 20,
-  },
-  // Shadows
-  shadowIOS: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-  },
-  shadowAndroid: {
-    elevation: 2,
-  },
-  shadowWeb: {
-    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-  },
-  // Empty State
-  emptyContainer: {
-    alignItems: 'center',
-    padding: 40,
-    borderRadius: 24,
-    borderWidth: 1,
-  },
-  emptyIcon: {
-    fontSize: 56,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  receiptStatusDotText: { fontSize: 10 },
+  receiptContent: { flex: 1 },
+  receiptStore: { fontSize: 16, fontWeight: '600', marginBottom: 6 },
+  receiptMeta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  receiptBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  receiptBadgeText: { fontSize: 11, fontWeight: '600' },
+  receiptItems: { fontSize: 12 },
+  receiptRight: { alignItems: 'flex-end' },
+  receiptAmount: { fontSize: 18, fontWeight: '700' },
+  receiptDate: { fontSize: 12, marginTop: 4 },
+  chevron: { fontSize: 20 },
+  // Empty
+  emptyState: { alignItems: 'center', paddingVertical: 48 },
+  emptyIcon: { fontSize: 64, marginBottom: 16 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  emptyText: { fontSize: 14, textAlign: 'center' },
 });

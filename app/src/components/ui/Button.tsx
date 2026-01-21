@@ -1,86 +1,189 @@
-import React, { forwardRef } from 'react';
+// src/components/ui/Button.tsx
+import React from 'react';
 import {
   Pressable,
   Text,
+  StyleSheet,
   ActivityIndicator,
-  View,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useColorMode } from '../../providers/GluestackUIProvider';
+import { colors, radius, getShadow, getTheme } from '../../constants/theme';
 
-export interface ButtonProps {
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+type ButtonSize = 'small' | 'medium' | 'large';
+
+interface ButtonProps {
   title: string;
   onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
-  size?: 'small' | 'medium' | 'large';
-  disabled?: boolean;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
+  disabled?: boolean;
   fullWidth?: boolean;
-  className?: string;
+  icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
+  style?: ViewStyle;
 }
 
-const variantClasses = {
-  primary: 'bg-primary-600 active:bg-primary-700',
-  secondary: 'bg-gray-100 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700',
-  outline: 'bg-transparent border-2 border-primary-600 active:bg-primary-50 dark:active:bg-primary-900/20',
-  danger: 'bg-error active:bg-red-600',
-  ghost: 'bg-transparent active:bg-gray-100 dark:active:bg-gray-800',
-};
+export function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  size = 'medium',
+  loading = false,
+  disabled = false,
+  fullWidth = false,
+  icon,
+  iconPosition = 'left',
+  style,
+}: ButtonProps) {
+  const { isDark } = useColorMode();
+  const theme = getTheme(isDark);
 
-const variantTextClasses = {
-  primary: 'text-white',
-  secondary: 'text-gray-900 dark:text-gray-100',
-  outline: 'text-primary-600',
-  danger: 'text-white',
-  ghost: 'text-primary-600',
-};
+  const sizeStyles: Record<ButtonSize, { paddingV: number; paddingH: number; fontSize: number }> = {
+    small: { paddingV: 10, paddingH: 16, fontSize: 13 },
+    medium: { paddingV: 14, paddingH: 24, fontSize: 15 },
+    large: { paddingV: 18, paddingH: 32, fontSize: 16 },
+  };
 
-const sizeClasses = {
-  small: 'py-2 px-4',
-  medium: 'py-3 px-6',
-  large: 'py-4 px-8',
-};
+  const { paddingV, paddingH, fontSize } = sizeStyles[size];
 
-const sizeTextClasses = {
-  small: 'text-sm',
-  medium: 'text-base',
-  large: 'text-lg',
-};
+  const getVariantStyles = (): { container: ViewStyle; text: TextStyle; gradient?: string[] } => {
+    switch (variant) {
+      case 'primary':
+        return {
+          container: {},
+          text: { color: '#FFFFFF', fontWeight: '700' },
+          gradient: ['#7C3AED', '#A855F7', '#EC4899'],
+        };
+      case 'secondary':
+        return {
+          container: {},
+          text: { color: '#FFFFFF', fontWeight: '600' },
+          gradient: ['#06B6D4', '#3B82F6'],
+        };
+      case 'outline':
+        return {
+          container: {
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderColor: theme.primary,
+          },
+          text: { color: theme.primary, fontWeight: '600' },
+        };
+      case 'ghost':
+        return {
+          container: {
+            backgroundColor: theme.primaryLight,
+          },
+          text: { color: theme.primary, fontWeight: '600' },
+        };
+      case 'danger':
+        return {
+          container: {},
+          text: { color: '#FFFFFF', fontWeight: '700' },
+          gradient: ['#EF4444', '#DC2626'],
+        };
+      default:
+        return {
+          container: {},
+          text: { color: '#FFFFFF', fontWeight: '600' },
+        };
+    }
+  };
 
-export const Button = forwardRef<View, ButtonProps>(function Button(
-  {
-    title,
-    onPress,
-    variant = 'primary',
-    size = 'medium',
-    disabled = false,
-    loading = false,
-    fullWidth = false,
-    className = '',
-  },
-  ref
-) {
+  const variantStyles = getVariantStyles();
+  const isGradient = !!variantStyles.gradient;
   const isDisabled = disabled || loading;
 
-  const baseClasses = 'items-center justify-center flex-row rounded-lg';
-  const disabledClasses = isDisabled ? 'opacity-50' : '';
-  const widthClasses = fullWidth ? 'w-full' : '';
+  const buttonContent = (
+    <>
+      {loading ? (
+        <ActivityIndicator
+          size="small"
+          color={variant === 'outline' || variant === 'ghost' ? theme.primary : '#FFFFFF'}
+        />
+      ) : (
+        <>
+          {icon && iconPosition === 'left' && icon}
+          <Text
+            style={[
+              styles.text,
+              { fontSize },
+              variantStyles.text,
+              icon && iconPosition === 'left' && { marginLeft: 8 },
+              icon && iconPosition === 'right' && { marginRight: 8 },
+            ]}
+          >
+            {title}
+          </Text>
+          {icon && iconPosition === 'right' && icon}
+        </>
+      )}
+    </>
+  );
+
+  const containerStyle: ViewStyle = {
+    paddingVertical: paddingV,
+    paddingHorizontal: paddingH,
+    borderRadius: radius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: isDisabled ? 0.6 : 1,
+    ...(fullWidth && { width: '100%' }),
+    ...variantStyles.container,
+  };
+
+  if (isGradient) {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={isDisabled}
+        style={({ pressed }) => [
+          { transform: [{ scale: pressed ? 0.98 : 1 }] },
+          fullWidth && { width: '100%' },
+          style,
+        ]}
+      >
+        <LinearGradient
+          colors={variantStyles.gradient as [string, string, ...string[]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            containerStyle,
+            getShadow(variant === 'primary' ? 'primary' : 'md'),
+          ]}
+        >
+          {buttonContent}
+        </LinearGradient>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
-      ref={ref}
       onPress={onPress}
       disabled={isDisabled}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses} ${widthClasses} ${className}`}
+      style={({ pressed }) => [
+        containerStyle,
+        { transform: [{ scale: pressed ? 0.98 : 1 }] },
+        variant === 'ghost' && getShadow('sm'),
+        style,
+      ]}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' || variant === 'danger' ? 'white' : '#7c3aed'}
-          size="small"
-        />
-      ) : (
-        <Text className={`font-semibold ${variantTextClasses[variant]} ${sizeTextClasses[size]}`}>
-          {title}
-        </Text>
-      )}
+      {buttonContent}
     </Pressable>
   );
+}
+
+const styles = StyleSheet.create({
+  text: {
+    textAlign: 'center',
+  },
 });
+
+export default Button;
