@@ -23,7 +23,7 @@ class Expense(BaseModel):
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     category: Mapped[str] = mapped_column(String(50))
-    expense_date: Mapped[datetime]
+    expense_date: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Converted amounts (historical rates at expense date)
     amount_usd: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)

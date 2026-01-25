@@ -120,3 +120,4 @@ credentials/
 # SSL certificates and certbot
 certbot/
 nginx/ssl/
+backend/backend.log

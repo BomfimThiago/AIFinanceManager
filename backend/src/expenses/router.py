@@ -34,8 +34,6 @@ async def create_expense(
 async def get_expenses(
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
     start_date: datetime | None = None,
     end_date: datetime | None = None,
     category: ExpenseCategory | None = None,
@@ -43,8 +41,6 @@ async def get_expenses(
     """Get all expenses for the current user."""
     expenses = await repository.get_all_by_user(
         user_id=current_user.id,
-        skip=skip,
-        limit=limit,
         start_date=start_date,
         end_date=end_date,
         category=category,

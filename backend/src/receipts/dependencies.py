@@ -9,7 +9,7 @@ from src.categories.dependencies import (
 from src.categories.preference_service import CategoryPreferenceService
 from src.categories.repository import CategoryRepository
 from src.database import DbSession
-from src.receipts.ai_parser import AIParser, get_ai_parser
+from src.receipts.parser_factory import get_ai_parser
 from src.receipts.ocr_service import OCRService, get_ocr_service
 from src.receipts.repository import ReceiptRepository
 from src.receipts.service import ReceiptService
@@ -22,7 +22,7 @@ def get_receipt_repository(db: DbSession) -> ReceiptRepository:
 def get_receipt_service(
     repository: Annotated[ReceiptRepository, Depends(get_receipt_repository)],
     ocr_service: Annotated[OCRService, Depends(get_ocr_service)],
-    ai_parser: Annotated[AIParser, Depends(get_ai_parser)],
+    ai_parser: Annotated[object, Depends(get_ai_parser)],  # Can be AIParser or BedrockParser
     category_repository: Annotated[CategoryRepository, Depends(get_category_repository)],
     preference_service: Annotated[CategoryPreferenceService, Depends(get_preference_service)],
 ) -> ReceiptService:

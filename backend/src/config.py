@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # AI Services
     anthropic_api_key: str = ""
 
+    # AWS Bedrock (optional - for using Claude via Bedrock instead of direct API)
+    use_bedrock: bool = False  # Set to True to use AWS Bedrock instead of Anthropic API
+    bedrock_region: str = "us-east-1"  # Bedrock region (may differ from main AWS region)
+    aws_region: str = "eu-west-3"  # Main AWS region for other services
+
     # Sentry
     sentry_dsn: str = ""
 

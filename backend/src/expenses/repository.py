@@ -45,8 +45,6 @@ class ExpenseRepository:
     async def get_all_by_user(
         self,
         user_id: int,
-        skip: int = 0,
-        limit: int = 50,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
         category: str | None = None,
@@ -60,7 +58,7 @@ class ExpenseRepository:
         if category:
             query = query.where(Expense.category == category)
 
-        query = query.order_by(Expense.expense_date.desc()).offset(skip).limit(limit)
+        query = query.order_by(Expense.expense_date.desc())
 
         result = await self.db.execute(query)
         return list(result.scalars().all())

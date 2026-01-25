@@ -80,6 +80,7 @@ resource "aws_instance" "api" {
   vpc_security_group_ids      = [aws_security_group.ec2.id]
   subnet_id                   = aws_subnet.public[0].id
   associate_public_ip_address = true
+  iam_instance_profile        = aws_iam_instance_profile.ec2_bedrock.name
 
   root_block_device {
     volume_size = 20
