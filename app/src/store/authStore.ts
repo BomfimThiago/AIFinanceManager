@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { authApi } from '../services/api';
+import { setTokenProvider, setUnauthorizedCallback } from '../services/tokenProvider';
 import { User } from '../types';
 
 interface AuthState {
@@ -18,6 +20,24 @@ interface AuthState {
   loadUser: () => Promise<void>;
   clearError: () => void;
 }
+
+// Custom secure storage for sensitive data
+const secureStorage = {
+  getItem: async (name: string) => {
+    try {
+      const value = await SecureStore.getItemAsync(name);
+      return value ? JSON.parse(value) : null;
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (name: string, value: any) => {
+    await SecureStore.setItemAsync(name, JSON.stringify(value));
+  },
+  removeItem: async (name: string) => {
+    await SecureStore.deleteItemAsync(name);
+  },
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -85,7 +105,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
       partialize: (state) => ({
         token: state.token,
         user: state.user,
@@ -94,3 +114,7 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Register token provider to break circular dependency with api.ts
+setTokenProvider(() => useAuthStore.getState().token);
+setUnauthorizedCallback(() => useAuthStore.getState().logout());

@@ -1,15 +1,16 @@
 // src/app/(tabs)/expenses.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   RefreshControl,
   Pressable,
   ScrollView,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
@@ -21,6 +22,7 @@ import { useExpenses, useUpdateExpense } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
 import { useResponsive } from '../../hooks/useResponsive';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { exportToExcel, exportToPDF } from '../../utils/exportData';
 import { Expense } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useColorMode } from '../../providers/GluestackUIProvider';
@@ -52,7 +54,8 @@ export default function ExpensesScreen() {
   const theme = getTheme(isDark);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const { data: expenses, isLoading, refetch } = useExpenses({ enabled: isAuthenticated });
+  const { data: expenseData, isLoading, refetch } = useExpenses({ enabled: isAuthenticated });
+  const expenses = expenseData?.items || [];
   const { data: categories } = useCategories({ filters: { type: 'expense' }, enabled: isAuthenticated });
   const updateExpense = useUpdateExpense();
 
@@ -64,6 +67,8 @@ export default function ExpensesScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { startDate, endDate } = useMemo(() => {
     if (filterMode === 'month') {
@@ -94,12 +99,26 @@ export default function ExpensesScreen() {
       { usd: 0, eur: 0, brl: 0, count: 0 }
     ), [filteredExpenses]);
 
-  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
-  const goToPreviousMonth = () => setSelectedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  const goToNextMonth = () => setSelectedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-  const isCurrentMonth = selectedMonth.getMonth() === new Date().getMonth() && selectedMonth.getFullYear() === new Date().getFullYear();
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
-  const handleCategorySelect = async (categoryKey: string) => {
+  const goToPreviousMonth = useCallback(() => {
+    setSelectedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    setSelectedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
+
+  const isCurrentMonth = useMemo(() => {
+    const now = new Date();
+    return selectedMonth.getMonth() === now.getMonth() && selectedMonth.getFullYear() === now.getFullYear();
+  }, [selectedMonth]);
+
+  const handleCategorySelect = useCallback(async (categoryKey: string) => {
     if (!selectedExpense) return;
     try {
       await updateExpense.mutateAsync({ id: selectedExpense.id, data: { category: categoryKey } });
@@ -108,13 +127,43 @@ export default function ExpensesScreen() {
     } catch (error) {
       console.error('Failed to update category:', error);
     }
-  };
+  }, [selectedExpense, updateExpense]);
 
-  const getCategoryInfo = (categoryKey: string) => {
+  const getCategoryInfo = useCallback((categoryKey: string) => {
     const cat = categories?.find((c) => c.defaultCategoryKey === categoryKey || c.name.toLowerCase() === categoryKey);
     if (cat) return { label: cat.name, icon: getIconEmoji(cat.icon), color: cat.color };
     return { label: categoryKey, icon: '📦', color: '#6B7280' };
-  };
+  }, [categories]);
+
+  const getExportFilename = useCallback(() => {
+    const dateStr = filterMode === 'month'
+      ? selectedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(' ', '_')
+      : `${startDate.toISOString().split('T')[0]}_${endDate.toISOString().split('T')[0]}`;
+    return `gastos_${dateStr}`;
+  }, [filterMode, selectedMonth, startDate, endDate]);
+
+  const handleExport = useCallback(async (format: 'excel' | 'pdf') => {
+    setIsExporting(true);
+    setShowExportMenu(false);
+    try {
+      const exportOptions = {
+        expenses: filteredExpenses,
+        filename: getExportFilename(),
+        dateRange: { start: startDate, end: endDate },
+        totals,
+      };
+
+      if (format === 'excel') {
+        await exportToExcel(exportOptions);
+      } else {
+        await exportToPDF(exportOptions);
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [filteredExpenses, getExportFilename, startDate, endDate, totals]);
 
   if (!isAuthenticated) {
     return (
@@ -131,16 +180,32 @@ export default function ExpensesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContent}>
-      {/* Filter Toggle */}
-      <SegmentedControl
-        options={[
-          { key: 'month', label: 'Por Mes', icon: '📅' },
-          { key: 'range', label: 'Rango', icon: '📊' },
-        ]}
-        selected={filterMode}
-        onChange={(key) => key === 'range' ? setShowDatePicker(true) : setFilterMode(key as FilterMode)}
-        style={{ marginBottom: 16 }}
-      />
+      {/* Filter Toggle + Export Button Row */}
+      <View style={styles.filterRow}>
+        <SegmentedControl
+          options={[
+            { key: 'month', label: 'Por Mes', icon: '📅' },
+            { key: 'range', label: 'Rango', icon: '📊' },
+          ]}
+          selected={filterMode}
+          onChange={(key) => key === 'range' ? setShowDatePicker(true) : setFilterMode(key as FilterMode)}
+          style={{ flex: 1 }}
+        />
+        <Pressable
+          onPress={() => setShowExportMenu(true)}
+          disabled={isExporting || filteredExpenses.length === 0}
+          style={[
+            styles.exportButton,
+            { backgroundColor: theme.primary, opacity: (isExporting || filteredExpenses.length === 0) ? 0.5 : 1 },
+          ]}
+        >
+          {isExporting ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <Text style={styles.exportButtonText}>📤 Exportar</Text>
+          )}
+        </Pressable>
+      </View>
 
       {/* Month Selector */}
       {filterMode === 'month' && (
@@ -184,10 +249,15 @@ export default function ExpensesScreen() {
     </View>
   );
 
-  const renderExpenseCard = ({ item }: { item: Expense }) => {
+  const handleExpensePress = useCallback((item: Expense) => {
+    setSelectedExpense(item);
+    setShowCategoryPicker(true);
+  }, []);
+
+  const renderExpenseCard = useCallback(({ item }: { item: Expense }) => {
     const catInfo = getCategoryInfo(item.category);
     return (
-      <Pressable onPress={() => { setSelectedExpense(item); setShowCategoryPicker(true); }}>
+      <Pressable onPress={() => handleExpensePress(item)}>
         <Card variant="glass" style={styles.expenseCard}>
           <View style={styles.expenseRow}>
             <View style={[styles.expenseIcon, { backgroundColor: `${catInfo.color}20` }]}>
@@ -214,33 +284,126 @@ export default function ExpensesScreen() {
         </Card>
       </Pressable>
     );
+  }, [getCategoryInfo, handleExpensePress, theme]);
+
+  const renderTableHeader = () => (
+    <View style={[styles.tableHeader, { backgroundColor: theme.primaryLight, borderColor: theme.border }]}>
+      <View style={styles.tableDescCol}>
+        <Text style={[styles.tableHeaderCell, { color: theme.textSecondary }]}>Descripción</Text>
+      </View>
+      <View style={styles.tableCatCol}>
+        <Text style={[styles.tableHeaderCell, { color: theme.textSecondary }]}>Categoría</Text>
+      </View>
+      <View style={styles.tableDateCol}>
+        <Text style={[styles.tableHeaderCell, { color: theme.textSecondary }]}>Fecha</Text>
+      </View>
+      <View style={styles.tableCurrencyCol}>
+        <Text style={[styles.tableHeaderCell, styles.textRight, { color: theme.textSecondary }]}>USD</Text>
+      </View>
+      <View style={styles.tableCurrencyCol}>
+        <Text style={[styles.tableHeaderCell, styles.textRight, { color: theme.textSecondary }]}>EUR</Text>
+      </View>
+      <View style={styles.tableCurrencyCol}>
+        <Text style={[styles.tableHeaderCell, styles.textRight, { color: theme.textSecondary }]}>BRL</Text>
+      </View>
+    </View>
+  );
+
+  const renderTableRow = ({ item, index }: { item: Expense; index: number }) => {
+    const catInfo = getCategoryInfo(item.category);
+    const isEven = index % 2 === 0;
+    return (
+      <Pressable onPress={() => { setSelectedExpense(item); setShowCategoryPicker(true); }}>
+        <View style={[
+          styles.tableRow,
+          { backgroundColor: isEven ? theme.surface : theme.background, borderColor: theme.border }
+        ]}>
+          <View style={styles.tableDescCol}>
+            <Text style={[styles.tableText, { color: theme.text }]} numberOfLines={1}>{item.description}</Text>
+          </View>
+          <View style={styles.tableCatCol}>
+            <View style={[styles.tableCatBadge, { backgroundColor: `${catInfo.color}15` }]}>
+              <Text style={styles.tableCatIcon}>{catInfo.icon}</Text>
+              <Text style={[styles.tableCatText, { color: catInfo.color }]} numberOfLines={1}>{catInfo.label}</Text>
+            </View>
+          </View>
+          <View style={styles.tableDateCol}>
+            <Text style={[styles.tableText, { color: theme.textSecondary }]}>{formatDate(item.expenseDate)}</Text>
+          </View>
+          <View style={styles.tableCurrencyCol}>
+            <Text style={[styles.tableCurrencyText, styles.textRight, { color: item.currency === 'USD' ? theme.primary : theme.textMuted }]}>
+              {item.amountUsd != null ? formatCurrency(item.amountUsd, 'USD') : '-'}
+            </Text>
+          </View>
+          <View style={styles.tableCurrencyCol}>
+            <Text style={[styles.tableCurrencyText, styles.textRight, { color: item.currency === 'EUR' ? theme.primary : theme.textMuted }]}>
+              {item.amountEur != null ? formatCurrency(item.amountEur, 'EUR') : '-'}
+            </Text>
+          </View>
+          <View style={styles.tableCurrencyCol}>
+            <Text style={[styles.tableCurrencyText, styles.textRight, { color: item.currency === 'BRL' ? theme.primary : theme.textMuted }]}>
+              {item.amountBrl != null ? formatCurrency(item.amountBrl, 'BRL') : '-'}
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    );
   };
+
+  const renderTable = () => (
+    <Card variant="glass" style={styles.tableContainer}>
+      {renderTableHeader()}
+      {filteredExpenses.length === 0 && !isLoading ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>💰</Text>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin gastos aún</Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Tus gastos aparecerán aquí</Text>
+        </View>
+      ) : (
+        <FlashList
+          data={filteredExpenses}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderTableRow}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
+          estimatedItemSize={60}
+          contentContainerStyle={styles.tableBody}
+        />
+      )}
+    </Card>
+  );
+
+  // Use table on desktop, cards on mobile
+  const useTableLayout = !isMobile;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
-      <FlatList
-        data={filteredExpenses}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderExpenseCard}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={!isLoading ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>💰</Text>
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin gastos aún</Text>
-            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Tus gastos aparecerán aquí</Text>
-          </View>
-        ) : null}
-        contentContainerStyle={{ padding: horizontalPadding, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-      />
-
-      {/* FAB */}
-      <Pressable style={styles.fab}>
-        <LinearGradient colors={['#7C3AED', '#A855F7', '#EC4899']} style={styles.fabGradient}>
-          <Text style={styles.fabText}>+</Text>
-        </LinearGradient>
-      </Pressable>
+      {useTableLayout ? (
+        <ScrollView
+          contentContainerStyle={{ padding: horizontalPadding, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
+        >
+          {renderHeader()}
+          {renderTable()}
+        </ScrollView>
+      ) : (
+        <FlashList
+          data={filteredExpenses}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderExpenseCard}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={!isLoading ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>💰</Text>
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin gastos aún</Text>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Tus gastos aparecerán aquí</Text>
+            </View>
+          ) : null}
+          contentContainerStyle={{ padding: horizontalPadding, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
+          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+          estimatedItemSize={100}
+        />
+      )}
 
       {/* Category Picker Modal */}
       <Modal visible={showCategoryPicker} transparent animationType="slide" onRequestClose={() => setShowCategoryPicker(false)}>
@@ -277,6 +440,50 @@ export default function ExpensesScreen() {
       </Modal>
 
       <DateRangePicker visible={showDatePicker} startDate={customStartDate} endDate={customEndDate} onRangeChange={(s, e) => { setCustomStartDate(s); setCustomEndDate(e); setFilterMode('range'); }} onClose={() => setShowDatePicker(false)} />
+
+      {/* Export Menu Modal */}
+      <Modal visible={showExportMenu} transparent animationType="fade" onRequestClose={() => setShowExportMenu(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowExportMenu(false)}>
+          <View style={[styles.exportMenuContent, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.exportMenuTitle, { color: theme.text }]}>Exportar Gastos</Text>
+            <Text style={[styles.exportMenuSubtitle, { color: theme.textSecondary }]}>
+              {filteredExpenses.length} transacciones
+            </Text>
+
+            <View style={styles.exportOptions}>
+              <Pressable
+                onPress={() => handleExport('excel')}
+                style={[styles.exportOption, { backgroundColor: theme.primaryLight, borderColor: theme.border }]}
+              >
+                <LinearGradient colors={['#10B981', '#059669']} style={styles.exportOptionIcon}>
+                  <Text style={styles.exportOptionEmoji}>📊</Text>
+                </LinearGradient>
+                <View style={styles.exportOptionText}>
+                  <Text style={[styles.exportOptionTitle, { color: theme.text }]}>Excel (.xlsx)</Text>
+                  <Text style={[styles.exportOptionDesc, { color: theme.textSecondary }]}>Ideal para análisis y edición</Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleExport('pdf')}
+                style={[styles.exportOption, { backgroundColor: theme.primaryLight, borderColor: theme.border }]}
+              >
+                <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.exportOptionIcon}>
+                  <Text style={styles.exportOptionEmoji}>📄</Text>
+                </LinearGradient>
+                <View style={styles.exportOptionText}>
+                  <Text style={[styles.exportOptionTitle, { color: theme.text }]}>PDF</Text>
+                  <Text style={[styles.exportOptionDesc, { color: theme.textSecondary }]}>Ideal para compartir e imprimir</Text>
+                </View>
+              </Pressable>
+            </View>
+
+            <Pressable onPress={() => setShowExportMenu(false)} style={styles.exportCancelButton}>
+              <Text style={[styles.exportCancelText, { color: theme.textSecondary }]}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -288,6 +495,9 @@ const styles = StyleSheet.create({
   authTitle: { fontSize: 22, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
   authSubtitle: { fontSize: 15, marginBottom: 24, textAlign: 'center' },
   headerContent: { marginBottom: 16 },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  exportButton: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.lg, flexDirection: 'row', alignItems: 'center' },
+  exportButtonText: { color: '#FFF', fontSize: 14, fontWeight: '600' },
   monthSelector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: radius.xl, borderWidth: 1, marginBottom: 16 },
   monthArrow: { width: 44, height: 44, borderRadius: radius.md, justifyContent: 'center', alignItems: 'center' },
   arrowText: { fontSize: 18, fontWeight: '600' },
@@ -304,6 +514,7 @@ const styles = StyleSheet.create({
   transactionCount: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.md },
   transactionCountText: { fontSize: 14 },
   listTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  // Card styles (mobile)
   expenseCard: { padding: 16 },
   expenseRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   expenseIcon: { width: 48, height: 48, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center' },
@@ -317,13 +528,27 @@ const styles = StyleSheet.create({
   expenseAmount: { fontSize: 16, fontWeight: '700' },
   convertedRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12, paddingTop: 12, borderTopWidth: 1, gap: 16 },
   convertedText: { fontSize: 12 },
+  // Table styles (desktop/tablet)
+  tableContainer: { padding: 0, overflow: 'hidden' },
+  tableHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1 },
+  tableHeaderCell: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  tableBody: { maxHeight: 500 },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1 },
+  tableText: { fontSize: 14 },
+  textRight: { textAlign: 'right' },
+  tableDescCol: { flex: 2.5, minWidth: 180, paddingRight: 12 },
+  tableCatCol: { flex: 1.5, minWidth: 130, paddingRight: 12 },
+  tableDateCol: { flex: 1, minWidth: 100, paddingRight: 12 },
+  tableCurrencyCol: { width: 110, paddingLeft: 8 },
+  tableCatBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 6, alignSelf: 'flex-start' },
+  tableCatIcon: { fontSize: 14 },
+  tableCatText: { fontSize: 12, fontWeight: '600' },
+  tableCurrencyText: { fontSize: 14, fontWeight: '600' },
+  // Common
   emptyState: { alignItems: 'center', paddingVertical: 48 },
   emptyIcon: { fontSize: 64, marginBottom: 16 },
   emptyTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
   emptyText: { fontSize: 14, textAlign: 'center' },
-  fab: { position: 'absolute', bottom: 100, right: 24 },
-  fabGradient: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', ...getShadow('primary') },
-  fabText: { color: '#FFF', fontSize: 28, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { maxHeight: '70%', borderTopLeftRadius: radius['3xl'], borderTopRightRadius: radius['3xl'], paddingBottom: 34 },
   modalHeader: { padding: 20, borderBottomWidth: 1 },
@@ -336,4 +561,17 @@ const styles = StyleSheet.create({
   categoryOptionText: { flex: 1, fontSize: 16 },
   modalCancel: { alignItems: 'center', padding: 16, borderTopWidth: 1 },
   modalCancelText: { fontSize: 16 },
+  // Export menu styles
+  exportMenuContent: { width: '90%', maxWidth: 400, borderRadius: radius['2xl'], padding: 24, alignSelf: 'center', marginTop: 'auto', marginBottom: 'auto' },
+  exportMenuTitle: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
+  exportMenuSubtitle: { fontSize: 14, textAlign: 'center', marginBottom: 24 },
+  exportOptions: { gap: 12 },
+  exportOption: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: radius.xl, borderWidth: 1, gap: 16 },
+  exportOptionIcon: { width: 50, height: 50, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center' },
+  exportOptionEmoji: { fontSize: 24 },
+  exportOptionText: { flex: 1 },
+  exportOptionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
+  exportOptionDesc: { fontSize: 13 },
+  exportCancelButton: { marginTop: 16, padding: 12, alignItems: 'center' },
+  exportCancelText: { fontSize: 16 },
 });

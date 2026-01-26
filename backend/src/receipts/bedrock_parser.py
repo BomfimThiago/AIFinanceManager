@@ -6,7 +6,6 @@ More reliable than direct Anthropic API, no overload issues.
 import asyncio
 import json
 import logging
-from datetime import datetime
 from decimal import Decimal
 
 import boto3
@@ -70,7 +69,7 @@ class BedrockParser:
 
             # For large documents, chunk them
             if len(ocr_text) > 8000:
-                logger.info(f"Processing large document in chunks")
+                logger.info("Processing large document in chunks")
                 return await self._parse_in_chunks(ocr_text, user_context)
 
             # Regular processing

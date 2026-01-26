@@ -22,7 +22,6 @@ class ConvertedAmounts(TypedDict):
 class CurrencyRatesNotAvailableError(Exception):
     """Raised when currency rates are not available."""
 
-    pass
 
 
 class CurrencyService:

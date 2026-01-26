@@ -1,14 +1,14 @@
 // src/app/(tabs)/receipts.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   RefreshControl,
   Pressable,
   Alert,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, Link } from 'expo-router';
@@ -29,7 +29,8 @@ export default function ReceiptsScreen() {
   const theme = getTheme(isDark);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const { data: receipts, isLoading, refetch } = useReceipts({ enabled: isAuthenticated });
+  const { data: receiptData, isLoading, refetch } = useReceipts({ enabled: isAuthenticated });
+  const receipts = receiptData?.items || [];
   const [refreshing, setRefreshing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
@@ -40,29 +41,34 @@ export default function ReceiptsScreen() {
     pending: { color: colors.gray[500], bg: 'rgba(107,114,128,0.15)', icon: '•', label: 'Pendiente' },
   };
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
-  };
+  }, [refetch]);
 
-  const handleUploadSuccess = () => {
-    Alert.alert('Éxito', '¡Recibo subido y procesando!');
-    refetch();
-  };
+  const handleUploadSuccess = useCallback(() => {
+    Alert.alert(
+      'Recibo Subido',
+      'El recibo se está procesando en segundo plano. Actualiza la página para ver el progreso.',
+      [{ text: 'OK', onPress: () => refetch() }]
+    );
+  }, [refetch]);
 
-  const handleUploadError = (error: Error) => {
+  const handleUploadError = useCallback((error: Error) => {
     Alert.alert('Error', error.message || 'Error al subir el recibo');
-  };
+  }, []);
 
   // Calculate stats
-  const stats = receipts
-    ? {
-        total: receipts.length,
-        completed: receipts.filter((r) => r.status === 'completed').length,
-        pending: receipts.filter((r) => r.status === 'processing' || r.status === 'pending').length,
-      }
-    : { total: 0, completed: 0, pending: 0 };
+  const stats = useMemo(() => {
+    if (!receipts) return { total: 0, completed: 0, pending: 0 };
+
+    return {
+      total: receipts.length,
+      completed: receipts.filter((r) => r.status === 'completed').length,
+      pending: receipts.filter((r) => r.status === 'processing' || r.status === 'pending').length,
+    };
+  }, [receipts]);
 
   if (!isAuthenticated) {
     return (
@@ -167,7 +173,7 @@ export default function ReceiptsScreen() {
             <View style={styles.receiptRight}>
               {item.totalAmount !== null && (
                 <Text style={[styles.receiptAmount, { color: theme.primary }]}>
-                  €{item.totalAmount.toFixed(2)}
+                  €{Number(item.totalAmount).toFixed(2)}
                 </Text>
               )}
               <Text style={[styles.receiptDate, { color: theme.textMuted }]}>
@@ -183,8 +189,8 @@ export default function ReceiptsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
-      <FlatList
-        data={receipts}
+      <FlashList
+        data={receipts || []}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderReceiptCard}
         ListHeaderComponent={renderHeader}
@@ -199,6 +205,7 @@ export default function ReceiptsScreen() {
             </View>
           ) : null
         }
+        estimatedItemSize={120}
         contentContainerStyle={[
           { paddingVertical: 8, paddingHorizontal: horizontalPadding },
           isDesktop && styles.desktopContent,

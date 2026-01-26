@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.currency.service import CurrencyService, get_currency_service
@@ -69,6 +69,45 @@ class ExpenseRepository:
         await self.db.commit()
         await self.db.refresh(expense)
         return expense
+
+    async def get_paginated_by_user(
+        self,
+        user_id: int,
+        offset: int,
+        limit: int,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        category: str | None = None,
+    ) -> tuple[list[Expense], int]:
+        """Get paginated expenses with total count for the user."""
+        # Build base query
+        base_query = select(Expense).where(Expense.user_id == user_id)
+
+        if start_date:
+            base_query = base_query.where(Expense.expense_date >= start_date)
+        if end_date:
+            base_query = base_query.where(Expense.expense_date <= end_date)
+        if category:
+            base_query = base_query.where(Expense.category == category)
+
+        # Get total count
+        count_query = select(func.count()).select_from(
+            base_query.order_by(None).subquery()
+        )
+        count_result = await self.db.execute(count_query)
+        total = count_result.scalar()
+
+        # Get paginated results
+        items_query = (
+            base_query
+            .order_by(Expense.expense_date.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        items_result = await self.db.execute(items_query)
+        items = list(items_result.scalars().all())
+
+        return items, total
 
     async def delete(self, expense: Expense) -> None:
         await self.db.delete(expense)

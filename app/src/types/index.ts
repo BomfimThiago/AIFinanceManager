@@ -139,7 +139,16 @@ export interface AuthToken {
   tokenType: string;
 }
 
-// API Response types
-export interface ApiError {
-  detail: string;
+// Pagination types
+export interface PaginationQuery {
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }

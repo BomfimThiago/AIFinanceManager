@@ -31,8 +31,11 @@ export default function DashboardScreen() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const { data: receipts, isLoading: receiptsLoading, refetch: refetchReceipts } = useReceipts({ enabled: isAuthenticated });
-  const { data: expenses, isLoading: expensesLoading, refetch: refetchExpenses } = useExpenses({ enabled: isAuthenticated });
+  const { data: receiptData, isLoading: receiptsLoading, refetch: refetchReceipts } = useReceipts({ enabled: isAuthenticated });
+  const { data: expenseData, isLoading: expensesLoading, refetch: refetchExpenses } = useExpenses({ enabled: isAuthenticated });
+
+  const receipts = receiptData?.items || [];
+  const expenses = expenseData?.items || [];
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = async () => {

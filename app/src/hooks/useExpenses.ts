@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { expensesApi } from '../services/api';
-import { Expense, ExpenseCreate, ExpenseUpdate } from '../types';
+import { Expense, ExpenseCreate, ExpenseUpdate, PaginatedResponse } from '../types';
 
 interface ExpenseFilters {
-  skip?: number;
+  page?: number;
   limit?: number;
   startDate?: string;
   endDate?: string;
@@ -17,9 +17,11 @@ interface UseExpensesOptions {
 
 export function useExpenses(options: UseExpensesOptions = {}) {
   const { filters, enabled = true } = options;
+  const { page = 1, limit = 100, ...otherFilters } = filters || {};
+
   return useQuery({
-    queryKey: ['expenses', filters],
-    queryFn: () => expensesApi.getAll(filters),
+    queryKey: ['expenses', page, limit, otherFilters],
+    queryFn: () => expensesApi.getAll({ page, limit, ...otherFilters }),
     enabled,
   });
 }

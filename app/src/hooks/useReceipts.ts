@@ -1,16 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { receiptsApi } from '../services/api';
-import { Receipt } from '../types';
+import { Receipt, PaginatedResponse } from '../types';
 
 interface UseReceiptsOptions {
   enabled?: boolean;
+  page?: number;
+  limit?: number;
 }
 
 export function useReceipts(options: UseReceiptsOptions = {}) {
-  const { enabled = true } = options;
+  const { enabled = true, page = 1, limit = 50 } = options;
   return useQuery({
-    queryKey: ['receipts'],
-    queryFn: () => receiptsApi.getAll(),
+    queryKey: ['receipts', page, limit],
+    queryFn: () => receiptsApi.getAll(page, limit),
     enabled,
   });
 }

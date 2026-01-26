@@ -24,6 +24,7 @@ dependencies = [
     "apscheduler>=3.11.2",
     "dateparser>=1.2.2",
     "boto3>=1.42.34",
+    "slowapi>=0.1.9",
 ]
 
 [project.optional-dependencies]
@@ -61,5 +62,6 @@ strict = true
 [dependency-groups]
 dev = [
     "aiosqlite>=0.22.1",
+    "autoflake>=2.3.1",
     "ruff>=0.14.10",
 ]

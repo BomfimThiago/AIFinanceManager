@@ -96,7 +96,7 @@ export default function ReceiptDetailScreen() {
         >
           {/* Store Header with Gradient */}
           <LinearGradient
-            colors={GRADIENTS.primaryFull as [string, string, ...string[]]}
+            colors={GRADIENTS.primary as [string, string, ...string[]]}
             style={styles.headerCard}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -223,6 +223,8 @@ export default function ReceiptDetailScreen() {
               styles.emptyItems,
               { backgroundColor: colors.surface, borderColor: colors.border },
               Platform.OS === 'ios' && styles.shadowIOS,
+              Platform.OS === 'android' && styles.shadowAndroid,
+              Platform.OS === 'web' && styles.shadowWeb,
             ]}>
               <Text style={styles.emptyIcon}>📝</Text>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin articulos</Text>

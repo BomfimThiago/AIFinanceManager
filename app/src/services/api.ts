@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { Platform } from 'react-native';
 import { API_URL } from '../constants/config';
-import { useAuthStore } from '../store/authStore';
+import { getAuthToken, handleUnauthorized } from './tokenProvider';
 import {
   AuthToken,
   Category,
@@ -12,6 +12,7 @@ import {
   ExpenseCreate,
   ExpenseUpdate,
   LoginCredentials,
+  PaginatedResponse,
   Receipt,
   ReceiptUploadResponse,
   RegisterData,
@@ -28,7 +29,7 @@ const api = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
+  const token = getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -61,8 +62,12 @@ function extractErrorMessage(error: AxiosError): string {
       return 'Resource not found.';
     case 422:
       return 'Validation error. Please check your input.';
+    case 429:
+      return 'Too many requests. Please wait a moment and try again.';
     case 500:
       return 'Server error. Please try again later.';
+    case 503:
+      return 'Service temporarily unavailable. Please try again later.';
     default:
       return error.message || 'An unexpected error occurred.';
   }
@@ -74,9 +79,9 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Only logout if we have a token (authenticated request failed)
-      const token = useAuthStore.getState().token;
+      const token = getAuthToken();
       if (token) {
-        useAuthStore.getState().logout();
+        handleUnauthorized();
       }
     }
 
@@ -167,13 +172,14 @@ export const receiptsApi = {
 
     const { data } = await api.post<ReceiptUploadResponse>('/receipts/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000, // 60 seconds for file upload (processing happens in background)
     });
     return data;
   },
 
-  getAll: async (skip = 0, limit = 50): Promise<Receipt[]> => {
-    const { data } = await api.get<Receipt[]>('/receipts', {
-      params: { skip, limit },
+  getAll: async (page = 1, limit = 50): Promise<PaginatedResponse<Receipt>> => {
+    const { data } = await api.get<PaginatedResponse<Receipt>>('/receipts', {
+      params: { page, limit },
     });
     return data;
   },
@@ -201,13 +207,14 @@ export const expensesApi = {
   },
 
   getAll: async (params?: {
-    skip?: number;
+    page?: number;
     limit?: number;
     startDate?: string;
     endDate?: string;
     category?: string;
-  }): Promise<Expense[]> => {
-    const { data } = await api.get<Expense[]>('/expenses', { params });
+  }): Promise<PaginatedResponse<Expense>> => {
+    const queryParams = { page: 1, limit: 100, ...params };
+    const { data } = await api.get<PaginatedResponse<Expense>>('/expenses', { params: queryParams });
     return data;
   },
 

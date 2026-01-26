@@ -1,5 +1,5 @@
 // src/components/ui/Button.tsx
-import React from 'react';
+import React, { forwardRef } from 'react';
 import {
   Pressable,
   Text,
@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  View,
+  PressableProps,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColorMode } from '../../providers/GluestackUIProvider';
@@ -15,9 +17,8 @@ import { colors, radius, getShadow, getTheme } from '../../constants/theme';
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type ButtonSize = 'small' | 'medium' | 'large';
 
-interface ButtonProps {
+interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
   title: string;
-  onPress?: () => void;
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
@@ -28,7 +29,7 @@ interface ButtonProps {
   style?: ViewStyle;
 }
 
-export function Button({
+export const Button = forwardRef<View, ButtonProps>(function Button({
   title,
   onPress,
   variant = 'primary',
@@ -39,7 +40,8 @@ export function Button({
   icon,
   iconPosition = 'left',
   style,
-}: ButtonProps) {
+  ...restProps
+}, ref) {
   const { isDark } = useColorMode();
   const theme = getTheme(isDark);
 
@@ -141,6 +143,7 @@ export function Button({
   if (isGradient) {
     return (
       <Pressable
+        ref={ref}
         onPress={onPress}
         disabled={isDisabled}
         style={({ pressed }) => [
@@ -148,6 +151,7 @@ export function Button({
           fullWidth && { width: '100%' },
           style,
         ]}
+        {...restProps}
       >
         <LinearGradient
           colors={variantStyles.gradient as [string, string, ...string[]]}
@@ -166,6 +170,7 @@ export function Button({
 
   return (
     <Pressable
+      ref={ref}
       onPress={onPress}
       disabled={isDisabled}
       style={({ pressed }) => [
@@ -174,16 +179,15 @@ export function Button({
         variant === 'ghost' && getShadow('sm'),
         style,
       ]}
+      {...restProps}
     >
       {buttonContent}
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   text: {
     textAlign: 'center',
   },
 });
-
-export default Button;

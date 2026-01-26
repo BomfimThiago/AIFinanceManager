@@ -54,10 +54,3 @@ class ExpenseResponse(BaseModel):
     amount_brl: Decimal | None
     created_at: datetime
     updated_at: datetime
-
-
-class ExpenseSummary(BaseModel):
-    total_amount: Decimal
-    currency: str
-    category: str
-    count: int

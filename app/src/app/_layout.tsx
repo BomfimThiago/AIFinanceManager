@@ -10,6 +10,7 @@ import { GluestackUIProvider, useColorMode } from '../providers/GluestackUIProvi
 import { useAuthStore } from '../store/authStore';
 import { useToastStore } from '../store/toastStore';
 import { Toast } from '../components/ui/Toast';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,12 +54,14 @@ function ThemedApp() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <GluestackUIProvider>
-          <ThemedApp />
-        </GluestackUIProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <GluestackUIProvider>
+            <ThemedApp />
+          </GluestackUIProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

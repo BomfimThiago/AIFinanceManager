@@ -16,6 +16,7 @@ class ParsedItemData(BaseModel):
     unit_price: Decimal
     total_price: Decimal
     category: str = "other_expense"  # Supports both default and custom categories
+    transaction_date: datetime | None = None  # Individual transaction date (for bank statements)
 
 
 class ReceiptUpdate(BaseModel):

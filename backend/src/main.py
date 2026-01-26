@@ -5,6 +5,7 @@ import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import select
 
 from src.auth.models import User
@@ -13,6 +14,7 @@ from src.categories.repository import CategoryRepository
 from src.categories.router import router as categories_router
 from src.config import get_settings
 from src.core.logging import get_logger, setup_logging
+from src.core.rate_limiter import limiter, rate_limit_handler
 from src.currency.service import CurrencyRatesNotAvailableError
 from src.database import async_session_maker
 from src.expenses.router import router as expenses_router
@@ -87,6 +89,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Add rate limiting state
+app.state.limiter = limiter
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -116,6 +121,12 @@ async def currency_rates_error_handler(
             "error_code": "CURRENCY_RATES_UNAVAILABLE",
         },
     )
+
+
+# Add rate limit exception handler
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return await rate_limit_handler(request, exc)
 
 
 @app.get("/health")

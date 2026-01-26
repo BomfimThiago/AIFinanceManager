@@ -213,39 +213,18 @@ export const shadows = {
 export const getTheme = (isDark: boolean) => isDark ? darkTheme : lightTheme;
 
 // Helper to get shadow based on platform
-export const getShadow = (size: 'sm' | 'md' | 'lg' | 'primary') => {
+export const getShadow = (size: 'sm' | 'md' | 'lg' | 'primary'): Record<string, unknown> => {
   const shadow = shadows[size];
-  if (Platform.OS === 'ios') return shadow.ios;
-  if (Platform.OS === 'android') return shadow.android;
-  return shadow.web;
-};
-
-// Backward compatibility - THEME object
-export const THEME = {
-  primary: {
-    DEFAULT: colors.primary[600],
-    light: colors.primary[400],
-    lighter: colors.primary[100],
-    dark: colors.primary[700],
-    pink: '#EC4899',
-  },
-  success: {
-    DEFAULT: colors.success.main,
-    light: colors.success.light,
-  },
-  warning: {
-    DEFAULT: colors.warning.main,
-    light: colors.warning.light,
-  },
-  error: {
-    DEFAULT: colors.danger.main,
-    light: colors.danger.light,
-  },
-  info: {
-    DEFAULT: colors.info.main,
-    light: colors.info.light,
-  },
-  category: colors.category,
+  switch (Platform.OS) {
+    case 'ios':
+      return shadow.ios;
+    case 'android':
+      return shadow.android;
+    case 'web':
+    default:
+      // Use boxShadow for web (shadow* props are deprecated)
+      return shadow.web;
+  }
 };
 
 // Backward compatibility - GRADIENTS

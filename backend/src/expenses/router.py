@@ -11,6 +11,7 @@ from src.expenses.repository import ExpenseRepository
 from src.expenses.schemas import ExpenseCreate, ExpenseResponse, ExpenseUpdate
 from src.shared.constants import ExpenseCategory
 from src.shared.exceptions import NotFoundError
+from src.shared.schemas import PaginatedResponse, PaginationQuery
 
 router = APIRouter()
 
@@ -24,28 +25,37 @@ async def create_expense(
     expense_data: ExpenseCreate,
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-) -> dict:
+) -> ExpenseResponse:
     """Create a new expense."""
     expense = await repository.create(expense_data, current_user.id)
-    return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
+    return ExpenseResponse.model_validate(expense)
 
 
 @router.get("")
 async def get_expenses(
+    pagination: Annotated[PaginationQuery, Depends()],
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-    start_date: datetime | None = None,
-    end_date: datetime | None = None,
-    category: ExpenseCategory | None = None,
-) -> list[dict]:
-    """Get all expenses for the current user."""
-    expenses = await repository.get_all_by_user(
+    start_date: datetime | None = Query(None, description="Filter expenses from this date"),
+    end_date: datetime | None = Query(None, description="Filter expenses until this date"),
+    category: ExpenseCategory | None = Query(None, description="Filter by expense category"),
+) -> PaginatedResponse[ExpenseResponse]:
+    """Get paginated expenses for the current user."""
+    expenses, total = await repository.get_paginated_by_user(
         user_id=current_user.id,
+        offset=pagination.offset,
+        limit=pagination.limit,
         start_date=start_date,
         end_date=end_date,
         category=category,
     )
-    return [ExpenseResponse.model_validate(e).model_dump(by_alias=True) for e in expenses]
+    expense_responses = [ExpenseResponse.model_validate(e) for e in expenses]
+    return PaginatedResponse.create(
+        items=expense_responses,
+        total=total,
+        page=pagination.page,
+        limit=pagination.limit,
+    )
 
 
 @router.get("/{expense_id}")
@@ -53,12 +63,12 @@ async def get_expense(
     expense_id: int,
     current_user: CurrentUser,
     repository: Annotated[ExpenseRepository, Depends(get_expense_repository)],
-) -> dict:
+) -> ExpenseResponse:
     """Get a specific expense."""
     expense = await repository.get_by_id(expense_id, current_user.id)
     if not expense:
         raise NotFoundError("Expense", expense_id)
-    return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
+    return ExpenseResponse.model_validate(expense)
 
 
 @router.patch("/{expense_id}")
@@ -92,7 +102,7 @@ async def update_expense(
         )
 
     expense = await repository.update(expense, update_data)
-    return ExpenseResponse.model_validate(expense).model_dump(by_alias=True)
+    return ExpenseResponse.model_validate(expense)
 
 
 @router.delete("/{expense_id}", status_code=204)

@@ -143,39 +143,6 @@ function LogoIcon({ size }: LogoIconProps) {
   );
 }
 
-/**
- * Compact logo for small spaces (tab bar, etc.)
- */
-export function LogoCompact({ size = 28 }: { size?: number }) {
-  return <LogoIcon size={size} />;
-}
-
-/**
- * Logo with tagline for marketing screens
- */
-export function LogoWithTagline({
-  size = 48,
-  light = false,
-  textColor,
-  tagline = 'Tu asistente financiero',
-}: LogoProps & { tagline?: string }) {
-  const resolvedTextColor = textColor || (light ? '#ffffff' : '#1f2937');
-  const taglineColor = light ? 'rgba(255,255,255,0.7)' : '#6b7280';
-
-  return (
-    <View style={styles.taglineContainer}>
-      <LogoIcon size={size} />
-      <View style={[styles.taglineTextContainer, { marginLeft: size * 0.3 }]}>
-        <Text style={[styles.logoText, { fontSize: size * 0.6, color: resolvedTextColor }]}>
-          Konta
-        </Text>
-        <Text style={[styles.taglineText, { fontSize: size * 0.28, color: taglineColor }]}>
-          {tagline}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   horizontalContainer: {
@@ -185,19 +152,9 @@ const styles = StyleSheet.create({
   verticalContainer: {
     alignItems: 'center',
   },
-  taglineContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  taglineTextContainer: {
-    justifyContent: 'center',
-  },
   logoText: {
     fontWeight: '700',
     letterSpacing: -0.5,
-  },
-  taglineText: {
-    marginTop: 2,
   },
 });
 

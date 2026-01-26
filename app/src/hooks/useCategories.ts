@@ -64,22 +64,12 @@ export function useDeleteCategory() {
   });
 }
 
-export function useHideCategory() {
+export function useToggleCategoryVisibility() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: categoriesApi.hide,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
-  });
-}
-
-export function useUnhideCategory() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: categoriesApi.unhide,
+    mutationFn: ({ id, hide }: { id: number; hide: boolean }) =>
+      hide ? categoriesApi.hide(id) : categoriesApi.unhide(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },

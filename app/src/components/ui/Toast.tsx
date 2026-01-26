@@ -120,12 +120,21 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
     zIndex: 9999,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+      web: {
+        boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+      },
+    }),
   },
   content: {
     flexDirection: 'row',

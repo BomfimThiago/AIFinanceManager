@@ -118,15 +118,6 @@ def log_error(
                 sentry_sdk.capture_message(message, level="error")
 
 
-def log_debug(message: str, **context: Any) -> None:
-    """Log a debug message with optional context."""
-    logger = logging.getLogger("app")
-    if context:
-        logger.debug(f"{message} | context={context}")
-    else:
-        logger.debug(message)
-
-
 def capture_exception(error: Exception, **context: Any) -> None:
     """Capture an exception to Sentry with context."""
     if settings.sentry_dsn:

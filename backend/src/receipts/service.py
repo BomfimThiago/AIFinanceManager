@@ -27,23 +27,18 @@ class ReceiptService:
         self.category_repository = category_repository
         self.preference_service = preference_service
 
-    async def upload_and_process(
+    async def create_receipt(
         self,
-        file_data: bytes,
         file_url: str,
         user_id: int,
-        is_pdf: bool = False,
     ) -> Receipt:
-        """Upload and process a receipt image or PDF."""
+        """Create a receipt record in processing state (quick operation)."""
         log_info(
             "Creating receipt record",
             user_id=user_id,
             file_url=file_url,
-            is_pdf=is_pdf,
-            file_size=len(file_data),
         )
 
-        # Create receipt in pending state
         receipt = await self.repository.create(
             user_id=user_id,
             image_url=file_url,
@@ -51,8 +46,32 @@ class ReceiptService:
         )
 
         log_info("Receipt record created", receipt_id=receipt.id)
+        return receipt
+
+    async def process_receipt_background(
+        self,
+        receipt_id: int,
+        file_data: bytes,
+        user_id: int,
+        is_pdf: bool = False,
+    ) -> None:
+        """Process a receipt in the background (OCR + AI parsing)."""
+        logger.info(f"=== RECEIPT PROCESSING START - Receipt ID: {receipt_id} ===")
+        log_info(
+            "Starting background processing",
+            receipt_id=receipt_id,
+            user_id=user_id,
+            is_pdf=is_pdf,
+            file_size=len(file_data),
+        )
 
         try:
+            # Get the receipt
+            receipt = await self.repository.get_by_id(receipt_id, user_id)
+            if not receipt:
+                log_error("Receipt not found for background processing", receipt_id=receipt_id)
+                return
+
             # Extract text based on file type
             add_breadcrumb(
                 message="Starting OCR extraction",
@@ -117,19 +136,37 @@ class ReceiptService:
                 store_name=receipt.store_name,
                 total_amount=receipt.total_amount,
             )
-
-            return receipt
+            logger.info(f"=== RECEIPT PROCESSING COMPLETE - Receipt ID: {receipt_id} ===")
+            logger.info(f"    Store: {receipt.store_name}")
+            logger.info(f"    Total: {receipt.total_amount} {receipt.currency}")
+            logger.info(f"    Date: {receipt.purchase_date}")
+            logger.info(f"    Items: {len(parsed_data.items)} extracted")
 
         except Exception as e:
             log_error(
                 "Receipt processing failed",
                 error=e,
-                receipt_id=receipt.id,
+                receipt_id=receipt_id,
                 user_id=user_id,
                 is_pdf=is_pdf,
             )
-            await self.repository.set_failed(receipt, str(e))
-            raise
+            # Get receipt again to set failed status
+            receipt = await self.repository.get_by_id(receipt_id, user_id)
+            if receipt:
+                await self.repository.set_failed(receipt, str(e))
+
+    async def upload_and_process(
+        self,
+        file_data: bytes,
+        file_url: str,
+        user_id: int,
+        is_pdf: bool = False,
+    ) -> Receipt:
+        """Upload and process a receipt image or PDF (synchronous, for backwards compatibility)."""
+        receipt = await self.create_receipt(file_url, user_id)
+        await self.process_receipt_background(receipt.id, file_data, user_id, is_pdf)
+        # Reload the receipt to get updated data
+        return await self.repository.get_by_id(receipt.id, user_id)
 
     async def get_receipt(self, receipt_id: int, user_id: int) -> Receipt:
         """Get a receipt by ID."""
@@ -146,6 +183,15 @@ class ReceiptService:
     ) -> list[Receipt]:
         """Get all receipts for a user."""
         return await self.repository.get_all_by_user(user_id, skip, limit)
+
+    async def get_paginated_receipts(
+        self,
+        user_id: int,
+        offset: int,
+        limit: int,
+    ) -> tuple[list[Receipt], int]:
+        """Get paginated receipts for a user with total count."""
+        return await self.repository.get_paginated_by_user(user_id, offset, limit)
 
     async def update_receipt(
         self,

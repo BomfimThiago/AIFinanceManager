@@ -1,9 +1,8 @@
 // src/app/(tabs)/categories.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   RefreshControl,
   Pressable,
@@ -11,7 +10,9 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  Platform,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 import { Card } from '../../components/ui/Card';
@@ -22,8 +23,7 @@ import {
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
-  useHideCategory,
-  useUnhideCategory,
+  useToggleCategoryVisibility,
   useInitializeCategories,
 } from '../../hooks/useCategories';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -81,8 +81,7 @@ export default function CategoriesScreen() {
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
-  const hideCategory = useHideCategory();
-  const unhideCategory = useUnhideCategory();
+  const toggleVisibility = useToggleCategoryVisibility();
   const initializeCategories = useInitializeCategories();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -179,11 +178,7 @@ export default function CategoriesScreen() {
 
   const handleToggleVisibility = async (category: Category) => {
     try {
-      if (category.isHidden) {
-        await unhideCategory.mutateAsync(category.id);
-      } else {
-        await hideCategory.mutateAsync(category.id);
-      }
+      await toggleVisibility.mutateAsync({ id: category.id, hide: !category.isHidden });
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Error al actualizar');
     }
@@ -310,14 +305,15 @@ export default function CategoriesScreen() {
         />
       </View>
 
-      <FlatList
-        data={filteredCategories}
+      <FlashList
+        data={filteredCategories || []}
         renderItem={renderCategoryItem}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={[{ paddingHorizontal: horizontalPadding, paddingBottom: 100 }, isDesktop && styles.desktopContent]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        estimatedItemSize={80}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📂</Text>
@@ -508,12 +504,24 @@ const styles = StyleSheet.create({
   textInput: { borderWidth: 2, borderRadius: radius.lg, padding: 16, fontSize: 16 },
   typeSelector: { flexDirection: 'row', borderRadius: radius.lg, padding: 4 },
   typeButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: radius.md, gap: 6 },
-  typeButtonActive: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+  typeButtonActive: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 },
+    android: { elevation: 2 },
+    web: { boxShadow: '0 1px 2px rgba(0,0,0,0.1)' },
+  }) as any,
   typeButtonIcon: { fontSize: 16 },
   typeButtonText: { fontSize: 14, fontWeight: '600' },
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   colorOption: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  colorSelected: { borderWidth: 3, borderColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 4 },
+  colorSelected: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3 },
+      android: { elevation: 4 },
+      web: { boxShadow: '0 2px 3px rgba(0,0,0,0.3)' },
+    }),
+  },
   colorCheck: { color: '#FFFFFF', fontWeight: '700' },
   iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   iconOption: { width: 48, height: 48, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center' },

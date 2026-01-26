@@ -9,8 +9,8 @@ from src.categories.dependencies import (
 from src.categories.preference_service import CategoryPreferenceService
 from src.categories.repository import CategoryRepository
 from src.database import DbSession
-from src.receipts.parser_factory import get_ai_parser
 from src.receipts.ocr_service import OCRService, get_ocr_service
+from src.receipts.parser_factory import get_ai_parser
 from src.receipts.repository import ReceiptRepository
 from src.receipts.service import ReceiptService
 
